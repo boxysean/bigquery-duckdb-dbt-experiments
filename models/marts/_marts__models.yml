@@ -1,0 +1,528 @@
+version: 2
+
+# Marts: facts (fct_*), dimensions (dim_*) and aggregates (mart_*), materialised
+# as tables (SPEC sections 4 and 5). Explicit column lists, no `select *`.
+#
+# Conventions for every model below:
+#   * money is money_type() (decimal(18,2) on DuckDB, numeric on BigQuery), in USD.
+#   * rates are float_type() (double on DuckDB, float64 on BigQuery), in 0..1.
+#   * every *_at column is a NAIVE UTC timestamp (from staging's to_utc_timestamp());
+#     dates and months are UTC calendar dates and months (months are timestamp_type()
+#     values at the first instant of the month).
+#   * "gross" means before returns and cancellations: every order item counts,
+#     whatever its status. Returns are reported in separate columns.
+#   * surrogate keys are generate_surrogate_key(): md5 of the parts joined with
+#     '||', built from integers only so the value is the same on both targets.
+
+models:
+  - name: fct_orders
+    description: >
+      Grain: one row per order, keyed by order_id. The order's item rollup
+      (counts, gross revenue, cost and margin in USD) plus the customer's country,
+      state and traffic source from dim_users. Timestamps naive UTC.
+    columns:
+      - name: order_id
+        description: Order identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: The customer who placed the order.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_users')
+                field: user_id
+      - name: order_status
+        description: Status of the order (orders.status).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Complete', 'Shipped', 'Processing', 'Returned', 'Cancelled']
+      - name: order_created_at
+        description: When the order was placed; naive UTC timestamp.
+        data_tests:
+          - not_null
+      - name: order_date
+        description: UTC calendar date of order_created_at.
+        data_tests:
+          - not_null
+      - name: order_month
+        description: First instant of the UTC calendar month of order_created_at (timestamp).
+        data_tests:
+          - not_null
+      - name: item_count
+        description: Number of order items in the order (counted, not the source's num_of_item).
+      - name: returned_item_count
+        description: Number of the order's items with status 'Returned'.
+      - name: gross_revenue
+        description: Sum of the items' sale_price, USD. Before returns and cancellations.
+      - name: total_cost
+        description: Sum of the items' inventory unit cost, USD.
+      - name: gross_margin
+        description: gross_revenue - total_cost, USD. Before returns.
+      - name: is_fully_returned
+        description: True when the order has items and every item has status 'Returned'.
+      - name: user_country
+        description: The customer's country (dim_users.country).
+      - name: user_state
+        description: The customer's state or region (dim_users.state).
+      - name: user_traffic_source
+        description: The channel the customer signed up through (dim_users.traffic_source).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Search', 'Organic', 'Facebook', 'Email', 'Display']
+
+  - name: fct_order_items
+    description: >
+      Grain: one row per order item (one unit ordered), keyed by order_item_id.
+      The enriched order item plus product name and list price from dim_products
+      and the customer's country and state from dim_users. Money in USD;
+      timestamps naive UTC.
+    columns:
+      - name: order_item_id
+        description: Order item identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: The order the item belongs to.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_orders')
+                field: order_id
+      - name: user_id
+        description: The customer who ordered the item.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_users')
+                field: user_id
+      - name: product_id
+        description: The product ordered.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+      - name: inventory_item_id
+        description: >
+          The physical inventory unit that fulfilled the item. A unit is sold at most
+          once, so this is unique too.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_inventory_items')
+                field: inventory_item_id
+      - name: distribution_center_id
+        description: Distribution center the unit shipped from (from the inventory unit).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_distribution_centers')
+                field: distribution_center_id
+      - name: order_item_status
+        description: Status of this item (order_items.status).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Complete', 'Shipped', 'Processing', 'Returned', 'Cancelled']
+      - name: order_status
+        description: Status of the parent order (orders.status).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Complete', 'Shipped', 'Processing', 'Returned', 'Cancelled']
+      - name: sale_price
+        description: Price the item sold for, USD.
+        data_tests:
+          - not_null
+      - name: product_cost
+        description: Cost of the inventory unit that was sold (inventory_items.cost), USD.
+        data_tests:
+          - not_null
+      - name: gross_margin
+        description: sale_price - product_cost, USD. Before returns.
+      - name: is_returned
+        description: True when order_item_status is 'Returned'.
+      - name: order_item_created_at
+        description: When the item was added to the order; naive UTC timestamp.
+      - name: order_date
+        description: UTC calendar date of the parent order's created_at.
+      - name: product_name
+        description: Product name (dim_products.product_name).
+      - name: product_category
+        description: Product category (products.category), e.g. 'Jeans'.
+      - name: product_department
+        description: Product department (products.department), 'Men' or 'Women'.
+      - name: product_brand
+        description: Product brand (products.brand).
+      - name: product_retail_price
+        description: The product's list price (dim_products.retail_price), USD.
+      - name: user_country
+        description: The customer's country (dim_users.country).
+      - name: user_state
+        description: The customer's state or region (dim_users.state).
+
+  - name: dim_users
+    description: >
+      Grain: one row per user, keyed by user_id; every user, including users who
+      never ordered (zero lifetime totals, null first/last order and cohort).
+      Profile attributes from staging plus the first-order cohort and lifetime
+      order totals (gross, USD). Timestamps naive UTC. street_address, latitude
+      and longitude are deliberately not carried into the mart.
+    columns:
+      - name: user_id
+        description: User identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: first_name
+        description: First name.
+      - name: last_name
+        description: Last name.
+      - name: email
+        description: Email address.
+      - name: age
+        description: Age in years, as recorded in the source.
+      - name: gender
+        description: Gender, 'M' or 'F'.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['M', 'F']
+      - name: city
+        description: City.
+      - name: state
+        description: State or region.
+      - name: country
+        description: Country.
+      - name: postal_code
+        description: Postal code (a string; not every country's codes are numeric).
+      - name: traffic_source
+        description: The channel the user signed up through.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Search', 'Organic', 'Facebook', 'Email', 'Display']
+      - name: signup_at
+        description: When the user signed up (users.created_at); naive UTC timestamp.
+        data_tests:
+          - not_null
+      - name: cohort_month
+        description: >
+          First instant of the UTC month of the user's first order (timestamp); null
+          when the user never ordered.
+      - name: first_order_at
+        description: When the user's first order was placed; naive UTC; null if none.
+      - name: last_order_at
+        description: When the user's latest order was placed; naive UTC; null if none.
+      - name: lifetime_orders
+        description: Number of orders the user placed, any status.
+      - name: lifetime_items
+        description: Number of order items across those orders.
+      - name: lifetime_gross_revenue
+        description: Sum of the user's order items' sale_price, USD. Before returns.
+      - name: lifetime_gross_margin
+        description: Lifetime gross revenue minus the sold units' cost, USD. Before returns.
+      - name: lifetime_returned_items
+        description: Number of the user's order items with status 'Returned'.
+
+  - name: dim_products
+    description: >
+      Grain: one row per product, keyed by product_id; every product, including
+      products never sold (zero sales, null return_rate). Catalogue attributes,
+      the home distribution center and lifetime sales and returns. Money in USD;
+      return_rate is a float in 0..1.
+    columns:
+      - name: product_id
+        description: Product identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: product_name
+        description: Product name (products.name).
+      - name: sku
+        description: Stock-keeping unit code.
+      - name: category
+        description: Product category, e.g. 'Jeans'.
+      - name: department
+        description: Department, 'Men' or 'Women'.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Men', 'Women']
+      - name: brand
+        description: Brand.
+      - name: distribution_center_id
+        description: The product's distribution center (products.distribution_center_id).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_distribution_centers')
+                field: distribution_center_id
+      - name: distribution_center_name
+        description: Name of that distribution center.
+      - name: unit_cost
+        description: The product's catalogue cost (products.cost), USD.
+      - name: retail_price
+        description: The product's list price (products.retail_price), USD.
+      - name: units_sold
+        description: Number of order items for this product, any status.
+      - name: gross_revenue
+        description: Sum of those items' sale_price, USD. Before returns.
+      - name: gross_margin
+        description: gross_revenue minus the sold units' cost, USD. Before returns.
+      - name: returned_units
+        description: Number of those items with status 'Returned'.
+      - name: return_rate
+        description: returned_units / units_sold, float in 0..1; null when never sold.
+
+  - name: dim_distribution_centers
+    description: >
+      Grain: one row per distribution center, keyed by distribution_center_id,
+      including centers holding no stock (zero units and value). Location plus the
+      inventory held there, counted from the inventory units. Money in USD.
+    columns:
+      - name: distribution_center_id
+        description: Distribution center identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: name
+        description: Distribution center name (city and state).
+      - name: latitude
+        description: Latitude, decimal degrees.
+      - name: longitude
+        description: Longitude, decimal degrees.
+      - name: inventory_units
+        description: Inventory units ever stocked at the center, sold or not.
+      - name: open_units
+        description: Units at the center not yet sold (sold_at is null).
+      - name: sold_units
+        description: Units at the center that have been sold.
+      - name: open_inventory_value
+        description: Sum of the open units' cost, USD.
+
+  - name: fct_inventory_items
+    description: >
+      Grain: one row per inventory item (one physical unit), keyed by
+      inventory_item_id, sold or open. The product_* columns are the source's
+      denormalised copies on inventory_items. Money in USD; timestamps naive UTC.
+    columns:
+      - name: inventory_item_id
+        description: Inventory item identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: product_id
+        description: The product this unit is.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+      - name: distribution_center_id
+        description: The center holding the unit (inventory_items.product_distribution_center_id).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_distribution_centers')
+                field: distribution_center_id
+      - name: unit_cost
+        description: Cost of this unit (inventory_items.cost), USD.
+        data_tests:
+          - not_null
+      - name: product_retail_price
+        description: The product's list price as denormalised on the unit, USD.
+      - name: created_at
+        description: When the unit entered inventory; naive UTC timestamp.
+        data_tests:
+          - not_null
+      - name: sold_at
+        description: When the unit was sold; naive UTC; null while the unit is open stock.
+      - name: is_sold
+        description: True when sold_at is not null.
+        data_tests:
+          - not_null
+      - name: days_to_sell
+        description: (sold_at - created_at) in days, float; null when the unit is unsold.
+      - name: product_category
+        description: Product category as denormalised on the unit.
+      - name: product_department
+        description: Product department as denormalised on the unit, 'Men' or 'Women'.
+      - name: product_brand
+        description: Product brand as denormalised on the unit.
+
+  - name: mart_daily_revenue
+    description: >
+      Grain: one row per UTC calendar date on which at least one order was placed,
+      keyed by revenue_date (the order's date, not the item's). No date spine: a
+      day with no orders is absent rather than a zero row. Money in USD, gross
+      (every item, any status). Ordered by revenue_date.
+    columns:
+      - name: revenue_date
+        description: UTC calendar date of the orders; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: order_count
+        description: Orders placed on the date, any status.
+      - name: order_item_count
+        description: Order items in those orders.
+      - name: customer_count
+        description: Distinct customers who placed those orders.
+      - name: gross_revenue
+        description: Sum of those items' sale_price, USD.
+      - name: total_cost
+        description: Sum of those items' inventory unit cost, USD.
+      - name: gross_margin
+        description: gross_revenue - total_cost, USD.
+      - name: average_order_value
+        description: >
+          gross_revenue / order_count, USD, rounded to cents with an explicit round(x, 2)
+          (BigQuery NUMERIC would otherwise keep 9 decimal places).
+      - name: returned_item_count
+        description: Those items with status 'Returned'.
+
+  - name: mart_product_performance
+    description: >
+      Grain: one row per product, keyed by product_id; every product, including
+      products never sold (zero units, null rates and sale timestamps). Catalogue
+      attributes, lifetime sales, margin and returns. Money in USD; rates are
+      floats. Ordered by gross_revenue desc, then product_id (a total order).
+    columns:
+      - name: product_id
+        description: Product identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+      - name: product_name
+        description: Product name.
+      - name: category
+        description: Product category.
+      - name: department
+        description: Department, 'Men' or 'Women'.
+      - name: brand
+        description: Brand.
+      - name: unit_cost
+        description: The product's catalogue cost (products.cost), USD.
+      - name: retail_price
+        description: The product's list price, USD.
+      - name: units_sold
+        description: Order items for this product, any status.
+      - name: gross_revenue
+        description: Sum of those items' sale_price, USD. Before returns.
+      - name: total_cost
+        description: Sum of the sold units' cost, USD.
+      - name: gross_margin
+        description: gross_revenue - total_cost, USD.
+      - name: gross_margin_rate
+        description: gross_margin / gross_revenue, float; null when never sold.
+      - name: returned_units
+        description: Those items with status 'Returned'.
+      - name: return_rate
+        description: returned_units / units_sold, float in 0..1; null when never sold.
+      - name: first_sold_at
+        description: Earliest order item created_at for the product; naive UTC; null if never sold.
+      - name: last_sold_at
+        description: Latest order item created_at for the product; naive UTC; null if never sold.
+
+  - name: mart_customer_summary
+    description: >
+      Grain: one row per user, keyed by user_id; every user, including users who
+      never ordered (zero totals and months_active). Cohort, activity span and
+      lifetime value per customer. Money in USD, gross (before returns).
+    columns:
+      - name: user_id
+        description: User identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_users')
+                field: user_id
+      - name: cohort_month
+        description: First instant of the UTC month of the first order; null if none.
+      - name: signup_at
+        description: When the user signed up; naive UTC timestamp.
+      - name: first_order_at
+        description: First order's created_at; naive UTC; null if none.
+      - name: last_order_at
+        description: Latest order's created_at; naive UTC; null if none.
+      - name: months_active
+        description: Distinct UTC calendar months in which the user placed an order.
+      - name: lifetime_orders
+        description: Orders placed, any status.
+      - name: lifetime_items
+        description: Order items across those orders.
+      - name: lifetime_gross_revenue
+        description: Sum of the items' sale_price, USD.
+      - name: lifetime_gross_margin
+        description: Lifetime gross revenue minus the sold units' cost, USD.
+      - name: average_order_value
+        description: >
+          lifetime_gross_revenue / lifetime_orders, USD, rounded to cents with an explicit
+          round(x, 2); null if no orders.
+      - name: returned_item_count
+        description: The user's order items with status 'Returned'.
+      - name: is_repeat_customer
+        description: True when the user placed more than one order.
+
+  - name: mart_cohort_retention
+    description: >
+      Grain: one row per cohort month x activity month, keyed by the surrogate
+      cohort_activity_key; only (cohort, month) pairs in which at least one cohort
+      member ordered appear. A cohort is the users whose first order fell in that
+      UTC month. Revenue in USD (gross); retention_rate is a float. Ordered by
+      cohort_month, activity_month (a total order: the pair is the grain).
+    columns:
+      - name: cohort_activity_key
+        description: >
+          Surrogate key, generate_surrogate_key() of the yyyymm integers of
+          cohort_month and activity_month; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: cohort_month
+        description: First instant of the cohort's UTC month (timestamp).
+        data_tests:
+          - not_null
+      - name: activity_month
+        description: First instant of the UTC month in which the orders were placed (timestamp).
+        data_tests:
+          - not_null
+      - name: months_since_cohort
+        description: Whole calendar months from cohort_month to activity_month (0 = the cohort month).
+        data_tests:
+          - not_null
+      - name: customers
+        description: Distinct cohort members who ordered in activity_month.
+      - name: orders
+        description: Orders those customers placed in activity_month.
+      - name: revenue
+        description: Gross revenue of those orders, USD.
+      - name: retention_rate
+        description: >
+          customers / the cohort's month-0 customers (float, 0..1). Month 0 is
+          always 1.0, because a cohort is defined by its first-order month.

@@ -8,7 +8,7 @@ SHELL := /bin/bash
 DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup check-env duck bq build-both parity clean
+.PHONY: help setup check-env fixtures duck bq build-both parity clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -16,7 +16,8 @@ help:
 	@printf '                    dbc, the DuckDB ADBC driver, the DuckDB 1.5.x CLI, the\n'
 	@printf '                    community bigquery extension\n'
 	@printf '  make check-env    assert every prerequisite, failing loudly on any gap\n'
-	@printf '  make duck         dbt build --target duckdb    (local dev.duckdb file)\n'
+	@printf '  make fixtures     (re)load the thelook_ecommerce fixture into dev.duckdb\n'
+	@printf '  make duck         fixtures, then dbt build --target duckdb (dev.duckdb)\n'
 	@printf '  make bq           dbt build --target bigquery  (needs Google credentials;\n'
 	@printf '                    refuses with exit 2 when the machine has none)\n'
 	@printf '  make build-both   both targets, in that order\n'
@@ -31,8 +32,13 @@ setup:
 check-env:
 	bash scripts/check_env.sh
 
+# The local stand-in for bigquery-public-data.thelook_ecommerce, recreated in
+# dev.duckdb on every run. DuckDB only: the BigQuery target reads the real data.
+fixtures:
+	bash scripts/load_duckdb_sources.sh
+
 # The duckdb target is the one that runs on a clean machine.
-duck: check-env
+duck: check-env fixtures
 	$(DBT) build --target duckdb
 
 # Configured but not runnable without credentials; the script says so plainly.
