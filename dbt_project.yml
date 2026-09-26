@@ -1,0 +1,29 @@
+# dbt v2 does not use config-version; the file layout below follows what
+# `dbt init` (dbt-oss 2.0.5) generates, with two additions: an intermediate
+# layer, and a pointer to the in-repo profiles.yml via DBT_PROFILES_DIR.
+name: bq_duckdb_experiments
+
+profile: bq_duckdb_experiments
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "dbt_internal_packages"
+  # dev.duckdb is NOT listed here: `dbt clean` resolves the duckdb profile first,
+  # which opens the very file it would delete. `make clean` removes it instead.
+
+# The whole point of the project: the SAME model tree is built against both
+# targets. Anything dialect-specific belongs in macros/, not in a forked model.
+models:
+  bq_duckdb_experiments:
+    +static_analysis: strict
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table

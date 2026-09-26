@@ -1,0 +1,56 @@
+# Committed on purpose: it holds no credentials.
+#
+# One profile, two outputs, one project. The credentials are read from the
+# environment (BigQuery) or are local files (DuckDB), so nothing secret lives
+# in this file. dbt is pointed at it with DBT_PROFILES_DIR, which the Makefile
+# exports, so `~/.dbt/profiles.yml` is never involved.
+bq_duckdb_experiments:
+  # The target that works on a clean machine. `make duck` selects it explicitly
+  # anyway, so this default only affects bare `dbt` invocations.
+  target: duckdb
+  outputs:
+    # ------------------------------------------------------------------ duckdb
+    duckdb:
+      type: duckdb
+      path: dev.duckdb
+      schema: main
+      threads: 4
+      extensions:
+        - httpfs
+        - iceberg
+        # The DuckDB `bigquery` extension is community-maintained, and dbt-oss
+        # 2.0.5 cannot say so here. What was tried on 2026-09-26:
+        #
+        #   - name: bigquery          -> InvalidConfig (dbt1005):
+        #     repo: community              "extensions: item 2 must be a string"
+        #   - "bigquery:community"    -> HTTP 404 for extension
+        #                                "bigquerycommunity"
+        #   - bigquery                -> HTTP 404 from the CORE repo
+        #                                (extensions.duckdb.org), where it does
+        #                                not exist
+        #
+        # so the extension is installed out of band, once, and then named as a
+        # plain string here (the driver's INSTALL becomes a no-op and LOAD finds
+        # the cached community build):
+        #
+        #   duckdb -c "INSTALL bigquery FROM community"
+        #
+        # Verified to work after that: community build 27d85ad, installed_from
+        # = community. scripts/check_env.sh fails loudly when it is missing, and
+        # scripts/install_prereqs.sh installs it.
+        - bigquery
+
+    # ---------------------------------------------------------------- bigquery
+    # Configured, documented, and NOT verified: this repository holds no Google
+    # credentials. `scripts/run_bq.sh` refuses to pretend otherwise.
+    bigquery:
+      type: bigquery
+      method: oauth
+      # `database` is the GCP project, `schema` is the dataset (dbt v2 naming).
+      database: coreychimpbot
+      schema: "experiments_{{ env_var('DBT_ENV', 'dev') }}"
+      location: US
+      threads: 4
+      # Hard cost ceiling: a query that would bill more than this FAILS instead
+      # of running. 1 GB by default; raise it deliberately, never silently.
+      maximum_bytes_billed: "{{ env_var('BQ_MAXIMUM_BYTES_BILLED', 1000000000) | int }}"
