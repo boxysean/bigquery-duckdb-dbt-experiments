@@ -1,0 +1,11 @@
+[project]
+name = "bigquery-duckdb-dbt-experiments"
+version = "0.0.1"
+description = "One dbt v2 project, two targets: BigQuery and DuckDB."
+requires-python = ">=3.11,<3.13"
+# Pinned on purpose: the project is an experiment in running the SAME models
+# against two engines, so the engine/driver versions are part of the contract.
+# See README.md ("Pinned versions") and scripts/check_env.sh.
+dependencies = [
+  "dbt-oss==2.0.5",
+]

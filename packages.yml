@@ -1,0 +1,6 @@
+# Kept deliberately empty until a package earns its place: every package added
+# here has to work on BOTH targets (BigQuery and DuckDB), which shrinks the set
+# drastically. dbt-labs/dbt_utils is the obvious first candidate and is not
+# added yet, because this card ships an empty skeleton and an unused dependency
+# would claim more than the project can verify.
+packages: []

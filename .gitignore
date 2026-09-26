@@ -1,0 +1,18 @@
+# dbt v2 build artifacts and the local DuckDB file. `dbt init` in dbt-oss 2.0.5
+# generates the first five lines; the rest are this project's own.
+dbt_packages/
+dbt_internal_packages/
+logs/
+target/
+.env
+
+# Local DuckDB database (`make clean` also removes it)
+dev.duckdb
+dev.duckdb.wal
+
+# Managed by `uv sync`
+.venv/
+__pycache__/
+
+# dbt writes this per-user anonymous usage id into the project directory
+.user.yml
