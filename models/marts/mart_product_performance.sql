@@ -40,8 +40,7 @@ select
     sales.gross_revenue,
     sales.total_cost,
     sales.gross_margin,
-    cast(sales.gross_margin as {{ float_type() }})
-        / nullif(cast(sales.gross_revenue as {{ float_type() }}), 0)    as gross_margin_rate,
+    {{ safe_divide('sales.gross_margin', 'sales.gross_revenue') }}      as gross_margin_rate,
     returns.returned_units,
     returns.return_rate,
     sales.first_sold_at,

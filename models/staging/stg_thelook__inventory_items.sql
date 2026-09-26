@@ -8,8 +8,8 @@ with source as (
 renamed as (
 
     select
-        cast(id as bigint)                                  as inventory_item_id,
-        cast(product_id as bigint)                          as product_id,
+        cast(id as {{ int_type() }})                                  as inventory_item_id,
+        cast(product_id as {{ int_type() }})                          as product_id,
         {{ to_utc_timestamp('created_at') }}                as created_at,
         {{ to_utc_timestamp('sold_at') }}                   as sold_at,
         cast(cost as {{ money_type() }})                    as cost,
@@ -19,7 +19,7 @@ renamed as (
         cast(product_retail_price as {{ money_type() }})    as product_retail_price,
         cast(product_department as {{ string_type() }})     as product_department,
         cast(product_sku as {{ string_type() }})            as product_sku,
-        cast(product_distribution_center_id as bigint)      as distribution_center_id
+        cast(product_distribution_center_id as {{ int_type() }})      as distribution_center_id
     from source
 
 )

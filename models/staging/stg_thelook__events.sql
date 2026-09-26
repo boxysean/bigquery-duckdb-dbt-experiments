@@ -7,9 +7,9 @@ with source as (
 renamed as (
 
     select
-        cast(id as bigint)                              as event_id,
-        cast(user_id as bigint)                         as user_id,
-        cast(sequence_number as bigint)                 as sequence_number,
+        cast(id as {{ int_type() }})                              as event_id,
+        cast(user_id as {{ int_type() }})                         as user_id,
+        cast(sequence_number as {{ int_type() }})                 as sequence_number,
         cast(session_id as {{ string_type() }})         as session_id,
         {{ to_utc_timestamp('created_at') }}            as created_at,
         cast(ip_address as {{ string_type() }})         as ip_address,

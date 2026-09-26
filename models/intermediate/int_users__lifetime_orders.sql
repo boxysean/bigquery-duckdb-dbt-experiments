@@ -28,12 +28,12 @@ select
     users.user_id,
     order_totals.first_order_at,
     order_totals.last_order_at,
-    cast(coalesce(order_totals.lifetime_orders, 0) as bigint)                           as lifetime_orders,
-    cast(coalesce(order_totals.lifetime_items, 0) as bigint)                            as lifetime_items,
+    cast(coalesce(order_totals.lifetime_orders, 0) as {{ int_type() }})                           as lifetime_orders,
+    cast(coalesce(order_totals.lifetime_items, 0) as {{ int_type() }})                            as lifetime_items,
     cast(coalesce(order_totals.lifetime_gross_revenue, 0) as {{ money_type() }})        as lifetime_gross_revenue,
     cast(coalesce(order_totals.lifetime_total_cost, 0) as {{ money_type() }})           as lifetime_total_cost,
     cast(coalesce(order_totals.lifetime_gross_margin, 0) as {{ money_type() }})         as lifetime_gross_margin,
-    cast(coalesce(order_totals.lifetime_returned_items, 0) as bigint)                   as lifetime_returned_items
+    cast(coalesce(order_totals.lifetime_returned_items, 0) as {{ int_type() }})                   as lifetime_returned_items
 from users
 left join order_totals
     on order_totals.user_id = users.user_id

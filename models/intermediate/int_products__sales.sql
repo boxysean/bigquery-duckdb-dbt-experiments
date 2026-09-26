@@ -25,8 +25,8 @@ sales as (
 
 select
     products.product_id,
-    cast(coalesce(sales.units_sold, 0) as bigint)                   as units_sold,
-    cast(coalesce(sales.orders_with_product, 0) as bigint)          as orders_with_product,
+    cast(coalesce(sales.units_sold, 0) as {{ int_type() }})                   as units_sold,
+    cast(coalesce(sales.orders_with_product, 0) as {{ int_type() }})          as orders_with_product,
     cast(coalesce(sales.gross_revenue, 0) as {{ money_type() }})    as gross_revenue,
     cast(coalesce(sales.total_cost, 0) as {{ money_type() }})       as total_cost,
     cast(coalesce(sales.gross_margin, 0) as {{ money_type() }})     as gross_margin,

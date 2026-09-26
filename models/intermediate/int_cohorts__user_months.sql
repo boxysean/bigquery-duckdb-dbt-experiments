@@ -38,8 +38,8 @@ select
     user_months.user_id,
     cohorts.cohort_month,
     user_months.activity_month,
-    cast(user_months.orders as bigint)                  as orders,
-    cast(user_months.items as bigint)                   as items,
+    cast(user_months.orders as {{ int_type() }})                  as orders,
+    cast(user_months.items as {{ int_type() }})                   as items,
     cast(user_months.revenue as {{ money_type() }})     as revenue
 from user_months
 left join cohorts

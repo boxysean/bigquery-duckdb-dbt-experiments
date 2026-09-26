@@ -31,7 +31,7 @@ select
     users.signup_at,
     users.first_order_at,
     users.last_order_at,
-    cast(coalesce(active_months.months_active, 0) as bigint)        as months_active,
+    cast(coalesce(active_months.months_active, 0) as {{ int_type() }})        as months_active,
     users.lifetime_orders,
     users.lifetime_items,
     users.lifetime_gross_revenue,

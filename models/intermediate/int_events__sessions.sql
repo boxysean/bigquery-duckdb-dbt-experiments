@@ -50,8 +50,8 @@ select
     session_totals.last_event_at,
     {{ seconds_between('session_totals.first_event_at', 'session_totals.last_event_at') }}
                                                         as session_seconds,
-    cast(session_totals.event_count as bigint)          as event_count,
-    cast(session_totals.max_sequence_number as bigint)  as max_sequence_number,
+    cast(session_totals.event_count as {{ int_type() }})          as event_count,
+    cast(session_totals.max_sequence_number as {{ int_type() }})  as max_sequence_number,
     first_events.traffic_source,
     first_events.browser,
     session_totals.has_purchase

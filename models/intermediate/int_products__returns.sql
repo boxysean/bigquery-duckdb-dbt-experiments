@@ -19,10 +19,10 @@ item_returns as (
 
 select
     products.product_id,
-    cast(coalesce(item_returns.units_sold, 0) as bigint)        as units_sold,
-    cast(coalesce(item_returns.returned_units, 0) as bigint)    as returned_units,
-    cast(item_returns.returned_units as {{ float_type() }})
-        / nullif(item_returns.units_sold, 0)                    as return_rate
+    cast(coalesce(item_returns.units_sold, 0) as {{ int_type() }})        as units_sold,
+    cast(coalesce(item_returns.returned_units, 0) as {{ int_type() }})    as returned_units,
+    {{ safe_divide('item_returns.returned_units', 'item_returns.units_sold') }}
+                                                                as return_rate
 from products
 left join item_returns
     on item_returns.product_id = products.product_id

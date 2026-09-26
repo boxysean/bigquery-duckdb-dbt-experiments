@@ -38,12 +38,12 @@ select
     cast(
         (extract(year from cohort_months.activity_month) - extract(year from cohort_months.cohort_month)) * 12
         + extract(month from cohort_months.activity_month) - extract(month from cohort_months.cohort_month)
-        as bigint)                                                  as months_since_cohort,
-    cast(cohort_months.customers as bigint)                         as customers,
-    cast(cohort_months.orders as bigint)                            as orders,
+        as {{ int_type() }})                                                  as months_since_cohort,
+    cast(cohort_months.customers as {{ int_type() }})                         as customers,
+    cast(cohort_months.orders as {{ int_type() }})                            as orders,
     cast(cohort_months.revenue as {{ money_type() }})               as revenue,
-    cast(cohort_months.customers as {{ float_type() }})
-        / nullif(cohort_sizes.cohort_customers, 0)                  as retention_rate
+    {{ safe_divide('cohort_months.customers', 'cohort_sizes.cohort_customers') }}
+                                                                    as retention_rate
 from cohort_months
 left join cohort_sizes
     on cohort_sizes.cohort_month = cohort_months.cohort_month
