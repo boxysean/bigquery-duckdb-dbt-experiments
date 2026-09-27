@@ -9,3 +9,10 @@ requires-python = ">=3.11,<3.13"
 dependencies = [
   "dbt-oss==2.0.5",
 ]
+
+# Repo tooling, not part of the dbt project. `uv sync` installs the dev group by
+# default. jinja2 is for scripts/move_to_duckdb.py (it renders the seam macros).
+[dependency-groups]
+dev = [
+  "jinja2==3.1.6",
+]

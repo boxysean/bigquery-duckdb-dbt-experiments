@@ -8,8 +8,7 @@ SHELL := /bin/bash
 DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup check-env fixtures duck bq build-both parity polyglot portability transport-a clean
-.PHONY: transport-b
+.PHONY: help setup check-env fixtures duck bq build-both parity polyglot portability transport-a transport-b move-to-duckdb handmove-example clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -41,6 +40,14 @@ help:
 	@printf '                    reverse load, and the type-fidelity table). Writes\n'
 	@printf '                    analyses/transport_b/results.{json,md} and logs/; needs\n'
 	@printf '                    BQ_KEYFILE, a writable GCS bucket, and costs money.\n'
+	@printf '  make move-to-duckdb  move the project to a DuckDB-only one in\n'
+	@printf '                    target/duckdb_only (seam macros inlined, source database,\n'
+	@printf '                    profile and dbt_project rewritten), build it, and write\n'
+	@printf '                    MOVE-REPORT.md (scripts/move_to_duckdb.py)\n'
+	@printf '  make handmove-example  the worked example: move with three models left for\n'
+	@printf '                    a hand move, drop in examples/duckdb_only/, prove each\n'
+	@printf '                    equals the automatic transcode (diff -w) and build green\n'
+	@printf '                    (target/handmove_example, target/handmove_example_auto)\n'
 	@printf '  make clean        remove target/ and the local dev.duckdb file\n\n'
 	@printf 'See README.md, in particular the "What is verified" section.\n'
 
@@ -92,6 +99,37 @@ transport-a:
 # the probe tables, so the bucket and the dataset are left as they were found.
 transport-b:
 	@python3 scripts/transport_b_measure.py
+
+# The code-movement procedure: this BigQuery-targeted project -> a DuckDB-only one
+# (docs/move_to_duckdb.md). jinja2 comes from the dev group of `uv sync`.
+PYTHON := $(CURDIR)/.venv/bin/python
+move-to-duckdb:
+	$(PYTHON) scripts/move_to_duckdb.py --out target/duckdb_only --force --verify
+
+# The worked example: the three models in examples/duckdb_only/ were moved by hand.
+# Move the project leaving them as HAND-MOVE placeholders (exit 3), drop the hand-moved
+# files in, require each to equal the automatic transcode ignoring whitespace and the
+# `-- [hand-moved]` header lines, then require a green build.
+HANDMOVE_MODELS := models/staging/stg_thelook__orders.sql models/marts/dim_date.sql models/marts/mart_daily_revenue.sql
+HM := $(CURDIR)/target/handmove_example
+handmove-example:
+	@set -uo pipefail; \
+	$(PYTHON) scripts/move_to_duckdb.py --out $(HM)_auto --force > $(HM)_auto.log 2>&1 \
+	    || { echo "handmove-example: FAIL automatic move exited $$? (see $(HM)_auto.log)"; exit 1; }; \
+	$(PYTHON) scripts/move_to_duckdb.py --out $(HM) --force \
+	    --manual dim_date,stg_thelook__orders,mart_daily_revenue > $(HM).log 2>&1; rc=$$?; \
+	[ $$rc -eq 3 ] || { echo "handmove-example: FAIL --manual exited $$rc, expected 3 (see $(HM).log)"; exit 1; }; \
+	for f in $(HANDMOVE_MODELS); do \
+	    cp examples/duckdb_only/$$f $(HM)/$$f; \
+	    if ! diff -w -I '^-- \[hand-moved\]' $(HM)/$$f $(HM)_auto/$$f; then \
+	        echo "handmove-example: FAIL $$f differs from the automatic transcode"; exit 1; fi; \
+	done; \
+	(cd $(HM) && DBT_PROFILES_DIR=$(HM) $(DBT) build --target duckdb) > $(HM)/build.log 2>&1; rc=$$?; \
+	summary=$$(grep -E '^Summary:' $(HM)/build.log); processed=$$(grep -E '^Processed:' $(HM)/build.log); \
+	if [ $$rc -ne 0 ] || ! [[ "$$summary" =~ ^Summary:\ ([0-9]+)\ total\ \|\ ([0-9]+)\ success$$ ]] \
+	    || [ "$${BASH_REMATCH[1]}" != "$${BASH_REMATCH[2]}" ]; then \
+	    echo "handmove-example: FAIL build exit $$rc: $$processed / $$summary (see $(HM)/build.log)"; exit 1; fi; \
+	echo "handmove-example: 3/3 hand-moved models equal the automatic transcode (diff -w); build green: $$processed | $$summary"
 
 # `dbt clean` is deliberately not used: it resolves the duckdb profile first,
 # which opens the very file it is asked to delete, and the failing exit that
