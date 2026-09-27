@@ -5,46 +5,95 @@ and against a local **DuckDB** file, with the dialect differences pushed into
 `macros/` rather than into a forked model tree. Sean's framing: *"one single
 project power both with using macros to help transpile."*
 
-**Status: a 29-model warehouse over `thelook_ecommerce`, built and tested on
-both targets, with every dialect difference in `macros/polyglot/`.** The model
-tree is the one described in `SPEC.md`: 7 staging views, 11 intermediate views and
-11 mart tables over the 7 tables of Google's public
-`bigquery-public-data.thelook_ecommerce` dataset. On the `duckdb` target the whole
-tree builds and 167 tests pass, twice in a row. That run reads a **generated
-fixture**: invented data with the real schema, not the real dataset (see "The
-DuckDB fixture"); `make fixtures-real` swaps the real rows in, and the value
-comparison below runs on those. On the `bigquery` target the project compiles, parses and **runs**:
-with a named credential, `make bq` materialises all 29 models against the real
-`bigquery-public-data.thelook_ecommerce` rows (`196 total | 195 success | 1 warn`,
-2026-09-27), so the `bigquery__` macro branches are executed, not merely inspected.
-The credential is not ambient — nothing is exported by default, so a bare `dbt`
-invocation finds none. Name it with `BQ_KEYFILE` (the service-account key, at
-`~/.config/gcp/coreychimpbot-sa.json`, outside the repository) or
-`GOOGLE_APPLICATION_CREDENTIALS`, or point `profiles.yml` at it; without one,
-`make bq` exits 2 with an explanation instead of an authentication error.
+## How close are the two targets?
 
-**Value equality, measured on one dataset: row counts are identical on all 29 models,
-8 of 29 are identical on every check, and only 1 of the 11 marts (`dim_date`).**
-`make value-parity` (2026-09-27) copied the seven real tables into `dev.duckdb` through
-the community `bigquery` extension (every row count equal to BigQuery's `numRows`),
-built both targets over the same rows (`196 total | 195 success | 1 warn` on each) and
-compared every materialised relation: row count, column names and canonical types, and
-per column an order-independent checksum, a null count and a distinct count. The 21
-models that differ do so in 55 columns, all money columns except one rate derived from
-them; no row count and no null count differs. The reason is where the rounding happens:
-`money_type()` is `decimal(18,2)` on DuckDB, which rounds the source's `FLOAT64` prices
-and costs to cents, and `numeric` on BigQuery, which keeps nine decimal places (29,035
-of the 29,120 real `products.cost` values are not whole cents there). Sums of cost then
-drift apart, and `mart_product_performance.gross_margin_rate` has 18,699 distinct values
-on DuckDB against 328 on BigQuery. The same 29 models took **19.96 s** of dbt model
-execution time on DuckDB and **230.25 s** on BigQuery, over the same rows (11.5x; up
-to 62.0x for one model, `stg_thelook__users`). See [`docs/gaps.md`](docs/gaps.md) §1 and
-`analyses/value_parity/` (`results.md`, raw `logs/`).
+**Identical in structure and row counts; not yet in every value, because money is rounded
+to cents on one engine only.** All 29 of 29 models are a single source file each: no fork,
+no `target.type` branch, no other engine's dialect in either render. Per `SPEC.md`: 7
+staging views, 11 intermediate views and 11 mart tables over the 7 tables of the public
+`bigquery-public-data.thelook_ecommerce` dataset. `scripts/check_portability.py` prints
+`compiled files checked: 30 (models: 29, analyses: 1)`, `BigQuery-only tokens in the
+DuckDB render: 0/15`, `DuckDB-only tokens in the BigQuery render: 0/13`, `target-branch
+findings: 0`, `PORTABLE`, exit 0. The 1 analysis is the showcase; the other 60 of the 61
+`.sql` files in `analyses/` are engine-specific transport scenarios (Transport A: 22,
+Transport B: 38), excluded by name (`EXCLUDED_ANALYSES`). Both targets build: DuckDB `196
+total | 196 success` (167 tests pass, twice in a row); BigQuery `196 total | 195 success |
+1 warn`, 2m 9s, exit 0 (2026-09-27, service-account key), so the `bigquery__` branches
+are executed, not merely inspected.
+
+**Values, on one dataset.** `make value-parity` (2026-09-27, `scripts/parity.py --sources
+real --bq-source materialised --same-data`) copied the seven real tables into `dev.duckdb`
+via the community `bigquery` extension (row counts equal to BigQuery's `numRows`), built
+both targets over them (`196 total | 195 success | 1 warn` each) and compared each
+relation's row count, column names, canonical types and per-column order-independent
+checksum, null count and distinct count. **Row counts match on all 29 models; 8 of 29
+match on every check; 1 of the 11 marts (`dim_date`).** The other 21 differ in 55
+columns, all `money_type()` but one derived rate (`mart_product_performance.gross_margin_rate`:
+18,699 distinct values on DuckDB, 328 on BigQuery); 0 row-count, null-count or name/type
+differences. Model time: **19.96 s** DuckDB, **230.25 s** BigQuery (11.5x; **62.0x** for
+`stg_thelook__users`). The default `make parity` reads the fixture on DuckDB, so its
+figures (28 of 29 differ, `stg_thelook__distribution_centers` matches) are no portability
+difference. Evidence: `analyses/value_parity/` (`results.md`, `results.json`, raw `logs/`),
+[`docs/gaps.md`](docs/gaps.md) §1.
+
+**Why they are not identical**, largest first:
+
+1. **Money's scale, and one type-fidelity mismatch behind it.** `money_type()` is
+   `decimal(18,2)` on DuckDB, which rounds the source's `FLOAT64` prices and costs to cents,
+   and `numeric` on BigQuery, which keeps nine decimal places: 29,035 of the 29,120 real
+   `products.cost` values are not whole cents there, so sums of cost drift apart. DuckDB
+   renders `12.30` where BigQuery renders `12.3`; rounding BigQuery to cents reconciles 23
+   of the 55 differing columns, and the other 32 (cost, and what is computed from it) still
+   differ. The one mismatch that made `make parity` exit 1 was `SAFE_DIVIDE`, which returned
+   `DOUBLE` on DuckDB and `NUMERIC` on BigQuery (`parity: MISMATCH. gating:
+   ['mart_product_performance']`); fixed by casting both sides to `float_type()` on the
+   BigQuery branch in `macros/polyglot/math.sql`. The two `average_order_value` money
+   metrics are a deliberate exception, keeping `round(x / nullif(y, 0), 2)` as
+   `money_type()`.
+2. **A boolean in `accepted_values`.** dbt quotes the literals, so BigQuery got
+   `BOOL not in ('True','False')` and errored (`Error 400: No matching signature for
+   operator IN for argument types BOOL and {STRING}`), where DuckDB coerces. The test was
+   removed (`not_null` covers a computed boolean) and the trap is recorded in the column
+   description so nobody re-adds it.
+3. **`BIGNUMERIC` has no DuckDB equivalent.** DuckDB's `DECIMAL` stops at 38 digits,
+   BigQuery's `BIGNUMERIC` carries 76.76. In files it narrows to a `double` silently (16
+   significant digits of 38, no error or warning); through the extension it arrives as
+   `VARCHAR`. No model has a `BIGNUMERIC` column, so nothing is currently exposed to this.
+4. **Date and time semantics**, four trap families, all now in macros: `unnest`'s alias in
+   `FROM` and the series' element type (`TIMESTAMP[]`); month steps drifting from a
+   month-end start; normalisation in the date/time helpers; and `day_of_week_iso`'s render.
+5. **One live warning on real data.** `assert_order_item_created_at_is_plausible` passes on
+   the fixture and warns on the real dataset, a fixture assumption the real data
+   contradicts. It is `severity: warn` deliberately.
+6. **BigQuery's export semantics**, which matter only if the file route is used: an
+   unordered export's row order is not reproducible; CSV cannot carry nested or repeated
+   types; JSON→Parquet is refused (though JSON→CSV works).
+
+**The seam, for scale:** 28 macros in `macros/polyglot/`; 148 seam call sites across the 29
+models (mean 5.10 per model, max 15 in `stg_thelook__users`), 175 including the showcase
+analysis (`analyses/polyglot_showcase.sql`, 27 more); 25 of 29 models call a seam macro; 16
+of the 26 dialect macros are called by a model; and across the 11 marts only one new
+primitive was needed (`dim_date`, from the date-spine traps above).
+
+Detail lives in [`docs/challenges.md`](docs/challenges.md) (every challenge, with the real
+error text) and [`docs/gaps.md`](docs/gaps.md) (what could not be established, and why).
+
+**Status: the tree builds on both targets.** The project compiles, parses and runs on each.
+The `duckdb` leg reads a **generated fixture**: invented data with the real schema, not the
+real dataset (see "The DuckDB fixture"); `make fixtures-real` swaps the real rows in, and the
+value comparison above runs on those. The `bigquery` leg reads the real
+`bigquery-public-data.thelook_ecommerce` rows and is **runnable with a named credential**,
+which is not ambient: nothing is exported by default, so a bare `dbt` invocation finds none.
+Name it with `BQ_KEYFILE` (the service-account key, at `~/.config/gcp/coreychimpbot-sa.json`,
+outside the repository) or `GOOGLE_APPLICATION_CREDENTIALS`, or point `profiles.yml` at it;
+without one, `make bq` exits 2 with an explanation instead of an authentication error.
 
 The transpile seam is **28 macros** in `macros/polyglot/`, one per dialect
 difference, each dispatching on the adapter; the DuckDB branch of every one of them
-is **executed** against DuckDB by `make polyglot` (44 self-check cases), and their
-BigQuery branch is rendered and inspected but never run. `scripts/check_portability.py`
+is **executed** against DuckDB by `make polyglot` (44 self-check cases), and, since
+2026-09-27, the BigQuery branch of the 16 dialect macros a model calls is **executed**
+too, by `make bq`; the 10 that no model calls are still render-only (see
+[`docs/gaps.md`](docs/gaps.md) §3). `scripts/check_portability.py`
 is the guardrail that turns "portable" into a number: it compiles both targets and
 scans each render for the other engine's dialect (0 findings over 30 compiled
 files, plus 0 target branches in `models/`), and `--demo` shows it failing on
