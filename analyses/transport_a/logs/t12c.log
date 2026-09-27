@@ -1,0 +1,36 @@
+# t12c: t12c_writable_leftover_check.sql
+# wall 5.62s  exit 0  peak RSS 59876 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t12c.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T12c: the probe table from t12/t12b is gone -- checked from BigQuery, not from
+-- the catalogue that just dropped it.
+LOAD bigquery;
+CREATE SECRET bq_me (TYPE bigquery, SCOPE 'bq://coreychimpbot',
+                     SERVICE_ACCOUNT_PATH '__SA_PATH__');
+SELECT count(*) AS probe_tables_left FROM bigquery_query('coreychimpbot',
+  'SELECT table_name FROM `coreychimpbot.experiments_dev.INFORMATION_SCHEMA.TABLES` WHERE table_name = "transport_a_probe"');
+SELECT count(*) AS tables_in_experiments_dev FROM bigquery_query('coreychimpbot',
+  'SELECT table_name FROM `coreychimpbot.experiments_dev.INFORMATION_SCHEMA.TABLES`');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌───────────────────┐
+│ probe_tables_left │
+│       int64       │
+├───────────────────┤
+│                 0 │
+└───────────────────┘
+┌───────────────────────────┐
+│ tables_in_experiments_dev │
+│           int64           │
+├───────────────────────────┤
+│                        29 │
+└───────────────────────────┘
+

@@ -1,0 +1,29 @@
+# t02: t02_install_from_community.sql
+# wall 3.46s  exit 0  peak RSS 215628 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t02.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T02: the community repository does have it.
+-- Same empty HOME as T01, so this is a real download from
+-- community-extensions.duckdb.org, not a cache hit.
+INSTALL bigquery FROM community;
+LOAD bigquery;
+SELECT extension_name, install_mode, installed_from, extension_version
+FROM duckdb_extensions() WHERE extension_name = 'bigquery';
+SELECT version() AS duckdb_version;
+
+# ---- output ----
+┌────────────────┬──────────────┬────────────────┬───────────────────┐
+│ extension_name │ install_mode │ installed_from │ extension_version │
+│    varchar     │   varchar    │    varchar     │      varchar      │
+├────────────────┼──────────────┼────────────────┼───────────────────┤
+│ bigquery       │ REPOSITORY   │ community      │ 27d85ad           │
+└────────────────┴──────────────┴────────────────┴───────────────────┘
+┌────────────────┐
+│ duckdb_version │
+│    varchar     │
+├────────────────┤
+│ v1.5.5         │
+└────────────────┘
+

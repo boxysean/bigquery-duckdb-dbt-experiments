@@ -1,0 +1,79 @@
+# t07b: t07b_dry_run_vs_billed.sql
+# wall 9.21s  exit 0  peak RSS 91000 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t07b.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T07b: predicted vs billed bytes for ONE query shape.
+-- The /* t07b 20260927T152417Z */ comment makes the GoogleSQL text unique to this run, so
+-- the real query cannot be answered from BigQuery's query-results cache and the two
+-- numbers in this log are comparable. Without a fresh marker, a repeat of the same
+-- query reports cache_hit = true and 0 bytes processed (that is visible in t07).
+-- NOTE: the dry-run result has to be read with SELECT * -- see t18.
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+CREATE SECRET bq_me (TYPE bigquery, SCOPE 'bq://coreychimpbot',
+                     SERVICE_ACCOUNT_PATH '__SA_PATH__');
+SET bq_debug_show_queries = true;
+.timer on
+
+.print '--- (a) dry run: bytes BigQuery says this shape will process'
+SELECT * FROM bigquery_query('bigquery-public-data',
+  'SELECT /* t07b 20260927T152417Z */ COUNT(*) AS n FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE year = 2000',
+  dry_run := true, billing_project := 'coreychimpbot');
+
+.print '--- (b) the real run of the same shape'
+SELECT * FROM bigquery_query('bigquery-public-data',
+  'SELECT /* t07b 20260927T152417Z */ COUNT(*) AS n FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE year = 2000',
+  billing_project := 'coreychimpbot');
+
+.print '--- (c) the newest query jobs in the billing project: the first row is (b)'
+SELECT job_id, job_type, state, bytes_processed, creation_time
+FROM bigquery_jobs('coreychimpbot') WHERE job_type = 'QUERY'
+ORDER BY creation_time DESC LIMIT 5;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+--- (a) dry run: bytes BigQuery says this shape will process
+┌───────────────────────┬───────────┬──────────┐
+│ total_bytes_processed │ cache_hit │ location │
+│         int64         │  boolean  │ varchar  │
+├───────────────────────┼───────────┼──────────┤
+│              44419616 │ false     │ US       │
+└───────────────────────┴───────────┴──────────┘
+Run Time (s): real 0.628 user 0.019421 sys 0.036814
+--- (b) the real run of the same shape
+query: SELECT /* t07b 20260927T152417Z */ COUNT(*) AS n FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE year = 2000
+BigQuery selected fields: n
+┌───────┐
+│   n   │
+│ int64 │
+├───────┤
+│ 79966 │
+└───────┘
+Run Time (s): real 2.869 user 0.086382 sys 0.174101
+--- (c) the newest query jobs in the billing project: the first row is (b)
+┌──────────────────────────────────┬──────────┬───────────┬─────────────────┬─────────────────────────┐
+│              job_id              │ job_type │   state   │ bytes_processed │      creation_time      │
+│             varchar              │ varchar  │  varchar  │      int64      │        timestamp        │
+├──────────────────────────────────┼──────────┼───────────┼─────────────────┼─────────────────────────┤
+│ job_3DQIfUbKF9VhPCionn3re9XR2ILX │ QUERY    │ Completed │        44419616 │ 2026-09-27 15:24:52.268 │
+│ job_qtg-4EZXoPMLB4k0KxX5y3QAHqXq │ QUERY    │ Completed │       111049040 │ 2026-09-27 15:24:42.729 │
+│ job_PLLZOH2nKVSvlcaYUPzH4s5wD4be │ QUERY    │ Completed │               0 │ 2026-09-27 15:24:22.181 │
+│ job_k3jMEI9wq43hC4f3J6gp8w6iGR7t │ QUERY    │ Completed │               0 │ 2026-09-27 15:19:10.172 │
+│ job_Tn9VvS4Fchfeo8mOYNxSRbrlNrdU │ QUERY    │ Completed │               0 │ 2026-09-27 15:18:58.881 │
+└──────────────────────────────────┴──────────┴───────────┴─────────────────┴─────────────────────────┘
+Run Time (s): real 5.501 user 0.328756 sys 0.924229
+

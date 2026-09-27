@@ -8,7 +8,7 @@ SHELL := /bin/bash
 DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup check-env fixtures duck bq build-both parity polyglot portability clean
+.PHONY: help setup check-env fixtures duck bq build-both parity polyglot portability transport-a clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -27,6 +27,11 @@ help:
 	@printf '                    .json and exits non-zero on a real mismatch\n'
 	@printf '  make polyglot     the macro layer end to end: self-check on DuckDB, renders\n'
 	@printf '                    for both targets, the decimal ceiling, the guardrail\n'
+	@printf '  make transport-a  Transport A measured: DuckDB reading BigQuery through the\n'
+	@printf '                    community bigquery extension (INSTALL/LOAD, secret scope,\n'
+	@printf '                    attach modes, pushdown, dry-run cost, parallelism, types).\n'
+	@printf '                    Writes analyses/transport_a/results.{json,md} and logs/;\n'
+	@printf '                    needs BQ_KEYFILE and Google credentials, and costs money.\n'
 	@printf '  make portability  compile both targets and scan each render for the other\n'
 	@printf '                    dialect (scripts/check_portability.py)\n'
 	@printf '  make clean        remove target/ and the local dev.duckdb file\n\n'
@@ -66,6 +71,13 @@ polyglot: check-env fixtures
 # the BigQuery render, no target branching in models/ or tests/. Needs dev.duckdb.
 portability: check-env
 	python3 scripts/check_portability.py
+
+# Transport A measured (analyses/transport_a/README.md). Not part of `make duck`:
+# it needs Google credentials AND it runs real BigQuery jobs, so it costs bytes.
+# Export BQ_KEYFILE (the service-account key path) first; nothing is committed and
+# the harness only passes the path to DuckDB.
+transport-a:
+	@python3 scripts/transport_a_measure.py
 
 # `dbt clean` is deliberately not used: it resolves the duckdb profile first,
 # which opens the very file it is asked to delete, and the failing exit that

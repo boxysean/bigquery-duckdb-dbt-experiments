@@ -1,0 +1,28 @@
+# t04: t04_secret_scope_right.sql
+# wall 4.02s  exit 0  peak RSS 67748 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t04.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T04: the working form -- SCOPE follows the data, billing_project follows the money.
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+SELECT count(*) AS usa_names_rows
+FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                   billing_project := 'coreychimpbot');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌────────────────┐
+│ usa_names_rows │
+│     int64      │
+├────────────────┤
+│        5552452 │
+└────────────────┘
+

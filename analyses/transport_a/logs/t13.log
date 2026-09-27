@@ -1,0 +1,110 @@
+# t13: t13_parallelism.sql
+# wall 18.90s  exit 0  peak RSS 72332 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t13.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T13: does parallel reading actually happen, and does it help?
+-- The extension's rule: bq_max_read_streams = 0 requests one stream per DuckDB
+-- thread, but ONLY when preserve_insertion_order = false.
+-- Each query transfers every column of the 5.5M-row table, so the numbers are
+-- network-bound rather than aggregation-bound.
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+SELECT current_setting('threads') AS duckdb_threads;
+.timer on
+
+.print '--- (a) defaults: preserve_insertion_order=true, bq_max_read_streams=0'
+SELECT current_setting('preserve_insertion_order') AS pio,
+       current_setting('bq_max_read_streams') AS streams,
+       count(*) AS n
+FROM (SELECT * FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                                  billing_project := 'coreychimpbot'));
+
+.print '--- (b) preserve_insertion_order=false, bq_max_read_streams=0 (one stream per thread)'
+SET preserve_insertion_order = false;
+SELECT current_setting('preserve_insertion_order') AS pio,
+       current_setting('bq_max_read_streams') AS streams,
+       count(*) AS n
+FROM (SELECT * FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                                  billing_project := 'coreychimpbot'));
+
+.print '--- (c) preserve_insertion_order=false, bq_max_read_streams=1 (forced single stream)'
+SET bq_max_read_streams = 1;
+SELECT current_setting('bq_max_read_streams') AS streams, count(*) AS n
+FROM (SELECT * FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                                  billing_project := 'coreychimpbot'));
+
+.print '--- (d) preserve_insertion_order=false, bq_max_read_streams=8 (more than the threads on this box)'
+SET bq_max_read_streams = 8;
+SELECT current_setting('bq_max_read_streams') AS streams, count(*) AS n
+FROM (SELECT * FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                                  billing_project := 'coreychimpbot'));
+
+.print '--- (e) threads=1, bq_max_read_streams=0'
+SET threads = 1;
+SET bq_max_read_streams = 0;
+SELECT current_setting('threads') AS threads, count(*) AS n
+FROM (SELECT * FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                                  billing_project := 'coreychimpbot'));
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌────────────────┐
+│ duckdb_threads │
+│     int64      │
+├────────────────┤
+│              3 │
+└────────────────┘
+--- (a) defaults: preserve_insertion_order=true, bq_max_read_streams=0
+┌─────────┬─────────┬─────────┐
+│   pio   │ streams │    n    │
+│ boolean │  int32  │  int64  │
+├─────────┼─────────┼─────────┤
+│ true    │       0 │ 5552452 │
+└─────────┴─────────┴─────────┘
+Run Time (s): real 3.778 user 2.752802 sys 1.286721
+--- (b) preserve_insertion_order=false, bq_max_read_streams=0 (one stream per thread)
+Run Time (s): real 0.002 user 0.001534 sys 0.001519
+┌─────────┬─────────┬─────────┐
+│   pio   │ streams │    n    │
+│ boolean │  int32  │  int64  │
+├─────────┼─────────┼─────────┤
+│ false   │       0 │ 5552452 │
+└─────────┴─────────┴─────────┘
+Run Time (s): real 3.857 user 0.747401 sys 2.075971
+--- (c) preserve_insertion_order=false, bq_max_read_streams=1 (forced single stream)
+Run Time (s): real 0.001 user 0.000249 sys 0.000215
+┌─────────┬─────────┐
+│ streams │    n    │
+│  int64  │  int64  │
+├─────────┼─────────┤
+│       1 │ 5552452 │
+└─────────┴─────────┘
+Run Time (s): real 3.583 user 0.714228 sys 2.042419
+--- (d) preserve_insertion_order=false, bq_max_read_streams=8 (more than the threads on this box)
+Run Time (s): real 0.001 user 0.000000 sys 0.002739
+┌─────────┬─────────┐
+│ streams │    n    │
+│  int64  │  int64  │
+├─────────┼─────────┤
+│       8 │ 5552452 │
+└─────────┴─────────┘
+Run Time (s): real 3.858 user 0.723703 sys 2.311415
+--- (e) threads=1, bq_max_read_streams=0
+Run Time (s): real 0.005 user 0.001332 sys 0.009142
+Run Time (s): real 0.001 user 0.000094 sys 0.000135
+┌─────────┬─────────┐
+│ threads │    n    │
+│  int64  │  int64  │
+├─────────┼─────────┤
+│       1 │ 5552452 │
+└─────────┴─────────┘
+Run Time (s): real 3.585 user 0.801950 sys 2.030612
+

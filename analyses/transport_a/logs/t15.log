@@ -1,0 +1,127 @@
+# t15: t15_types_storage_api.sql
+# wall 7.86s  exit 0  peak RSS 62456 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t15.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T15: type fidelity, Storage Read API path (the default for bigquery_scan /
+-- bigquery_query without use_rest_api). typeof() on every column of one result.
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+.timer on
+
+.print '--- (a) declared types, as DuckDB sees them'
+SELECT typeof(bignum) AS t_bignum, typeof(num) AS t_numeric, typeof(geo) AS t_geography,
+       typeof(arr_i) AS t_array_int, typeof(arr_s) AS t_array_str, typeof(st) AS t_struct,
+       typeof(ts) AS t_timestamp, typeof(dt) AS t_datetime, typeof(tm) AS t_time,
+       typeof(js) AS t_json, typeof(byt) AS t_bytes, typeof(iv) AS t_interval
+FROM bigquery_query('bigquery-public-data', $$
+  SELECT CAST('123456789012345678901234567890.123456789' AS BIGNUMERIC) AS bignum,
+         NUMERIC '1.23' AS num,
+         ST_GEOGPOINT(-122.4, 37.7) AS geo,
+         [1,2,3] AS arr_i,
+         ['a','b'] AS arr_s,
+         STRUCT(1 AS a, 'x' AS b) AS st,
+         TIMESTAMP '2024-01-02 03:04:05 UTC' AS ts,
+         DATETIME '2024-01-02 03:04:05.678901' AS dt,
+         TIME '03:04:05.678901' AS tm,
+         JSON '{"k":1}' AS js,
+         b'\x01\x02' AS byt,
+         INTERVAL 1 DAY AS iv
+$$, billing_project := 'coreychimpbot');
+
+.print '--- (b) values, not just types'
+.mode line
+SELECT bignum, num, geo, arr_i, arr_s, st, ts, dt, tm, js, byt, iv
+FROM bigquery_query('bigquery-public-data', $$
+  SELECT CAST('123456789012345678901234567890.123456789' AS BIGNUMERIC) AS bignum,
+         NUMERIC '1.23' AS num,
+         ST_GEOGPOINT(-122.4, 37.7) AS geo,
+         [1,2,3] AS arr_i,
+         ['a','b'] AS arr_s,
+         STRUCT(1 AS a, 'x' AS b) AS st,
+         TIMESTAMP '2024-01-02 03:04:05 UTC' AS ts,
+         DATETIME '2024-01-02 03:04:05.678901' AS dt,
+         TIME '03:04:05.678901' AS tm,
+         JSON '{"k":1}' AS js,
+         b'\x01\x02' AS byt,
+         INTERVAL 1 DAY AS iv
+$$, billing_project := 'coreychimpbot');
+.mode duckbox
+
+.print '--- (c) a real table: TIMESTAMP columns from thelook_ecommerce.orders'
+SELECT typeof(min(created_at)) AS t_created_at,
+       min(created_at) AS min_created, max(created_at) AS max_created,
+       count(*) AS rows_read,
+       count(returned_at) AS returned_at_non_null
+FROM bigquery_scan('bigquery-public-data.thelook_ecommerce.orders',
+                   billing_project := 'coreychimpbot');
+
+.print '--- (d) a real GEOGRAPHY column, and its DuckDB type'
+DESCRIBE SELECT * FROM bigquery_scan('bigquery-public-data.geo_us_boundaries.counties',
+                                     billing_project := 'coreychimpbot');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+--- (a) declared types, as DuckDB sees them
+┌──────────┬───────────────┬───────────────────────┬─────────────┬─────────────┬─────────────────────────────┬─────────────┬────────────┬─────────┬─────────┬─────────┬────────────┐
+│ t_bignum │   t_numeric   │      t_geography      │ t_array_int │ t_array_str │          t_struct           │ t_timestamp │ t_datetime │ t_time  │ t_json  │ t_bytes │ t_interval │
+│ varchar  │    varchar    │        varchar        │   varchar   │   varchar   │           varchar           │   varchar   │  varchar   │ varchar │ varchar │ varchar │  varchar   │
+├──────────┼───────────────┼───────────────────────┼─────────────┼─────────────┼─────────────────────────────┼─────────────┼────────────┼─────────┼─────────┼─────────┼────────────┤
+│ VARCHAR  │ DECIMAL(38,9) │ GEOMETRY('OGC:CRS84') │ BIGINT[]    │ VARCHAR[]   │ STRUCT(a BIGINT, b VARCHAR) │ TIMESTAMP   │ TIMESTAMP  │ TIME    │ VARCHAR │ BLOB    │ INTERVAL   │
+└──────────┴───────────────┴───────────────────────┴─────────────┴─────────────┴─────────────────────────────┴─────────────┴────────────┴─────────┴─────────┴─────────┴────────────┘
+Run Time (s): real 2.706 user 0.100778 sys 0.154594
+--- (b) values, not just types
+bignum = 123456789012345678901234567890.12345678900000000000000000000000000000
+   num = 1.230000000
+   geo = POINT (-122.4 37.7)
+ arr_i = [1, 2, 3]
+ arr_s = [a, b]
+    st = {'a': 1, 'b': x}
+    ts = 2024-01-02 03:04:05
+    dt = 2024-01-02 03:04:05.678901
+    tm = 03:04:05.678901
+    js = {"k":1}
+   byt = \x01\x02
+    iv = 1 day
+Run Time (s): real 2.520 user 0.086615 sys 0.153806
+--- (c) a real table: TIMESTAMP columns from thelook_ecommerce.orders
+┌──────────────┬─────────────────────┬────────────────────────────┬───────────┬──────────────────────┐
+│ t_created_at │     min_created     │        max_created         │ rows_read │ returned_at_non_null │
+│   varchar    │      timestamp      │         timestamp          │   int64   │        int64         │
+├──────────────┼─────────────────────┼────────────────────────────┼───────────┼──────────────────────┤
+│ TIMESTAMP    │ 2019-01-15 07:03:47 │ 2026-09-27 00:38:27.945885 │    124952 │                12379 │
+└──────────────┴─────────────────────┴────────────────────────────┴───────────┴──────────────────────┘
+Run Time (s): real 1.891 user 0.041080 sys 0.441832
+--- (d) a real GEOGRAPHY column, and its DuckDB type
+[90m┌────────────────────────────────────────────────┐[00m[90m
+[00m[90m│                    [00m[1mDescribe[00m[90m                    │[00m[90m
+[00m[90m│                                                │[00m[90m
+[00m[90m│ [00mgeo_id[90m                   [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mstate_fips_code[90m          [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mcounty_fips_code[90m         [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mcounty_gnis_code[90m         [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mcounty_name[90m              [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mlsad_name[90m                [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mlsad_code[90m                [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mfips_class_code[90m          [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mmtfcc_feature_class_code[90m [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mcsa_fips_code[90m            [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mcbsa_fips_code[90m           [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mmet_div_fips_code[90m        [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00mfunctional_status[90m        [00m[90mvarchar[00m[90m               [00m[90m│[00m[90m
+[00m[90m│ [00marea_land_meters[90m         [00m[90mbigint[00m[90m                [00m[90m│[00m[90m
+[00m[90m│ [00marea_water_meters[90m        [00m[90mbigint[00m[90m                [00m[90m│[00m[90m
+[00m[90m│ [00mint_point_lat[90m            [00m[90mdouble[00m[90m                [00m[90m│[00m[90m
+[00m[90m│ [00mint_point_lon[90m            [00m[90mdouble[00m[90m                [00m[90m│[00m[90m
+[00m[90m│ [00mint_point_geom[90m           [00m[90mgeometry('ogc:crs84')[00m[90m [00m[90m│[00m[90m
+[00m[90m│ [00mcounty_geom[90m              [00m[90mgeometry('ogc:crs84')[00m[90m [00m[90m│[00m[90m
+[00m[90m└────────────────────────────────────────────────┘[00m[90m
+[00mRun Time (s): real 0.513 user 0.021942 sys 0.028712
+

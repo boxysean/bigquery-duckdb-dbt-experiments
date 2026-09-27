@@ -1,0 +1,89 @@
+# t07: t07_cost_guard.sql
+# wall 10.06s  exit 0  peak RSS 91744 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t07.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T07: dry_run as a cost guard, compared with what BigQuery actually billed.
+-- Two secrets on purpose: one scoped to the data project (reads/count(*) via the
+-- Storage API), one scoped to the billing project (query jobs + job listing).
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+CREATE SECRET bq_me (TYPE bigquery, SCOPE 'bq://coreychimpbot',
+                     SERVICE_ACCOUNT_PATH '__SA_PATH__');
+SET bq_debug_show_queries = true;
+.timer on
+
+.print '--- (a) dry run: filtered aggregate (year = 2000)'
+SELECT * FROM bigquery_query('bigquery-public-data',
+  'SELECT /* t07 20260927T152417Z */ state, SUM(number) AS n FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE year = 2000 GROUP BY state',
+  dry_run := true, billing_project := 'coreychimpbot');
+
+.print '--- (b) dry run: the same aggregate with no filter'
+SELECT * FROM bigquery_query('bigquery-public-data',
+  'SELECT /* t07 20260927T152417Z */ state, SUM(number) AS n FROM `bigquery-public-data.usa_names.usa_1910_2013` GROUP BY state',
+  dry_run := true, billing_project := 'coreychimpbot');
+
+.print '--- (c) the real run of (a)'
+SELECT count(*) AS states_returned FROM bigquery_query('bigquery-public-data',
+  'SELECT /* t07 20260927T152417Z */ state, SUM(number) AS n FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE year = 2000 GROUP BY state',
+  billing_project := 'coreychimpbot');
+
+.print '--- (d) what BigQuery billed for the jobs this script submitted'
+SELECT job_id, job_type, state, bytes_processed, total_slot_time_ms
+FROM bigquery_jobs('coreychimpbot')
+WHERE user_email = 'coreychimpbot@coreychimpbot.iam.gserviceaccount.com'
+ORDER BY creation_time DESC LIMIT 4;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+--- (a) dry run: filtered aggregate (year = 2000)
+┌───────────────────────┬───────────┬──────────┐
+│ total_bytes_processed │ cache_hit │ location │
+│         int64         │  boolean  │ varchar  │
+├───────────────────────┼───────────┼──────────┤
+│             111049040 │ false     │ US       │
+└───────────────────────┴───────────┴──────────┘
+Run Time (s): real 0.657 user 0.028329 sys 0.017587
+--- (b) dry run: the same aggregate with no filter
+┌───────────────────────┬───────────┬──────────┐
+│ total_bytes_processed │ cache_hit │ location │
+│         int64         │  boolean  │ varchar  │
+├───────────────────────┼───────────┼──────────┤
+│              66629424 │ false     │ US       │
+└───────────────────────┴───────────┴──────────┘
+Run Time (s): real 0.535 user 0.013970 sys 0.023544
+--- (c) the real run of (a)
+query: SELECT /* t07 20260927T152417Z */ state, SUM(number) AS n FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE year = 2000 GROUP BY state
+BigQuery selected fields: state
+┌─────────────────┐
+│ states_returned │
+│      int64      │
+├─────────────────┤
+│              51 │
+└─────────────────┘
+Run Time (s): real 2.893 user 0.104427 sys 0.162896
+--- (d) what BigQuery billed for the jobs this script submitted
+┌──────────────────────────────────┬──────────┬───────────┬─────────────────┬────────────────────┐
+│              job_id              │ job_type │   state   │ bytes_processed │ total_slot_time_ms │
+│             varchar              │ varchar  │  varchar  │      int64      │       int64        │
+├──────────────────────────────────┼──────────┼───────────┼─────────────────┼────────────────────┤
+│ job_qtg-4EZXoPMLB4k0KxX5y3QAHqXq │ QUERY    │ Completed │       111049040 │                125 │
+│ job_PLLZOH2nKVSvlcaYUPzH4s5wD4be │ QUERY    │ Completed │               0 │               NULL │
+│ job_k3jMEI9wq43hC4f3J6gp8w6iGR7t │ QUERY    │ Completed │               0 │               NULL │
+│ job_Tn9VvS4Fchfeo8mOYNxSRbrlNrdU │ QUERY    │ Completed │               0 │               NULL │
+└──────────────────────────────────┴──────────┴───────────┴─────────────────┴────────────────────┘
+Run Time (s): real 5.759 user 0.367794 sys 0.736705
+

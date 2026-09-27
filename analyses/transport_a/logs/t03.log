@@ -1,0 +1,58 @@
+# t03: t03_secret_scope_wrong.sql
+# wall 3.17s  exit 1  peak RSS 60128 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t03.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T03: the secret-scope trap, in both directions.
+-- A secret is selected by the project it is SCOPEd to. Scope it to the project
+-- that PAYS and an operation against the project that HOLDS THE DATA falls back
+-- to ADC (and, on this box, to a lookup of the GCE metadata server).
+LOAD bigquery;
+CREATE SECRET wrong_scope (TYPE bigquery, SCOPE 'bq://coreychimpbot',
+                           SERVICE_ACCOUNT_PATH '__SA_PATH__');
+
+-- (a) secret scoped to the billing project, data in the public project
+SELECT 'a: scan of public data with a billing-scoped secret' AS case,
+       count(*) AS n
+FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                   billing_project := 'coreychimpbot')
+WHERE state = 'CA';
+
+-- (b) secret scoped to the data project, job submitted against the billing project
+SELECT 'b: job in the billing project with a data-scoped secret' AS case,
+       count(*) AS n
+FROM bigquery_query('coreychimpbot', 'SELECT 1 AS one');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌─────────────────────────────────────────────────────────┬───────┐
+│                          case                           │   n   │
+│                         varchar                         │ int64 │
+├─────────────────────────────────────────────────────────┼───────┤
+│ b: job in the billing project with a data-scoped secret │     1 │
+└─────────────────────────────────────────────────────────┴───────┘
+Invalid Input Error: BigQuery Authentication Failed
+
+No usable authentication credentials were found. Please configure one of the following:
+
+Authentication options:
+  1. DuckDB secret for this project:
+     - CREATE SECRET (TYPE bigquery, SCOPE 'bq://your-project', ACCESS_TOKEN 'your-token')
+  2. Application Default Credentials (ADC):
+     - Run: gcloud auth application-default login
+     - Or set GOOGLE_APPLICATION_CREDENTIALS to a service account, authorized user, or external account JSON file
+  3. Attached Google Cloud service account:
+     - On Dataproc, Compute Engine, GKE, or Cloud Run, make sure the runtime service account has BigQuery permissions
+
+Underlying authentication error:
+  PerformWork() - CURL error [6]=Could not resolve hostname
+
+LINE 3: FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013...
+             ^
+

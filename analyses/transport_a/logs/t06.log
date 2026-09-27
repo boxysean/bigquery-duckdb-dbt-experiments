@@ -1,0 +1,77 @@
+# t06: t06_pushdown_projection.sql
+# wall 10.51s  exit 0  peak RSS 70784 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t06.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T06: column pruning -- which columns does the reader ask BigQuery for?
+-- Three scans of the same table; the debug "BigQuery selected fields:" line says
+-- exactly what was fetched, and the wall time says whether it mattered.
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+SET bq_debug_show_queries = true;
+.timer on
+.print '--- (a) count(*): no columns needed'
+SELECT count(*) AS n FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                                        billing_project := 'coreychimpbot');
+.print '--- (b) one column, filtered'
+SELECT sum(number) AS s FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                                           billing_project := 'coreychimpbot')
+WHERE year = 2000;
+.print '--- (c) two columns, filtered'
+SELECT count(DISTINCT state) AS states, sum(number) AS s
+FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                   billing_project := 'coreychimpbot')
+WHERE year = 2000;
+.print '--- (d) every column, no filter (state, gender, year, name, number)'
+SELECT count(*) AS n FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                                        billing_project := 'coreychimpbot')
+WHERE gender IS NOT NULL;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+--- (a) count(*): no columns needed
+BigQuery selected fields: state
+┌─────────┐
+│    n    │
+│  int64  │
+├─────────┤
+│ 5552452 │
+└─────────┘
+Run Time (s): real 3.986 user 0.625071 sys 2.554888
+--- (b) one column, filtered
+BigQuery selected fields: year, number
+BigQuery row restrictions: `year` = 2000
+┌─────────┐
+│    s    │
+│ int128  │
+├─────────┤
+│ 3296565 │
+└─────────┘
+Run Time (s): real 1.318 user 0.064867 sys 0.136383
+--- (c) two columns, filtered
+BigQuery selected fields: year, state, number
+BigQuery row restrictions: `year` = 2000
+┌────────┬─────────┐
+│ states │    s    │
+│ int64  │ int128  │
+├────────┼─────────┤
+│     51 │ 3296565 │
+└────────┴─────────┘
+Run Time (s): real 1.470 user 0.074018 sys 0.244378
+--- (d) every column, no filter (state, gender, year, name, number)
+BigQuery selected fields: gender
+┌─────────┐
+│    n    │
+│  int64  │
+├─────────┤
+│ 5552452 │
+└─────────┘
+Run Time (s): real 3.487 user 0.693498 sys 2.027675
+
