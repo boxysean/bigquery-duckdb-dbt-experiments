@@ -1,0 +1,62 @@
+# t18: t18_dry_run_projection_error.sql
+# wall 0.75s  exit 1  peak RSS 51860 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t18.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T18: second extension failure mode -- projecting out of a dry-run result.
+-- bigquery_query(..., dry_run := true) is fine as SELECT *, but naming any of its
+-- columns in an outer projection kills the process with a DuckDB INTERNAL error
+-- (the extension indexes past the end of its own result vector). Not a permission
+-- problem, not the query: the same shape as SELECT * returns 44,419,616 bytes.
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+.print '--- projecting two columns out of the dry-run table function'
+SELECT total_bytes_processed AS predicted_bytes, cache_hit
+FROM bigquery_query('bigquery-public-data',
+  'SELECT /* t18 20260927T152417Z */ COUNT(*) AS n FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE year = 2000',
+  dry_run := true, billing_project := 'coreychimpbot');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+--- projecting two columns out of the dry-run table function
+INTERNAL Error: Attempted to access index 2 within vector of size 2
+
+Stack Trace:
+
+/home/hermes/.duckdb/extensions/v1.5.5/linux_amd64/bigquery.duckdb_extension(+0xf846cb) [0x7c1dbcf846cb]
+/home/hermes/.duckdb/extensions/v1.5.5/linux_amd64/bigquery.duckdb_extension(+0xf84784) [0x7c1dbcf84784]
+/home/hermes/.duckdb/extensions/v1.5.5/linux_amd64/bigquery.duckdb_extension(+0xf86771) [0x7c1dbcf86771]
+/home/hermes/.duckdb/extensions/v1.5.5/linux_amd64/bigquery.duckdb_extension(+0x684727) [0x7c1dbc684727]
+/home/hermes/.duckdb/extensions/v1.5.5/linux_amd64/bigquery.duckdb_extension(+0x3b7b3e) [0x7c1dbc3b7b3e]
+/home/hermes/.duckdb/extensions/v1.5.5/linux_amd64/bigquery.duckdb_extension(+0x6c7829) [0x7c1dbc6c7829]
+/home/hermes/.local/bin/duckdb() [0x1b2ec7f]
+/home/hermes/.local/bin/duckdb() [0xdf2a3b]
+/home/hermes/.local/bin/duckdb() [0xdfac2d]
+/home/hermes/.local/bin/duckdb() [0xdfb002]
+/home/hermes/.local/bin/duckdb() [0xdf3d76]
+/home/hermes/.local/bin/duckdb() [0xdfd164]
+/home/hermes/.local/bin/duckdb() [0xdaf390]
+/home/hermes/.local/bin/duckdb() [0xdaf5cc]
+/home/hermes/.local/bin/duckdb() [0xdaf776]
+/home/hermes/.local/bin/duckdb() [0xdb3660]
+/home/hermes/.local/bin/duckdb() [0xdb40ad]
+/home/hermes/.local/bin/duckdb() [0x85fd13]
+/home/hermes/.local/bin/duckdb() [0x860017]
+/home/hermes/.local/bin/duckdb() [0x86031b]
+/home/hermes/.local/bin/duckdb() [0x86ae8e]
+/home/hermes/.local/bin/duckdb() [0x86c27e]
+/home/hermes/.local/bin/duckdb() [0x83c6af]
+/lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca) [0x7c1de0a2a1ca]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x7c1de0a2a28b]
+/home/hermes/.local/bin/duckdb() [0x84269e]
+
+This error signals an assertion failure within DuckDB. This usually occurs due to unexpected conditions or errors in the program's logic.
+For more information, see https://duckdb.org/docs/stable/dev/internal_errors
+

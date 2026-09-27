@@ -1,0 +1,49 @@
+# t09: t09_aggregate_pushdown_on.sql
+# wall 2.28s  exit 0  peak RSS 54220 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t09.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T09: the same query with bq_enable_aggregate_pushdown = true (experimental).
+-- If the aggregate pushes down, the debug output shows a "query: ..." line (a
+-- remote GoogleSQL query job) instead of a bare read-session row restriction.
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+SET bq_debug_show_queries = true;
+SET bq_enable_aggregate_pushdown = true;
+.print '--- aggregate pushdown ON: grouped sum, filtered'
+SELECT state, sum(number) AS n
+FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013', billing_project := 'coreychimpbot')
+WHERE year = 2000
+GROUP BY state ORDER BY 1 LIMIT 3;
+.print '--- aggregate pushdown ON: ungrouped sum over the whole table'
+SELECT sum(number) AS s FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                                           billing_project := 'coreychimpbot');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+--- aggregate pushdown ON: grouped sum, filtered
+query: SELECT `state` AS __duckdb_bq_group_0, SUM(`number`) AS __duckdb_bq_aggr_0 FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE `year` = 2000 GROUP BY `state`
+┌─────────┬────────┐
+│  state  │   n    │
+│ varchar │ int128 │
+├─────────┼────────┤
+│ AK      │   5600 │
+│ AL      │  46412 │
+│ AR      │  27033 │
+└─────────┴────────┘
+--- aggregate pushdown ON: ungrouped sum over the whole table
+query: SELECT SUM(`number`) AS __duckdb_bq_aggr_0 FROM `bigquery-public-data.usa_names.usa_1910_2013`
+┌───────────┐
+│     s     │
+│  int128   │
+├───────────┤
+│ 295727065 │
+└───────────┘
+

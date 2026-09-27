@@ -1,0 +1,39 @@
+# t08: t08_aggregate_pushdown_off.sql
+# wall 2.02s  exit 0  peak RSS 62060 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t08.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T08: aggregates with the DEFAULT settings.
+-- bq_enable_aggregate_pushdown is off by default: expect a row restriction
+-- (the WHERE) to reach BigQuery, but the GROUP BY / SUM to happen in DuckDB.
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+SET bq_debug_show_queries = true;
+SET bq_enable_aggregate_pushdown = false;
+.print '--- aggregate pushdown OFF (default): grouped sum, filtered'
+SELECT state, sum(number) AS n
+FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013', billing_project := 'coreychimpbot')
+WHERE year = 2000
+GROUP BY state ORDER BY 1 LIMIT 3;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+--- aggregate pushdown OFF (default): grouped sum, filtered
+BigQuery selected fields: year, state, number
+BigQuery row restrictions: `year` = 2000
+┌─────────┬────────┐
+│  state  │   n    │
+│ varchar │ int128 │
+├─────────┼────────┤
+│ AK      │   5600 │
+│ AL      │  46412 │
+│ AR      │  27033 │
+└─────────┴────────┘
+

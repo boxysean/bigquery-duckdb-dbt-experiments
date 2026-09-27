@@ -1,0 +1,42 @@
+# t12: t12_attach_writable.sql
+# wall 5.52s  exit 1  peak RSS 53384 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t12.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T12: READ_ONLY vs writable, part 1.
+-- (a) is the local guard only: a READ_ONLY catalog must refuse DDL before any
+--     remote call is attempted.
+-- (b) opens a writable catalog and creates a probe table. The row insert is done
+--     in a SECOND session (t12b) on purpose: see the note there.
+LOAD bigquery;
+CREATE SECRET bq_me (TYPE bigquery, SCOPE 'bq://coreychimpbot',
+                     SERVICE_ACCOUNT_PATH '__SA_PATH__');
+
+.print '--- (a) DDL through a READ_ONLY catalog'
+ATTACH 'project=coreychimpbot dataset=experiments_dev' AS bq_ro (TYPE bigquery, READ_ONLY);
+CREATE TABLE bq_ro.experiments_dev.transport_a_probe (id BIGINT);
+
+.print '--- (b) the same DDL through a writable catalog'
+ATTACH 'project=coreychimpbot dataset=experiments_dev' AS bq_rw (TYPE bigquery);
+DROP TABLE IF EXISTS bq_rw.experiments_dev.transport_a_probe;
+CREATE TABLE bq_rw.experiments_dev.transport_a_probe (id BIGINT, note VARCHAR);
+SELECT 'created (remote DDL through the attached catalog)' AS step;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+--- (a) DDL through a READ_ONLY catalog
+--- (b) the same DDL through a writable catalog
+┌───────────────────────────────────────────────────┐
+│                       step                        │
+│                      varchar                      │
+├───────────────────────────────────────────────────┤
+│ created (remote DDL through the attached catalog) │
+└───────────────────────────────────────────────────┘
+Invalid Input Error: Cannot execute statement of type "CREATE" on database "bq_ro" which is attached in read-only mode!
+

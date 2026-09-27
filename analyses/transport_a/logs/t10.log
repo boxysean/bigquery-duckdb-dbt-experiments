@@ -1,0 +1,44 @@
+# t10: t10_attach_dataset_readonly.sql
+# wall 11.86s  exit 0  peak RSS 68520 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t10.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T10: attach ONE dataset (the form that works for public data: the data project
+-- is named in `project`, the paying project in `billing_project`).
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+ATTACH 'project=bigquery-public-data dataset=usa_names billing_project=coreychimpbot'
+    AS bqnames (TYPE bigquery, READ_ONLY);
+SELECT table_name FROM duckdb_tables() WHERE database_name = 'bqnames' ORDER BY 1;
+SELECT count(*) AS n FROM bqnames.main.usa_1910_2013;
+SELECT min(year) AS min_year, max(year) AS max_year FROM bqnames.main.usa_1910_2013;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌──────────────────┐
+│    table_name    │
+│     varchar      │
+├──────────────────┤
+│ usa_1910_2013    │
+│ usa_1910_current │
+└──────────────────┘
+┌─────────┐
+│    n    │
+│  int64  │
+├─────────┤
+│ 5552452 │
+└─────────┘
+┌──────────┬──────────┐
+│ min_year │ max_year │
+│  int64   │  int64   │
+├──────────┼──────────┤
+│     1910 │     2013 │
+└──────────┴──────────┘
+

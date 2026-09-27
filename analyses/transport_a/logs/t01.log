@@ -1,0 +1,25 @@
+# t01: t01_install_plain_core.sql
+# wall 0.26s  exit 1  peak RSS 28032 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t01.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T01: is there a CORE-repo build of the bigquery extension?
+-- The driver runs this with HOME pointed at an empty directory, so nothing is
+-- cached and DuckDB has to ask the core repository (extensions.duckdb.org).
+-- Expectation from the card: HTTP 404 -- bigquery is not a core extension.
+INSTALL bigquery;
+SELECT extension_name, installed, installed_from
+FROM duckdb_extensions() WHERE extension_name = 'bigquery';
+
+# ---- output ----
+┌────────────────┬───────────┬────────────────┐
+│ extension_name │ installed │ installed_from │
+│    varchar     │  boolean  │    varchar     │
+└────────────────┴───────────┴────────────────┘
+                    0 rows                   
+HTTP Error: Failed to download extension "bigquery" at URL "http://extensions.duckdb.org/v1.5.5/linux_amd64/bigquery.duckdb_extension.gz" (HTTP 404)
+
+Candidate extensions: "icu", "iceberg", "parquet", "inet", "quack"
+For more info, visit https://duckdb.org/docs/stable/extensions/troubleshooting?version=v1.5.5&platform=linux_amd64&extension=bigquery
+

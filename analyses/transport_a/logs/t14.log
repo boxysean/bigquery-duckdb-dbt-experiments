@@ -1,0 +1,51 @@
+# t14: t14_materialize_full_table.sql
+# wall 11.74s  exit 0  peak RSS 122800 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t14.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T14: the plainest possible proof that the Storage Read API read path works:
+-- materialize the whole 5.5M-row table locally and check the data, not the count.
+-- (The card carries a signal that read-session creation 404s on this project.)
+LOAD bigquery;
+CREATE SECRET bq_pub (TYPE bigquery, SCOPE 'bq://bigquery-public-data',
+                      SERVICE_ACCOUNT_PATH '__SA_PATH__');
+.timer on
+ATTACH '/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t14.duckdb' AS local (TYPE duckdb);
+CREATE OR REPLACE TABLE local.t14_usa_names AS
+SELECT * FROM bigquery_scan('bigquery-public-data.usa_names.usa_1910_2013',
+                            billing_project := 'coreychimpbot');
+SELECT count(*) AS rows_local,
+       count(DISTINCT state) AS states,
+       min(year) AS min_year, max(year) AS max_year,
+       sum(number) AS total_number
+FROM local.t14_usa_names;
+DESCRIBE local.t14_usa_names;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+Run Time (s): real 0.002 user 0.000040 sys 0.003228
+Run Time (s): real 11.467 user 6.776865 sys 6.866643
+┌────────────┬────────┬──────────┬──────────┬──────────────┐
+│ rows_local │ states │ min_year │ max_year │ total_number │
+│   int64    │ int64  │  int64   │  int64   │    int128    │
+├────────────┼────────┼──────────┼──────────┼──────────────┤
+│    5552452 │     51 │     1910 │     2013 │    295727065 │
+└────────────┴────────┴──────────┴──────────┴──────────────┘
+Run Time (s): real 0.022 user 0.038439 sys 0.015195
+[90m┌────────────────┐[00m[90m
+[00m[90m│ [00m[1mt14_usa_names[00m[90m  │[00m[90m
+[00m[90m│                │[00m[90m
+[00m[90m│ [00mstate[90m  [00m[90mvarchar[00m[90m [00m[90m│[00m[90m
+[00m[90m│ [00mgender[90m [00m[90mvarchar[00m[90m [00m[90m│[00m[90m
+[00m[90m│ [00myear[90m   [00m[90mbigint[00m[90m  [00m[90m│[00m[90m
+[00m[90m│ [00mname[90m   [00m[90mvarchar[00m[90m [00m[90m│[00m[90m
+[00m[90m│ [00mnumber[90m [00m[90mbigint[00m[90m  [00m[90m│[00m[90m
+[00m[90m└────────────────┘[00m[90m
+[00mRun Time (s): real 0.000 user 0.000241 sys 0.000230
+

@@ -1,0 +1,53 @@
+# t12b: t12b_attach_writable_cleanup.sql
+# wall 12.60s  exit 0  peak RSS 60936 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_a/t12b.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+# (SQL as run, after placeholder substitution; __SA_PATH__ stands for the
+#  service-account key path, which is never written to this log)
+
+-- T12b: READ_ONLY vs writable, part 2, and the cleanup.
+-- A separate DuckDB session inserts into the table t12 created, reads it back
+-- through the attached catalog, verifies the row remotely with a query job, then
+-- drops the table. t12c then re-lists the dataset remotely.
+--
+-- Why a second session: inserting into a table created moments earlier IN THE SAME
+-- session fails on the first attempt with a Storage Write API NOT_FOUND ("Requested
+-- entity was not found") -- see analyses/transport_a/README.md. Inserting into a
+-- pre-existing table works, but the extension retries first (the "Retrying..." lines
+-- are the Storage Write API, and the insert is slow: see the timings in the log).
+LOAD bigquery;
+CREATE SECRET bq_me (TYPE bigquery, SCOPE 'bq://coreychimpbot',
+                     SERVICE_ACCOUNT_PATH '__SA_PATH__');
+.timer on
+ATTACH 'project=coreychimpbot dataset=experiments_dev' AS bq_rw (TYPE bigquery);
+INSERT INTO bq_rw.experiments_dev.transport_a_probe VALUES (1, 'transport a probe');
+SELECT id, note FROM bq_rw.experiments_dev.transport_a_probe;
+SELECT n AS rows_seen_by_a_query_job FROM bigquery_query('coreychimpbot',
+  'SELECT COUNT(*) AS n FROM `coreychimpbot.experiments_dev.transport_a_probe`');
+DROP TABLE bq_rw.experiments_dev.transport_a_probe;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+Run Time (s): real 0.007 user 0.004492 sys 0.003212
+Retrying...
+Run Time (s): real 5.565 user 0.111007 sys 0.400994
+┌───────┬───────────────────┐
+│  id   │       note        │
+│ int64 │      varchar      │
+├───────┼───────────────────┤
+│     1 │ transport a probe │
+└───────┴───────────────────┘
+Run Time (s): real 1.194 user 1.186637 sys 0.088720
+┌──────────────────────────┐
+│ rows_seen_by_a_query_job │
+│          int64           │
+├──────────────────────────┤
+│                        1 │
+└──────────────────────────┘
+Run Time (s): real 4.948 user 0.092828 sys 0.226505
+Run Time (s): real 0.608 user 0.016620 sys 0.024193
+
