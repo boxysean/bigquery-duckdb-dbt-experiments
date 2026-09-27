@@ -8,7 +8,7 @@ SHELL := /bin/bash
 DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup check-env fixtures duck bq build-both parity polyglot portability transport-a transport-b move-to-duckdb handmove-example clean
+.PHONY: help setup check-env fixtures duck bq build-both parity polyglot portability pre-pr transport-a transport-b move-to-duckdb handmove-example clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -34,6 +34,11 @@ help:
 	@printf '                    needs BQ_KEYFILE and Google credentials, and costs money.\n'
 	@printf '  make portability  compile both targets and scan each render for the other\n'
 	@printf '                    dialect (scripts/check_portability.py)\n'
+	@printf '  make pre-pr       the whole pre-PR routine: check-env, the fixture, the\n'
+	@printf '                    guardrail, then parity (scripts/pre_pr.sh). The script exits\n'
+	@printf '                    1 on a real finding, 2 when parity is NOT established (no\n'
+	@printf '                    BQ_KEYFILE; the guardrail still ran). make itself exits 2\n'
+	@printf '                    on either and prints it as "Error 1" / "Error 2"\n'
 	@printf '  make transport-b  Transport B measured: EXPORT DATA to GCS as Parquet and\n'
 	@printf '                    back through DuckDB (the wildcard/split and 1 GB rules, the\n'
 	@printf '                    nested-to-CSV and JSON-to-Parquet refusals, row order, the\n'
@@ -85,6 +90,13 @@ polyglot: check-env fixtures
 # the BigQuery render, no target branching in models/ or tests/. Needs dev.duckdb.
 portability: check-env
 	python3 scripts/check_portability.py
+
+# Everything to run before a PR (scripts/pre_pr.sh). No prerequisites on purpose: the
+# script runs check-env itself, and parity.py already runs `make duck`. GNU make exits 2
+# for any failed recipe, so the script's 1-vs-2 survives only as make's "Error N" line;
+# call `bash scripts/pre_pr.sh` directly when the exit status itself matters.
+pre-pr:
+	bash scripts/pre_pr.sh
 
 # Transport A measured (analyses/transport_a/README.md). Not part of `make duck`:
 # it needs Google credentials AND it runs real BigQuery jobs, so it costs bytes.

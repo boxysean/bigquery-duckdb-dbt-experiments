@@ -1241,3 +1241,79 @@ renderer are implemented but unexercised here.
    exits 2 rather than pretending.
 5. **The harness writes nothing** to BigQuery. It cannot create the dataset it would need, so it
    never tried to.
+
+# Card t_33ffc523 — the pre-PR gate (`scripts/pre_pr.sh`, `make pre-pr`)
+
+## What it is
+
+One command for the whole pre-PR routine, in this order: `scripts/check_env.sh`,
+`scripts/load_duckdb_sources.sh`, `scripts/check_portability.py`, `scripts/parity.py`. It reports
+each step `ok` / `FAIL` in the `scripts/polyglot_check.sh` style and, like it, has no `set -e`, so a
+failed step still reports on the later ones. The last line is the wall time, `pre-pr: <N.N>s`.
+
+Why: nothing routinely ran the guardrail. A raw `try_cast(...)` or a `target.type` branch in a
+model passes `make duck`; without credentials `make parity` then exits 2 ("NOT established"),
+which reads like "skipped"; with credentials a target branch passes parity, because both branches
+are valid SQL. Only the guardrail catches either.
+
+**The fixture step is required, and is not in the card's original sketch.** `check_portability.py`
+refuses to run without `dev.duckdb` (exit 2, `dev.duckdb not found: run make fixtures first`), so
+`load_duckdb_sources.sh` runs unconditionally before it (about half a second). `make duck` is not
+called: `parity.py` already runs it, plus a DuckDB baseline rebuild. For the same reason the
+`pre-pr` make target has no prerequisites.
+
+## The exit-code contract (`bash scripts/pre_pr.sh`)
+
+| exit | meaning |
+|---|---|
+| 0 | every step `ok`, parity established on both targets |
+| 1 | a real finding: any step failed. Wins over 2 when both happen |
+| 2 | every other step `ok`, but `parity.py` exited 2 (no `BQ_KEYFILE`): the step is reported `n/a`, not `FAIL`, and the script prints `PARITY NOT ESTABLISHED (no BQ_KEYFILE)`, matching `run_bq.sh` / `parity.py` |
+
+**Through make the distinction is only in the text.** GNU make exits 2 for *any* failed recipe, so
+`make pre-pr` exits 2 on a real finding too; the script's status survives as make's
+`make: *** [Makefile:..: pre-pr] Error 1` (finding) vs `Error 2` (not established) line, and in the
+summary lines above it. Run `bash scripts/pre_pr.sh` when a caller branches on the exit status.
+
+With `BQ_KEYFILE` set the parity step queries BigQuery read-only, each job capped at 1 GB billed.
+
+## Verification (this machine, 2026-09-27)
+
+    $ bash scripts/check_env.sh                                              # exit 0, 7 ok
+    $ env -u BQ_KEYFILE -u GOOGLE_APPLICATION_CREDENTIALS make pre-pr        # make exit 2 ("Error 2")
+      ok    bash scripts/check_env.sh
+      ok    bash scripts/load_duckdb_sources.sh
+      ok    python3 scripts/check_portability.py      (30 files, 0/15, 0/13, 0 findings, PORTABLE)
+      n/a   python3 scripts/parity.py (exit 2: parity NOT established, no BQ_KEYFILE)
+    PARITY NOT ESTABLISHED (no BQ_KEYFILE)
+    pre-pr: 24.0s
+
+    # regression probe: `try_cast(1 as int) as regression_probe` added to the SELECT list of
+    # models/staging/stg_thelook__orders.sql
+    $ env -u BQ_KEYFILE bash scripts/pre_pr.sh                               # exit 1
+      FAIL  python3 scripts/check_portability.py (exit 1)   (DuckDB-only tokens in the BigQuery render: 1/13)
+      n/a   python3 scripts/parity.py (exit 2: ...)
+    pre-pr: 1 step(s) FAILED
+    pre-pr: 24.2s
+    $ env -u BQ_KEYFILE make pre-pr                                          # "Error 1", make exit 2
+    $ git checkout -- models/                                                # reverted; git status clean
+                                                                             # apart from this card's files
+
+    # the credentialed leg, run by the orchestrator
+    $ export BQ_KEYFILE=/home/hermes/.config/gcp/coreychimpbot-sa.json   # the box's service-account key
+    $ bash scripts/pre_pr.sh                                             # exit 0, 67 s wall (date +%s, external measure)
+      ok    bash scripts/check_env.sh
+      ok    bash scripts/load_duckdb_sources.sh
+      ok    python3 scripts/check_portability.py    (30 files, 0/15, 0/13, 0 findings, PORTABLE)
+      ok    python3 scripts/parity.py               ('[3/5] compiling the DAG read-only for BigQuery (all layers ephemeral)', baseline MATCH, schema parity holds on all 29 models)
+    pre-pr: all steps ok
+    pre-pr: 67.0s
+
+**Measured wall time: 24.0 s without credentials (exit 2), 67 s with them (exit 0).** Without
+`BQ_KEYFILE`: `make pre-pr`, exit 2; 24.2 s for the direct script run with the probe; almost all of
+it is `parity.py`'s DuckDB build and baseline rebuild. With `BQ_KEYFILE`: `bash scripts/pre_pr.sh`,
+exit 0, 67 s by an external `date +%s` measure (the script's own line said 67.0 s). The extra ~43 s
+is the read-only BigQuery leg.
+
+`shellcheck` is not installed on this machine, so `scripts/pre_pr.sh` was not shellchecked; nothing
+was installed to do it.

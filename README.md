@@ -428,6 +428,9 @@ make polyglot     # the macro layer end to end: 44 self-check cases on DuckDB, t
                   # for both targets, the decimal ceiling, then the guardrail and its --demo
 make portability  # just the guardrail: compile both targets, scan each render for the other
                   # dialect, fail on a target branch in a model
+make pre-pr       # the whole pre-PR routine: check-env, the fixture, the portability guardrail,
+                  # then parity. Exits 1 on a real finding, 2 when parity is NOT established
+                  # (no BQ_KEYFILE — the portability guardrail still ran and passed)
 make move-to-duckdb    # move the project to a DuckDB-only one in target/duckdb_only and build
                        # it (scripts/move_to_duckdb.py; see docs/move_to_duckdb.md)
 make handmove-example  # the worked example: three hand-moved models must equal the automatic
