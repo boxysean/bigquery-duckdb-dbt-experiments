@@ -92,7 +92,7 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
 * **Resolution.** `decimal_type(p > 38)` renders `bignumeric` on BigQuery and raises a
   compiler error on DuckDB (`Refusing to fall back to DOUBLE silently.`,
   `README.md:194-197`), never a silent `double`.
-* **Classification.** dual-target: a type-system gap, not a setting (it bites again in 8.4).
+* **Classification.** dual-target: a type-system gap, not a setting (it bites again in 7.4).
 
 ### 3.2 The date spine: `unnest`'s alias in `FROM`, and the series' element type
 
@@ -143,39 +143,9 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
   `(mod(extract(dayofweek from …) + 5, 7) + 1)`.
 * **Classification.** dual-target.
 
-### 3.5 Claude Code's own limits cut a run mid-flight
-
-* **Symptom.**
-  ```
-  429 ... You've hit your weekly limit · resets 10am (Europe/Vienna)
-  ```
-  source: `NOTES.md:1088-1090`. `--fallback-model haiku` returned the same 429 and no other
-  coding CLI was installed. The three runs cost $2.06 / $0.88 / $1.07 ($4.01).
-* **Cause.** The subscription's weekly limit ran out during the third print-mode run.
-* **Resolution.** The guardrail it had written but not verified was verified by hand,
-  including an adversarial leak `--demo` does not use (`NOTES.md:1090-1095`).
-* **Classification.** environment.
-
 ## 4. The parity harness (t_52340fa8; defect follow-up t_c5b39ecf)
 
-### 4.1 The BigQuery leg could not be materialised at first
-
-* **Symptom.**
-  ```
-  [BigQuery] googleapi: Error 404: Not found: Dataset coreychimpbot:experiments_dev
-  was not found in location US
-  403 Access Denied: Project coreychimpbot: User does not have bigquery.datasets.create permission
-  in project coreychimpbot
-  ```
-  source: `NOTES.md:1119-1126` (line breaks as there).
-* **Cause.** The dataset did not exist; the account could read and run jobs, not create one.
-* **Resolution.** Workaround first: `scripts/parity.py` compiles every layer ephemeral, so
-  each model runs as one self-contained `SELECT` needing no write (`NOTES.md:1129-1135`).
-  Later **resolved**: the dataset exists (6.1), `analyses/transport_a/logs/t12c.log:34`
-  counts 29 tables in it, and the orchestrator's `make bq` built all 29 (see the verdict).
-* **Classification.** environment.
-
-### 4.2 `SAFE_DIVIDE` returns its inputs' type
+### 4.1 `SAFE_DIVIDE` returns its inputs' type
 
 * **Symptom.** `mart_product_performance.gross_margin_rate` was `DOUBLE` on DuckDB and
   `NUMERIC` on BigQuery, the gating mismatch that made `make parity` exit 1
@@ -216,63 +186,9 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
   description so nobody re-adds it (`models/marts/_marts__models.yml:350-356`).
 * **Classification.** dual-target, and dbt v2 (the quoting is dbt's).
 
-## 6. The Google Cloud grants (t_2e263433)
+## 6. Transport A: the community extension (t_d4637e87)
 
-### 6.1 GCS bucket location, bucket metadata, and dataset creation
-
-* **Symptom.** From the t_2e263433 card thread (board, not in the repo), for
-  `gcloud storage buckets create ... --location=US`:
-  ```
-  ERROR: (gcloud.storage.buckets.create) HTTPError 400: The specified location constraint is not valid.
-  ```
-  The same thread records `storage.buckets.get` / `storage.buckets.list` returning 403 for
-  the service account, and `bigquery.datasets.create` not granted. In the repo, only
-  `analyses/transport_b/README.md:295-297`: *"A cross-location bucket (the trap that bit an
-  earlier attempt): the bucket and the dataset are both `US` here, so the location rule is
-  not re-measured; the failure mode is recorded in the card thread, not reproduced in a
-  scenario."*
-* **Cause.** `EXPORT DATA` needs the bucket and the dataset in one location (also
-  `analyses/transport_b/README.md:33`); `roles/storage.objectAdmin` covers objects, not
-  bucket metadata; the account can write to a dataset but not create one.
-* **Resolution.** Per the thread, `--location` was dropped (default `us`) and the export
-  then succeeded. Bucket metadata stays unreadable. The dataset now exists: the
-  orchestrator's read-only `datasets.get` returned HTTP 200, the service account `OWNER`
-  (who created it is not recorded in the repo).
-* **Classification.** environment.
-
-## 7. Transport A: the community extension (t_d4637e87)
-
-### 7.1 The secret `SCOPE` follows the data, not the billing
-
-* **Symptom.**
-  ```
-  Invalid Input Error: BigQuery Authentication Failed
-  Underlying authentication error:
-    PerformWork() - CURL error [6]=Could not resolve hostname
-  ```
-  source: `analyses/transport_a/logs/t03.log:40,53-54`.
-* **Cause.** Scoped to the billing project (`bq://coreychimpbot`), the secret did not match
-  a read of `bigquery-public-data`, which fell back to Application Default Credentials; on a
-  non-GCE box that metadata-server lookup fails as a DNS error.
-* **Resolution.** `SCOPE 'bq://bigquery-public-data'` plus `billing_project :=
-  'coreychimpbot'` (t04: 5,552,452 rows).
-* **Classification.** ext 27d85ad (rule and misleading fallback), plus environment.
-
-### 7.2 Attaching a whole public project fails both ways
-
-* **Symptom.**
-  ```
-  Error in non-idempotent operation: Access Denied: Project bigquery-public-data: User does not have bigquery.jobs.create permission in project bigquery-public-data.
-  Binder Error: Query execution failed: Error in non-idempotent operation: Linked dataset bigquery-public-data:crypto_kusama is unlinked.
-  ```
-  source: `analyses/transport_a/logs/t11.log:60-61`.
-* **Cause.** Without `billing_project` the metadata jobs run *in the data project*; with it,
-  one `UNION ALL` over every dataset's `INFORMATION_SCHEMA.COLUMNS` dies on one unlinked
-  dataset.
-* **Resolution.** Attach one dataset: t10 works (2 tables, 5,552,452 rows).
-* **Classification.** ext 27d85ad, plus environment (no `jobs.create` there).
-
-### 7.3 Two reproducible bugs in the extension
+### 6.1 Two reproducible bugs in the extension
 
 * **Symptom.**
   ```
@@ -287,7 +203,7 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
   (`analyses/transport_a/README.md:287-306`).
 * **Classification.** DuckDB 1.5.5 / ext 27d85ad.
 
-### 7.4 Writes through the extension are the weak leg
+### 6.2 Writes through the extension are the weak leg
 
 * **Symptom.**
   ```
@@ -303,7 +219,7 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
   (insert from a second session; read with the extension, do not write).
 * **Classification.** ext 27d85ad.
 
-### 7.5 `INFORMATION_SCHEMA.JOBS_BY_PROJECT` is not readable
+### 6.3 `INFORMATION_SCHEMA.JOBS_BY_PROJECT` is not readable
 
 * **Symptom.** `Permission Error: BigQuery Permission Denied` on it.
   source: `analyses/transport_a/README.md:308-312`.
@@ -312,9 +228,9 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
   `bytes_billed`; billing is computed as `max(10 MiB, bytes_processed)`.
 * **Classification.** environment.
 
-## 8. Transport B: `EXPORT DATA` to GCS (t_69095c72)
+## 7. Transport B: `EXPORT DATA` to GCS (t_69095c72)
 
-### 8.1 No HMAC keys, so the `gs://` read path is unusable
+### 7.1 No HMAC keys, so the `gs://` read path is unusable
 
 * **Symptom.**
   ```
@@ -334,7 +250,7 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
   (b09: 59 objects, 58,937,715 rows in 20.73 s).
 * **Classification.** environment (no HMAC keys), plus DuckDB 1.5.5 (http secret behaviour).
 
-### 8.2 Two refusals in the export path
+### 7.2 Two refusals in the export path
 
 * **Symptom.**
   ```
@@ -347,7 +263,7 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
 * **Resolution.** Nested data as Parquet; JSON as CSV (or cast to STRING).
 * **Classification.** dual-target: BigQuery's export rules, inherited by any file hand-off.
 
-### 8.3 An unordered export's row order is not reproducible
+### 7.3 An unordered export's row order is not reproducible
 
 * **Symptom.** Three identical exports gave the same two chunks, but run B's file 0 is
   byte-for-byte run A's file 1 (`238054 rows · d28275cb555862308a6570acc846d1f5`) and vice
@@ -356,9 +272,9 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
 * **Cause.** One shard per parallel worker, with nothing fixing which worker writes which file.
 * **Resolution.** `ORDER BY` makes the artifact reproducible (1 file, 0 descents, 4,038,747
   rows), at the cost of parallelism (1 file instead of 17).
-* **Classification.** dual-target (BigQuery export semantics, as 8.2).
+* **Classification.** dual-target (BigQuery export semantics, as 7.2).
 
-### 8.4 BIGNUMERIC is dropped silently
+### 7.4 BIGNUMERIC is dropped silently
 
 * **Symptom.** In Parquet it becomes a `double`, `1.234567890123457e+37`: 16 significant
   digits of 38, no error or warning (`analyses/transport_b/README.md:150,153-157`, b18b).
@@ -369,9 +285,9 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
   (read it directly or cast it in the export). No model has a BIGNUMERIC column.
 * **Classification.** dual-target.
 
-## 9. The two-repo fallback and the guardrail's scope (t_ef8e0090, t_75db4537)
+## 8. The two-repo fallback and the guardrail's scope (t_ef8e0090, t_75db4537)
 
-### 9.1 The guardrail scanned the transport scenarios and stayed red
+### 8.1 The guardrail scanned the transport scenarios and stayed red
 
 * **Symptom.** `compiled files checked: 90 (models: 29, analyses: 61)`,
   `NOT PORTABLE: 39 finding(s)`: 12 in `analyses/transport_a/sql/`, 27 in
@@ -387,7 +303,7 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
 * **Classification.** dbt v2 (all of `analyses/` is parsed), and dual-target (a guardrail
   must know which files are warehouse code).
 
-### 9.2 A `MacroSyntaxInvalid` warning: recorded, not reproduced
+### 8.2 A `MacroSyntaxInvalid` warning: recorded, not reproduced
 
 * **Symptom.** Recorded once, while `docs/move_to_duckdb.md` lived at
   `analyses/move_to_duckdb/README.md`:
@@ -443,7 +359,7 @@ dialect and schema, and measured above. It is not measurable for values, because
 targets read different data by design (the fixture vs `bigquery-public-data`): **28 of 29
 models differ on rows and checksums**, and only `stg_thelook__distribution_centers` (1 of
 29), whose fixture copies the ten real centres verbatim, matches on everything. What is
-established is schema/type parity (0 gating mismatches after the `safe_divide` fix, 4.2)
+established is schema/type parity (0 gating mismatches after the `safe_divide` fix, 4.1)
 and dialect portability. Sources: `README.md:687-715` (§"What is NOT verified"),
 `NOTES.md:1179-1203` (Card 4); what value parity needs is in [`gaps.md`](gaps.md).
 
@@ -459,23 +375,18 @@ and dialect portability. Sources: `README.md:687-715` (§"What is NOT verified")
 | 3.2 unnest alias, `TIMESTAMP[]` | `duckdb -c` reproductions above (2026-09-27); `macros/polyglot/arrays.sql:10-29,50-54,72-74`; `models/marts/dim_date.sql:18`; `README.md:267-275`; `NOTES.md:1009-1014` |
 | 3.3 month-end drift | `duckdb -c` reproduction above (2026-09-27); `macros/polyglot/arrays.sql:57-60` |
 | 3.4 normalisation traps | `NOTES.md:1016-1023`; `macros/polyglot/dates.sql:31,70,88,92-94`; `README.md:290-297` |
-| 3.5 the 429 and the costs | `NOTES.md:1085-1095` |
-| 4.1 dataset 404 / 403, read-only workaround | `NOTES.md:1112-1135`; `scripts/run_bq.sh:13-21`; `analyses/transport_a/logs/t12c.log:34` |
-| 4.2 `safe_divide` type | `NOTES.md:1186-1196,1218`; `README.md:691-701`; `macros/polyglot/math.sql:1-25`; commit `cbe259c` |
+| 4.1 `safe_divide` type | `NOTES.md:1186-1196,1218`; `README.md:691-701`; `macros/polyglot/math.sql:1-25`; commit `cbe259c` |
 | 5.1 three failures, 122 skipped, fourth hidden | `NOTES.md:825-889` |
 | 5.2 boolean `accepted_values` | `NOTES.md:840,879-885`; `models/marts/_marts__models.yml:350-356` |
-| 6.1 bucket location, `buckets.get` 403, no `datasets.create` | t_2e263433 card thread (board, **not in the repo**); in-tree: `analyses/transport_b/README.md:33,295-297`; dataset exists: orchestrator's `datasets.get` (2026-09-27) |
-| 7.1 `SCOPE` | `analyses/transport_a/logs/t03.log:40-54`; `analyses/transport_a/README.md:257-271` |
-| 7.2 whole-project attach | `analyses/transport_a/logs/t11.log:60-61`; `analyses/transport_a/README.md:273-285` |
-| 7.3 REST cast bug, dry-run crash | `analyses/transport_a/logs/t17.log:49`, `t18.log:29`; `analyses/transport_a/README.md:287-306` |
-| 7.4 write stream `NOT_FOUND`, 5.6 / 11.3 / 128.7 s | `analyses/transport_a/README.md:234-242`; `analyses/transport_a/logs/t12b.log:12-16,36-37` |
-| 7.5 `JOBS_BY_PROJECT` | `analyses/transport_a/README.md:308-312` |
-| 8.1 `gs://` 403, scoped secret HTTP 0, globs | `analyses/transport_b/logs/b06.log:17-22`, `b06b.log:21-26`, `b07b.log:21`, `b08.log:21`; `analyses/transport_b/README.md:52-67` |
-| 8.2 CSV / JSON refusals | `analyses/transport_b/logs/b14.log:64`, `b13c.log:63`; `analyses/transport_b/README.md:97-99` |
-| 8.3 row order | `analyses/transport_b/logs/b24.log:51-73`; `analyses/transport_b/README.md:102-130` |
-| 8.4 BIGNUMERIC → double / VARCHAR | `analyses/transport_b/README.md:150,153-157`; `analyses/transport_a/README.md:173,193-199` |
-| 9.1 39 findings, then excluded | `docs/move_to_duckdb.md:535,576-591`; `scripts/check_portability.py:40,254-256`; commit `60b0c5d`; `python3 scripts/check_portability.py` (2026-09-27, this worktree) |
-| 9.2 `MacroSyntaxInvalid` | orchestrator's record and probe (2026-09-27, **not in a file**); `.cc-move-run3.json` |
+| 6.1 REST cast bug, dry-run crash | `analyses/transport_a/logs/t17.log:49`, `t18.log:29`; `analyses/transport_a/README.md:287-306` |
+| 6.2 write stream `NOT_FOUND`, 5.6 / 11.3 / 128.7 s | `analyses/transport_a/README.md:234-242`; `analyses/transport_a/logs/t12b.log:12-16,36-37` |
+| 6.3 `JOBS_BY_PROJECT` | `analyses/transport_a/README.md:308-312` |
+| 7.1 `gs://` 403, scoped secret HTTP 0, globs | `analyses/transport_b/logs/b06.log:17-22`, `b06b.log:21-26`, `b07b.log:21`, `b08.log:21`; `analyses/transport_b/README.md:52-67` |
+| 7.2 CSV / JSON refusals | `analyses/transport_b/logs/b14.log:64`, `b13c.log:63`; `analyses/transport_b/README.md:97-99` |
+| 7.3 row order | `analyses/transport_b/logs/b24.log:51-73`; `analyses/transport_b/README.md:102-130` |
+| 7.4 BIGNUMERIC → double / VARCHAR | `analyses/transport_b/README.md:150,153-157`; `analyses/transport_a/README.md:173,193-199` |
+| 8.1 39 findings, then excluded | `docs/move_to_duckdb.md:535,576-591`; `scripts/check_portability.py:40,254-256`; commit `60b0c5d`; `python3 scripts/check_portability.py` (2026-09-27, this worktree) |
+| 8.2 `MacroSyntaxInvalid` | orchestrator's record and probe (2026-09-27, **not in a file**); `.cc-move-run3.json` |
 | verdict: guardrail, `make duck`, `make bq`, `datasets.get` | orchestrator's runs in this worktree, 2026-09-27; the guardrail re-run for this document; `make bq` not re-run (it costs money) |
 | verdict: 148 / 5.10 / 15 / 27 / 175, 25 of 29, 16 of 26 | the counting script described above (re-run for this document); `docs/move_to_duckdb.md:77-116` |
 | verdict: 0 forked, 3 rewritten, 1 helper in 11 marts | `docs/move_to_duckdb.md:447-451,509-511`; `README.md:271-275` |
