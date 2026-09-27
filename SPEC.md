@@ -38,8 +38,12 @@ Do not commit anything. Do not touch `main`. Do not edit `profiles.yml` or `dbt_
   `dbt compile`, `dbt run-operation` all exist in v2.
 * On the DuckDB target, `target.database` is `dev` (the `dev.duckdb` file stem) and
   `target.schema` is `main`. Verified: `select current_database()` → `dev`.
-* There are **no Google credentials** on this machine. Never run anything against the
-  BigQuery target beyond `dbt parse --target bigquery`. Never fake a BigQuery run.
+* ~~There are **no Google credentials** on this machine. Never run anything against the
+  BigQuery target beyond `dbt parse --target bigquery`.~~ **Superseded 2026-09-27:** a
+  service-account key exists at `~/.config/gcp/coreychimpbot-sa.json` (mode 600, outside the
+  repository) and BigQuery *is* run against the real dataset, with the credential named via
+  `BQ_KEYFILE` / `GOOGLE_APPLICATION_CREDENTIALS`. The credential is not ambient, so a bare
+  `dbt` invocation still finds none. **Never fake a BigQuery run.**
 * `packages.yml` is deliberately empty: **no dbt packages**. No `dbt_utils`. Anything you
   need, write as a macro in `macros/`.
 
