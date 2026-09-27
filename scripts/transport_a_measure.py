@@ -68,6 +68,8 @@ SCENARIOS = [
      "title": "dry_run vs billed bytes", "fresh_home": False, "expect_failure": False},
     {"key": "t07b", "file": "t07b_dry_run_vs_billed.sql",
      "title": "one shape: predicted vs billed bytes", "fresh_home": False, "expect_failure": False},
+    {"key": "t07c", "file": "t07c_count_star_is_free.sql",
+     "title": "COUNT(*) is metadata, COUNT(col) is a scan", "fresh_home": False, "expect_failure": False},
     {"key": "t08", "file": "t08_aggregate_pushdown_off.sql",
      "title": "aggregate pushdown OFF (default)", "fresh_home": False, "expect_failure": False},
     {"key": "t09", "file": "t09_aggregate_pushdown_on.sql",

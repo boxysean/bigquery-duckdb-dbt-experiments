@@ -11,10 +11,10 @@ that reproduces it.
 * raw output: `analyses/transport_a/logs/*.log` (stdout + stderr + the exact SQL as run)
 * generated table: `analyses/transport_a/results.md`, machine-readable `results.json`
 
-Run of record: **2026-09-27 15:19 UTC**, DuckDB **v1.5.5 (Variegata) d8cdaa33fd**,
+Run of record: **2026-09-27 15:26 UTC**, DuckDB **v1.5.5 (Variegata) d8cdaa33fd**,
 extension build **27d85ad** (`installed_from = community`), 3 CPUs, data in
 `bigquery-public-data`, billing/quota project `coreychimpbot`, service account
-`coreychimpbot@coreychimpbot.iam.gserviceaccount.com`. The suite was run three times
+`coreychimpbot@coreychimpbot.iam.gserviceaccount.com`. The suite was run four times
 end to end; where a number moves between runs, all of them are shown.
 
 ## Reproduce
@@ -45,26 +45,28 @@ BigQuery's result cache cannot answer them.
 | t03 | secret `SCOPE` vs the data project | 3.58 | 59 | **fails** against `bigquery-public-data` (ADC fallback); the same file's billing-scoped query works |
 | t04 | `SCOPE 'bq://bigquery-public-data'` + `billing_project` | 3.91 | 62 | ok, `usa_names.usa_1910_2013` = **5,552,452 rows** |
 | t05 | `WHERE` pushdown | 1.77 | 57 | pushed: `` `state` = "CA" AND `year` >= 2000 ``, 95,373 rows |
-| t06 | column pruning | 10.41 | 68 | pushed; see the per-query times below |
-| t07 | dry run vs billed bytes | 10.74 | 90 | predicted 111,049,040; the real job processed **111,049,040** |
-| t07b | one shape, cache defeated | 9.24 | 89 | predicted 44,419,616; the real job processed **44,419,616** |
-| t08 | aggregate pushdown **off** (default) | 1.78 | 61 | filter pushed, `GROUP BY`/`SUM` local |
-| t09 | aggregate pushdown **on** (experimental) | 2.12 | 53 | whole aggregate becomes a remote GoogleSQL query job |
-| t10 | `ATTACH` one dataset, `READ_ONLY` | 11.54 | 67 | works: dataset lists 2 tables, counts 5,552,452 |
-| t11 | `ATTACH` a whole project | 32.70 | 195 | **fails both ways** (see failure modes) |
-| t12 | `READ_ONLY` guard + writable DDL | 5.57 | 54 | guard refused locally; writable catalog created the probe table |
-| t12b | writable: insert, read back, drop | 16.43 | 59 | row written and verified by a query job (n=1); 11.3 s of it is the insert |
-| t12c | leftover check from BigQuery | 6.97 | 58 | 0 probe tables, 29 tables in `experiments_dev` |
-| t13 | read parallelism | 20.19 | 69 | no reproducible gain from more streams (see below) |
-| t14 | materialize the whole table locally | 12.20 | 130 | **5,552,452 rows**, 51 states, 1910–2013, `sum(number)` 295,727,065 |
+| t06 | column pruning | 10.51 | 69 | pushed; see the per-query times below |
+| t07 | dry run vs billed bytes | 10.06 | 90 | predicted 111,049,040; the real job processed **111,049,040** |
+| t07b | one shape, cache defeated | 9.21 | 89 | predicted 44,419,616; the real job processed **44,419,616** |
+| t07c | `COUNT(*)` vs `COUNT(col)` dry runs | 1.47 | 48 | **0 bytes** vs 22,209,808 bytes |
+| t08 | aggregate pushdown **off** (default) | 2.02 | 61 | filter pushed, `GROUP BY`/`SUM` local |
+| t09 | aggregate pushdown **on** (experimental) | 2.28 | 53 | whole aggregate becomes a remote GoogleSQL query job |
+| t10 | `ATTACH` one dataset, `READ_ONLY` | 11.86 | 67 | works: dataset lists 2 tables, counts 5,552,452 |
+| t11 | `ATTACH` a whole project | 30.03 | 194 | **fails both ways** (see failure modes) |
+| t12 | `READ_ONLY` guard + writable DDL | 5.52 | 52 | guard refused locally; writable catalog created the probe table |
+| t12b | writable: insert, read back, drop | 12.60 | 60 | row written and verified by a query job (n=1); 5.6 s of it is the insert |
+| t12c | leftover check from BigQuery | 5.62 | 58 | 0 probe tables, 29 tables in `experiments_dev` |
+| t13 | read parallelism | 18.90 | 71 | no reproducible gain from more streams (see below) |
+| t14 | materialize the whole table locally | 11.74 | 120 | **5,552,452 rows**, 51 states, 1910–2013, `sum(number)` 295,727,065 |
 | t15 | type fidelity, Storage path | 8.26 | 61 | see the type table |
 | t16 | type fidelity, REST path | 4.66 | 51 | same types; `BIGNUMERIC` unpadded text |
 | t17 | REST decoder failure mode | 4.06 | 60 | **fails**: `Failed to cast value: Unimplemented type for cast (GEOMETRY('OGC:CRS84') -> BIGINT[])` |
 | t18 | dry-run result projection | 0.84 | 50 | **crashes**: `INTERNAL Error: Attempted to access index 2 within vector of size 2` |
 
-Wall times are single runs on a shared box and vary run to run: t14 was 11.9 s, 11.2 s
-and 22.2 s across the three runs, t12b 16.4 s, 93.2 s and 133.5 s, t13 20.2 s, 18.1 s
-and 24.3 s. The bytes and row counts are stable; treat the seconds as ±50%.
+Wall times are single runs on a shared box and vary run to run: t14 was 11.7 s, 11.2 s,
+11.9 s and 22.2 s across the four runs, t12b 12.6 s, 16.4 s, 93.2 s and 133.5 s, t13
+18.9 s, 20.2 s, 18.1 s and 24.3 s. The bytes and row counts are stable; treat the
+seconds as ±50%.
 
 ### Pushdown: filters and projections reach BigQuery (t05, t06, t08)
 
@@ -75,18 +77,19 @@ BigQuery selected fields: state, year
 BigQuery row restrictions: `state` = "CA" AND `year` >= 2000
 ```
 
-* t06(a) `count(*)` → `selected fields: state` (one column, not zero — 3.90 s)
-* t06(b) `sum(number) WHERE year = 2000` → `year, number` + `` `year` = 2000 `` (1.36 s)
-* t06(c) `count(DISTINCT state), sum(number) WHERE year = 2000` → `year, state, number` (1.81 s)
-* t06(d) `WHERE gender IS NOT NULL` → `gender` (3.11 s)
+* t06(a) `count(*)` → `selected fields: state` (one column, not zero — 3.99 s)
+* t06(b) `sum(number) WHERE year = 2000` → `year, number` + `` `year` = 2000 `` (1.32 s)
+* t06(c) `count(DISTINCT state), sum(number) WHERE year = 2000` → `year, state, number` (1.47 s)
+* t06(d) `WHERE gender IS NOT NULL` → `gender` (3.49 s)
 
 So column pruning is real, and it is what drives cost: the logs of t07 show the same
 aggregate costing 111,049,040 bytes when it needs `state, number, year` and 66,629,424
 bytes when `year` is not referenced. One oddity worth knowing: `count(*)` still comes
-back with `selected fields: state` and costs 3.9 s, i.e. the reader asks for a column the
+back with `selected fields: state` and costs 4 s, i.e. the reader asks for a column the
 query does not need (that attribution is an inference from the debug line plus the
-timing, not something the extension reports). `count(*)` answered from table metadata —
-0 bytes — only happens on the `bigquery_query` path, not on a scan.
+timing, not something the extension reports). Two different `count(*)`s exist, and t07c
+separates them: on the `bigquery_query` path `COUNT(*)` is answered from table metadata
+and a dry run reports **0 bytes**, while `COUNT(state)` reports 22,209,808 bytes.
 
 ### Aggregate pushdown is off by default and does what it says (t08, t09)
 
@@ -132,6 +135,9 @@ Two caveats measured, not assumed:
 
 * **Billing floor**: a query that processes less than 10 MiB is billed 10 MiB; the
   44.4 MB row above is billed in full (≈42.4 MiB).
+* **`COUNT(*)` is free on this path, `COUNT(col)` is not** (t07c): `SELECT COUNT(*)` dry
+  runs to **0 bytes** against a 5.5 M-row table, while `COUNT(state)` dry runs to
+  22,209,808 bytes.
 * **Result cache**: repeating identical SQL is answered from BigQuery's result cache —
   those jobs report `bytes_processed = 0` (visible in t07's job list). A dry run of a
   cached shape reports `cache_hit = true` and still prints the would-process bytes.
@@ -143,20 +149,20 @@ Two caveats measured, not assumed:
 Same query (all 5 columns of the 5.5 M-row table transferred), 3 CPUs, seconds per run
 (run of record first):
 
-| variant | wall s |
+| variant | wall s (run of record / the three earlier runs) |
 |---|---|
-| `preserve_insertion_order = true`, `bq_max_read_streams = 0` (defaults) | 4.25 / 3.71 / 4.60 |
-| `preserve_insertion_order = false`, `bq_max_read_streams = 0` (one stream per thread) | 3.94 / 3.32 / 4.42 |
-| `preserve_insertion_order = false`, `bq_max_read_streams = 1` (forced single stream) | 3.77 / 3.46 / 4.46 |
-| `preserve_insertion_order = false`, `bq_max_read_streams = 8` | 3.96 / 3.69 / 4.51 |
-| `threads = 1`, `bq_max_read_streams = 0` | 4.01 / 3.64 / 5.84 |
+| `preserve_insertion_order = true`, `bq_max_read_streams = 0` (defaults) | 3.78 / 4.25 / 3.71 / 4.60 |
+| `preserve_insertion_order = false`, `bq_max_read_streams = 0` (one stream per thread) | 3.86 / 3.94 / 3.32 / 4.42 |
+| `preserve_insertion_order = false`, `bq_max_read_streams = 1` (forced single stream) | 3.58 / 3.77 / 3.46 / 4.46 |
+| `preserve_insertion_order = false`, `bq_max_read_streams = 8` | 3.86 / 3.96 / 3.69 / 4.51 |
+| `threads = 1`, `bq_max_read_streams = 0` | 3.59 / 4.01 / 3.64 / 5.84 |
 
-Every variant is within the run-to-run spread. Forcing a **single** stream costs nothing
+Every variant sits inside the run-to-run spread. Forcing a **single** stream costs nothing
 versus three or eight, and one thread is in the same band: the read is not stream-bound.
-CPU time inside the process (user+sys ≈ 3–3.5 s of the ~4 s) says the cost is local Arrow
-decoding, not the wire. On this hardware the parallelism knobs are not worth touching; on
-a larger table or a slower client they may be — this box cannot answer that, because the
-default already matches its 3 CPUs.
+CPU time inside the process (user+sys ≈ 3.0 s of the 3.6–3.9 s in the run of record) says
+the cost is local Arrow decoding, not the wire. On this hardware the parallelism knobs are
+not worth touching; on a larger table or a slower client they may be — this box cannot
+answer that, because the default already matches its 3 CPUs.
 
 ### Type fidelity across the wire (t15 Storage, t16 REST)
 
@@ -199,9 +205,9 @@ Notes that matter for a warehouse:
 
 The card carried a signal that Storage Read API read-session creation returns HTTP 404 on
 this project. Through the extension it does not: t14 materializes the entire
-5,552,452-row table into a local DuckDB file in 11.9 s (11.2 s and 22.2 s in the other
-two runs) and the local copy checks out — 51 states, years 1910–2013, `sum(number)` =
-295,727,065. Every scan in this suite goes through the same read path (the extension's
+5,552,452-row table into a local DuckDB file in 11.7 s (11.9 s, 11.2 s and 22.2 s in the
+other three runs) and the local copy checks out — 51 states, years 1910–2013,
+`sum(number)` = 295,727,065. Every scan in this suite goes through the same read path (the extension's
 docs say Storage Read API, and it exposes `grpc_endpoint` for it); nothing 404s. The only
 404s seen in the suite are the *core-repo extension download* (t01) and a Storage
 **Write** `NOT_FOUND` (t12b).
@@ -226,8 +232,9 @@ query job (`n = 1`), then dropped — and `INFORMATION_SCHEMA.TABLES` (queried r
 shows **0** probe tables and the 29 dbt tables still in place.
 
 Writing is the weakest leg of this transport, and it is the one number that swings
-hardest: the insert took 11.3 s in the run of record and 128.7 s in another run, with 82
-`Retrying...` lines from the Storage Write API in the slow one. Inserting into a table
+hardest: the insert took 5.6 s in the run of record, 11.3 s in another run and 128.7 s in
+a third, with 82 `Retrying...` lines from the Storage Write API in the slow one (1 in the
+run of record). Inserting into a table
 created moments earlier **in the same session** failed outright
 (`Failed to create write stream: NOT_FOUND ... Cannot create BigQuery write stream to
 projects/coreychimpbot/datasets/experiments_dev/tables/transport_a_probe`) while the
