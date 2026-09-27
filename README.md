@@ -12,9 +12,8 @@ tree is the one described in `SPEC.md`: 7 staging views, 11 intermediate views a
 `bigquery-public-data.thelook_ecommerce` dataset. On the `duckdb` target the whole
 tree builds and 167 tests pass, twice in a row. That run reads a **generated
 fixture**: invented data with the real schema, not the real dataset (see "The
-DuckDB fixture") — it keeps reading the fixture until a real dataset has been
-loaded into it; value equality between the two legs is what the value-equality
-work is for. On the `bigquery` target the project compiles, parses and **runs**:
+DuckDB fixture"); `make fixtures-real` swaps the real rows in, and the value
+comparison below runs on those. On the `bigquery` target the project compiles, parses and **runs**:
 with a named credential, `make bq` materialises all 29 models against the real
 `bigquery-public-data.thelook_ecommerce` rows (`196 total | 195 success | 1 warn`,
 2026-09-27), so the `bigquery__` macro branches are executed, not merely inspected.
@@ -23,6 +22,24 @@ invocation finds none. Name it with `BQ_KEYFILE` (the service-account key, at
 `~/.config/gcp/coreychimpbot-sa.json`, outside the repository) or
 `GOOGLE_APPLICATION_CREDENTIALS`, or point `profiles.yml` at it; without one,
 `make bq` exits 2 with an explanation instead of an authentication error.
+
+**Value equality, measured on one dataset: row counts are identical on all 29 models,
+8 of 29 are identical on every check, and only 1 of the 11 marts (`dim_date`).**
+`make value-parity` (2026-09-27) copied the seven real tables into `dev.duckdb` through
+the community `bigquery` extension (every row count equal to BigQuery's `numRows`),
+built both targets over the same rows (`196 total | 195 success | 1 warn` on each) and
+compared every materialised relation: row count, column names and canonical types, and
+per column an order-independent checksum, a null count and a distinct count. The 21
+models that differ do so in 55 columns, all money columns except one rate derived from
+them; no row count and no null count differs. The reason is where the rounding happens:
+`money_type()` is `decimal(18,2)` on DuckDB, which rounds the source's `FLOAT64` prices
+and costs to cents, and `numeric` on BigQuery, which keeps nine decimal places (29,035
+of the 29,120 real `products.cost` values are not whole cents there). Sums of cost then
+drift apart, and `mart_product_performance.gross_margin_rate` has 18,699 distinct values
+on DuckDB against 328 on BigQuery. The same 29 models took **19.96 s** of dbt model
+execution time on DuckDB and **230.25 s** on BigQuery, over the same rows (11.5x; up
+to 62.0x for one model, `stg_thelook__users`). See [`docs/gaps.md`](docs/gaps.md) §1 and
+`analyses/value_parity/` (`results.md`, raw `logs/`).
 
 The transpile seam is **28 macros** in `macros/polyglot/`, one per dialect
 difference, each dispatching on the adapter; the DuckDB branch of every one of them
@@ -650,8 +667,12 @@ boolean `accepted_values` test was removed — `docs/challenges.md` 5.2).
   Both pass. That run exited 1 on one real mismatch it found —
   `mart_product_performance.gross_margin_rate` was `DOUBLE` on DuckDB and `NUMERIC`
   on BigQuery. Card 7 fixed it (the BigQuery branch of `safe_divide` now casts both
-  sides), so the run no longer fails on a type mismatch. Value parity is still not
-  established — see "What is NOT verified".
+  sides), so the run no longer fails on a type mismatch.
+* Value parity was measured on 2026-09-27 with both legs on the real rows
+  (`make value-parity`): row counts equal on all 29 models, 8 of 29 equal on every
+  check, 1 of 11 marts; digest self-check PASS, DuckDB-vs-DuckDB baseline MATCH, 0
+  gating (name/type) findings. The differences are listed under "What is NOT
+  verified" and in `analyses/value_parity/results.md`.
 
 ## What is NOT verified
 
@@ -699,7 +720,8 @@ boolean `accepted_values` test was removed — `docs/challenges.md` 5.2).
   * that real prices have at most 2 decimal places. `sale_price` does (differences
     from its 2-decimal rounding are float noise, max 1.5e-05), but `products.cost`
     does not in 27% of rows, so the `decimal(18,2)`/`numeric` cast rounds real costs
-    by up to half a cent;
+    by up to half a cent — and only on DuckDB, which is what the value comparison
+    measured (see "Value parity is measured" below);
   * that `inventory_items.cost` = `products.cost`, and that a unit's denormalised
     price and center equal the product's.
   Assumptions the measurement **settled** (each is in NOTES.md with its numbers):
@@ -710,9 +732,20 @@ boolean `accepted_values` test was removed — `docs/challenges.md` 5.2).
   unit; every real order does have at least one item and `num_of_item` matches;
   `order_items.user_id` does equal its order's user_id; and `orders` timestamps are
   ordered while `order_items.created_at` is not.
-* **Parity is not established, but it is now *measured* rather than assumed.**
-  `make parity` compares all 29 models on both targets and separates the two kinds of
-  difference that exist today:
+* **Value parity is measured, and it does not hold for money.** `make value-parity`
+  loads the real rows into DuckDB and compares every model on the *same* input
+  (`analyses/value_parity/results.md`): row counts are equal on all 29 models and 8 of
+  29 match on every check, but 21 differ in 55 money columns and one rate derived from
+  them. `money_type()` rounds to cents on DuckDB (`decimal(18,2)`) and keeps nine
+  decimals on BigQuery (`numeric`), and the source's prices and costs are `FLOAT64`, so
+  the same SQL over the same rows yields different money. Rounding BigQuery's value to
+  cents reconciles 23 of those columns (prices and revenue); the other 32 are sums of
+  cost or values computed from them, and still differ
+  (`analyses/value_parity/logs/probe_scale_attribution.log`).
+  Which rows differ, and by how much, is not measured: the harness compares aggregates
+  per column. Details and sources in [`docs/gaps.md`](docs/gaps.md) §1.
+* **The default `make parity` still runs on the fixture.** It compares all 29 models
+  on both targets and separates the two kinds of difference that exist on that path:
 
   * **A real defect it found, since fixed.** Card 4 found
     `mart_product_performance.gross_margin_rate` was `DOUBLE` on DuckDB and `NUMERIC`
@@ -725,25 +758,21 @@ boolean `accepted_values` test was removed — `docs/challenges.md` 5.2).
     `int_products__returns.return_rate` and `mart_cohort_retention.retention_rate`
     call the same macro and were never affected: their inputs are integers, so
     `SAFE_DIVIDE` yields `FLOAT64` either way.
-  * **Different source data.** 28 of the 29 models differ on row counts and
-    checksums, because the DuckDB leg reads the fixture and the BigQuery leg reads
-    the real dataset — 3,000 fixture orders against 124,952 real ones, 20,000
-    fixture events against 2,425,698 real ones, and so on. Those checksums are
-    reported, not gated, until both legs read one dataset; `--same-data` promotes
-    them to gating for that day.
+  * **Different source data, on the fixture path.** There, 28 of the 29 models differ
+    on row counts and checksums, because the DuckDB leg reads the fixture and the
+    BigQuery leg reads the real dataset — 3,000 fixture orders against 124,952 real
+    ones, 20,000 fixture events against 2,425,698 real ones, and so on. Those
+    checksums are reported, not gated, on that path; the value result is the one
+    above, from `make value-parity`.
 
-  One model matches on *everything*, values included:
+  On the fixture path one model matches on *everything*, values included:
   `stg_thelook__distribution_centers`. The fixture copies the real ten distribution
-  centres verbatim, and the checksums agree — the proof that this comparison is
-  comparing data and not just always answering "differs".
-  Meaningful value parity needs both legs reading the same data (cards 5/6). One way
-  is to point the DuckDB leg at the real tables through the `bigquery` extension,
-  which needs credentials.
-* **Surrogate keys have now run on both sides but still do not *match*.** Both
-  branches hash the same `'||'`-joined integer text by construction, and the
-  BigQuery side executed for the first time in card 4 (read-only, whole model
-  tree). The parity harness compares the key columns like any other column; they
-  differ exactly where the underlying rows differ, and nowhere else.
+  centres verbatim, and the checksums agree.
+* **Surrogate keys match across engines on the same rows.** All three key columns
+  (`int_inventory__by_product_center.product_center_key`,
+  `int_cohorts__user_months.user_month_key`, `mart_cohort_retention.cohort_activity_key`)
+  are absent from the value-parity differences: equal checksum, null count and
+  distinct count on both legs (`analyses/value_parity/results.md`).
 * **The singular tests' failing path has not been exercised on the fixture.** The three
   strict ones return zero rows on the fixture (nothing has run them against an injected
   violation); the fourth, `assert_order_item_created_at_is_plausible`, does return rows on
