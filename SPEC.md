@@ -424,7 +424,10 @@ It is the number the card asks for, so it must print counts, not adjectives.
    fixture, so tell the caller to run `make fixtures` when `dev.duckdb` is missing).
 2. **Scan the compiled SQL** under `target/portability/<target>/compiled/bq_duckdb_experiments/`
    (both `models/` and `analyses/`), after **stripping SQL comments** (`--` to end of line and
-   `/* */`) so prose cannot trip it.
+   `/* */`) so prose cannot trip it. The transport measurement trees `analyses/transport_a/` and
+   `analyses/transport_b/` are excluded (an explicit list, `EXCLUDED_ANALYSES`, in the script; the
+   output reports how many compiled files each dropped): they are deliberately engine-specific
+   scenarios run by the transport harnesses, compiled by dbt only because they sit under `analyses/`.
    * DuckDB render must not contain any BigQuery-only token:
      `float64`, `safe_cast`, `safe_divide`, `generate_array`, `generate_date_array`,
      `regexp_contains`, `format_date`, `timestamp_trunc`, `timestamp_diff`, `bignumeric`,
