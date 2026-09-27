@@ -3,6 +3,9 @@
 dbt_packages/
 dbt_internal_packages/
 logs/
+# ... except the raw logs of the value-parity run, which are evidence and committed
+# (analyses/transport_{a,b}/logs/ were force-added for the same reason).
+!analyses/value_parity/logs/
 target/
 .env
 

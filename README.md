@@ -40,8 +40,9 @@ dbt_project.yml         dbt v2 project (no config-version; v2 does not use it)
 profiles.yml            BOTH targets, committed — it holds no credentials
 packages.yml            empty on purpose: every package must work on both targets
 pyproject.toml + uv.lock  dbt itself, pinned (dbt-oss 2.0.5)
-Makefile                make setup | check-env | fixtures | duck | bq | build-both | parity |
-                        polyglot | portability | move-to-duckdb | handmove-example | clean
+Makefile                make setup | check-env | fixtures | duck | fixtures-real | duck-real |
+                        bq | build-both | parity | value-parity | polyglot | portability |
+                        move-to-duckdb | handmove-example | clean
 models/staging/         7 views: rename + cast only, one per source table; the source definition
 models/intermediate/    11 views: the joins and aggregates
 models/marts/           11 tables: fct_*, dim_*, mart_* (dim_date is the date spine)
@@ -51,13 +52,18 @@ tests/                  3 singular tests (cross-model invariants)
 scripts/check_env.sh    prerequisite gate; fails loudly, never half-succeeds
 scripts/install_prereqs.sh  dbc, the DuckDB driver, the DuckDB CLI, the community extension
 scripts/load_duckdb_sources.sh  loads the DuckDB fixture and checks its integrity (make fixtures)
+scripts/load_duckdb_real_sources.sh  loads the REAL thelook_ecommerce into dev.duckdb through the
+                        community bigquery extension, row counts checked against BigQuery
+                        (make fixtures-real)
+scripts/bq_table_meta.py  BigQuery numRows/numBytes from table metadata (used by the loader)
 scripts/fixtures/       the fixture generator SQL, plus the grain/coherence check queries
 scripts/check_portability.py  the guardrail: compile both targets, scan each render for the
                         other dialect, fail on a target branch in a model (make portability)
 scripts/polyglot_check.sh  the macro layer end to end (make polyglot)
 scripts/run_bq.sh       the BigQuery leg: refuses clearly when credentials are absent
 scripts/parity.py       every model, both targets: rows, names, types, per-column checksums
-                        (make parity)
+                        (make parity; on one dataset: make value-parity)
+analyses/value_parity/  the value-equality run: results.md (generated), probes/, raw logs/
 SPEC.md                 the design contract for the model tree
 NOTES.md                the build record: every decision, deviation and command output
 docs/challenges.md      every challenge hit, in order, with its evidence, and the verdict
@@ -432,11 +438,16 @@ official release URLs, verifies a sha256, and installs into `~/.local/bin`
 ```bash
 make duck         # check-env, load the fixture, then dbt build --target duckdb
 make fixtures     # (re)load the DuckDB fixture only
+make fixtures-real  # load the REAL thelook_ecommerce into dev.duckdb instead (BQ_KEYFILE, ~40 s)
+make duck-real    # fixtures-real, then dbt build --target duckdb
 make bq           # dbt build --target bigquery (exits 2 without credentials)
 make build-both   # duck, then bq
 make parity       # every model on both targets: rows, column names, canonical column
                   # types, per-column checksums; writes parity-report.md/.json and exits
                   # non-zero on a real mismatch (see "What is NOT verified")
+make value-parity # fixtures-real, then both builds and every model compared on the SAME
+                  # input rows, rows and checksums gating; writes analyses/value_parity/
+                  # results.md and logs/ (BQ_KEYFILE; costs money; exit 1 = values differ)
 make polyglot     # the macro layer end to end: 44 self-check cases on DuckDB, the renders
                   # for both targets, the decimal ceiling, then the guardrail and its --demo
 make portability  # just the guardrail: compile both targets, scan each render for the other

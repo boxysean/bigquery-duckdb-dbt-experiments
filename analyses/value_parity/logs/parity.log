@@ -1,0 +1,45 @@
+      dev.duckdb holds the real thelook_ecommerce rows (users.user_geom present, timestamps TIMESTAMPTZ)
+[1/5] dbt build --target duckdb  (real sources; the fixture is NOT reloaded)
+      exit 0, wall 14.7 s
+      29 models discovered
+[2/5] digest self-check: PASS
+[3/5] dbt build --target bigquery (attempt)
+      exit 0
+[3/5] measuring the materialised relations in coreychimpbot.experiments_dev (what dbt build --target bigquery wrote)
+[4/5] measuring every model on both legs
+[5/5] DuckDB baseline: rebuild and prove the measurements reproduce
+      baseline: MATCH
+
+      model                                       layer         verdict      rows duckdb  rows bq  duckdb s    bq s  bq/duck
+      dim_date                                    marts         match               2813     2813      2.03    6.38     3.1x
+      dim_distribution_centers                    marts         differs               10       10      0.39    6.59    16.9x
+      dim_products                                marts         differs            29120    29120      1.00   13.83    13.8x
+      dim_users                                   marts         differs           100000   100000      2.51    9.70     3.9x
+      fct_inventory_items                         marts         differs           489625   489625      1.86    7.15     3.8x
+      fct_order_items                             marts         differs           181313   181313      1.08    5.32     4.9x
+      fct_orders                                  marts         differs           124952   124952      1.08    5.31     4.9x
+      int_cohorts__user_months                    intermediate  differs           120667   120667      0.37   11.38    30.9x
+      int_events__sessions                        intermediate  match             681313   681313      0.41    7.04    17.1x
+      int_inventory__by_product_center            intermediate  differs            29059    29059      0.17    2.63    15.9x
+      int_inventory_items__enriched               intermediate  differs           489625   489625      0.10    4.73    45.1x
+      int_order_items__enriched                   intermediate  differs           181313   181313      0.38    2.02     5.3x
+      int_orders__daily                           intermediate  differs             2761     2761      0.20   11.22    57.4x
+      int_orders__item_rollup                     intermediate  differs           124952   124952      0.39    5.97    15.4x
+      int_products__returns                       intermediate  match              29120    29120      0.41    6.40    15.8x
+      int_products__sales                         intermediate  differs            29120    29120      0.49    7.30    14.9x
+      int_users__first_order_cohort               intermediate  match             100000   100000      0.29    7.36    25.5x
+      int_users__lifetime_orders                  intermediate  differs           100000   100000      0.24   12.99    54.2x
+      mart_cohort_retention                       marts         differs             3824     3824      1.08   11.18    10.3x
+      mart_customer_summary                       marts         differs           100000   100000      1.02    4.64     4.5x
+      mart_daily_revenue                          marts         differs             2761     2761      2.16    7.41     3.4x
+      mart_product_performance                    marts         differs            29120    29120      0.97   13.76    14.1x
+      stg_thelook__distribution_centers           staging       match                 10       10      0.13    7.76    57.9x
+      stg_thelook__events                         staging       match            2425698  2425698      0.14    7.78    53.8x
+      stg_thelook__inventory_items                staging       differs           489625   489625      0.27    7.79    28.6x
+      stg_thelook__order_items                    staging       differs           181313   181313      0.18    8.32    47.3x
+      stg_thelook__orders                         staging       match             124952   124952      0.23    9.50    40.9x
+      stg_thelook__products                       staging       differs            29120    29120      0.23    9.39    41.1x
+      stg_thelook__users                          staging       match             100000   100000      0.15    9.41    62.0x
+
+parity: MISMATCH. gating: none; value/row: ['dim_distribution_centers', 'dim_products', 'dim_users', 'fct_inventory_items', 'fct_order_items', 'fct_orders', 'int_cohorts__user_months', 'int_inventory__by_product_center', 'int_inventory_items__enriched', 'int_order_items__enriched', 'int_orders__daily', 'int_orders__item_rollup', 'int_products__sales', 'int_users__lifetime_orders', 'mart_cohort_retention', 'mart_customer_summary', 'mart_daily_revenue', 'mart_product_performance', 'stg_thelook__inventory_items', 'stg_thelook__order_items', 'stg_thelook__products']; not measured: none
+See parity-report.md.

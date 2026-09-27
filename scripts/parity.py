@@ -37,6 +37,20 @@ GATING
   `--same-data` to make row counts and checksums gate as well - that is the mode
   cards 5/6 will need once a single dataset feeds both legs.
 
+ONE DATASET ON BOTH LEGS (make value-parity; SPEC-value-parity.md)
+  --sources real            dev.duckdb holds the real thelook_ecommerce rows, loaded by
+                            scripts/load_duckdb_real_sources.sh (make fixtures-real). Only
+                            `dbt build --target duckdb` runs - never `make duck`, whose
+                            fixture reload would overwrite them. Refuses to start unless
+                            the real load (not the fixture, not a raw probe) is present.
+  --bq-source materialised  measure the tables and views `dbt build --target bigquery`
+                            wrote to <project>.experiments_<DBT_ENV>, instead of the
+                            read-only inlined compile (the default, `compiled`).
+  --out-dir DIR             also write DIR/results.{md,json}, and into DIR/logs/ the raw
+                            output of every build and a copy of each run_results.json.
+  In these modes every model also carries dbt's per-model execution_time on both legs
+  and their ratio. The defaults (fixture, compiled) print exactly what they always did.
+
 TRAPS (each one is a decision, not a shrug)
   1. BIGNUMERIC. DuckDB DECIMAL tops out at 38 digits, so a 77-digit BIGNUMERIC
      arrives as VARCHAR and nothing can be done about the precision; the canonical
@@ -113,6 +127,19 @@ def dbt_env() -> dict:
     env = dict(os.environ)
     env["DBT_PROFILES_DIR"] = str(REPO)
     env.setdefault("PATH", "")
+    return env
+
+
+def bq_build_env(key) -> dict:
+    """dbt_env() for a `dbt build --target bigquery` with a key file.
+
+    profiles.yml defaults to `method: oauth`, which ignores `keyfile:`; with a key file
+    the build must ask for the service-account method, exactly as scripts/run_bq.sh does.
+    """
+    env = dbt_env()
+    if key:
+        env.setdefault("BQ_KEYFILE", key)
+        env.setdefault("BQ_AUTH_METHOD", "service-account")
     return env
 
 
@@ -251,7 +278,18 @@ class Engine:
             return self.to_text(expr)
         if k == "bool":
             return self.to_text(expr)
-        if k == "decimal" or k == "bignumeric":
+        if k == "decimal":
+            # The engines print one decimal value differently: DuckDB keeps the declared
+            # scale (DECIMAL(18,2) 12.30 -> '12.30', 12 -> '12.00'), BigQuery NUMERIC
+            # prints the shortest form ('12.3', '12'). Measured on 2026-09-27 (value
+            # parity card): without this, equal cents hashed differently. So both sides
+            # drop trailing fractional zeros (and a bare '.'); integers are untouched.
+            if self.name == "bigquery":
+                return (f"REGEXP_REPLACE({self.to_text(expr)}, "
+                        r"r'(\.[0-9]*[1-9])0+$|\.0+$', r'\1')")
+            return (f"regexp_replace({self.to_text(expr)}, "
+                    r"'(\.[0-9]*[1-9])0+$|\.0+$', '\1')")
+        if k == "bignumeric":
             return self.to_text(expr)
         if k == "date":
             return self.to_text(expr)
@@ -419,12 +457,19 @@ class BigQueryLeg:
                 return e.code, {"raw": body}
 
     def schema(self, model, compiled):
-        fields, _ = self.query(f"SELECT * FROM (\n{compiled}\n) AS _m LIMIT 0")
-        return [(f["name"], bq_kind(f), _bq_type_str(f)) for f in fields]
+        return self.schema_of(f"(\n{compiled}\n) AS _m")
 
     def measure(self, model, columns, compiled):
-        sql = metrics_sql(self.engine, f"(\n{compiled}\n) AS _m",
-                          [(n, k) for n, k, _ in columns])
+        return self.measure_of(f"(\n{compiled}\n) AS _m", columns)
+
+    # `source` is anything a FROM accepts: the inlined compile above, or a
+    # materialised table `project.dataset.model` (--bq-source materialised).
+    def schema_of(self, source):
+        fields, _ = self.query(f"SELECT * FROM {source} LIMIT 0")
+        return [(f["name"], bq_kind(f), _bq_type_str(f)) for f in fields]
+
+    def measure_of(self, source, columns):
+        sql = metrics_sql(self.engine, source, [(n, k) for n, k, _ in columns])
         _, rows = self.query(sql)
         return _normalise(rows[0], columns)
 
@@ -451,8 +496,16 @@ def _normalise(row, columns) -> dict:
 
 
 # ------------------------------------------------------------------- reporting
-def model_verdict(duck_model, bq_model):
-    """Compare one model on both legs; returns (verdict, list-of-differences)."""
+def model_verdict(duck_model, bq_model, same_rows=False):
+    """Compare one model on both legs; returns (verdict, list-of-differences).
+
+    `same_rows`: both legs read the same input rows (--sources real), so a row or
+    value difference is a result difference, not a data difference.
+    """
+    row_detail = ("same input rows, different row count" if same_rows
+                  else "the two legs read different source data")
+    value_detail = ("same input rows, different values" if same_rows
+                    else "different source data")
     diffs = []
     d_names = [c[0] for c in duck_model["columns"]]
     b_names = [c[0] for c in bq_model["columns"]]
@@ -477,7 +530,7 @@ def model_verdict(duck_model, bq_model):
         diffs.append({"check": "row_count",
                       "duckdb": duck_model["metrics"]["__rows"],
                       "bigquery": bq_model["metrics"]["__rows"],
-                      "detail": "the two legs read different source data"})
+                      "detail": row_detail})
     for name in d_names:
         if name not in b_types:
             continue
@@ -488,7 +541,7 @@ def model_verdict(duck_model, bq_model):
             if dv != bv:
                 diffs.append({"check": f"column_{label}", "column": name,
                               "duckdb": dv, "bigquery": bv,
-                              "detail": "different source data"})
+                              "detail": value_detail})
     gating = [d for d in diffs if d["check"] in ("column_names", "column_type")]
     return ("match" if not diffs else "differs"), diffs, bool(gating)
 
@@ -539,8 +592,11 @@ def compile_ephemeral_bigquery(tmp: Path):
 
 def digest_selfcheck(duck: DuckLeg, bq: BigQueryLeg):
     """Both engines must agree on the digest construction for constant inputs."""
-    # Written out longhand so the two spellings are visible side by side.
-    duck_sql = """
+    # Written out longhand so the two spellings are visible side by side. Rows 3-4
+    # carry decimals with trailing zeros (12.30, 12.00): DuckDB prints them at the
+    # declared scale and BigQuery in the shortest form, which the first two rows
+    # could never show (see Engine.canon, kind "decimal").
+    duck_sql = r"""
 select
   sum(cast(('0x'||substr(md5(cast(i as varchar)),1,8)) as bigint)) as int_sum,
   sum(cast(('0x'||substr(md5(cast(cast(round(f*1000000) as bigint) as varchar)),1,8)) as bigint)) as float_sum,
@@ -548,14 +604,16 @@ select
   sum(cast(('0x'||substr(md5(cast(d as varchar)),1,8)) as bigint)) as date_sum,
   sum(cast(('0x'||substr(md5(cast(epoch_us(ts) as varchar)),1,8)) as bigint)) as ts_sum,
   sum(cast(('0x'||substr(md5(s),1,8)) as bigint)) as str_sum,
-  sum(cast(('0x'||substr(md5(cast(dec as varchar)),1,8)) as bigint)) as dec_sum,
+  sum(cast(('0x'||substr(md5(regexp_replace(cast(dec as varchar), '(\.[0-9]*[1-9])0+$|\.0+$', '\1')),1,8)) as bigint)) as dec_sum,
   count(distinct cast(f as varchar)) as f_distinct
 from (values
   (1, 1.5, true,  date '2024-03-15', timestamp '2024-03-15 13:45:12', 'abc', 12.34::decimal(18,2)),
-  (2, -2.25, false, date '2023-01-01', timestamp '2023-01-01 00:00:00', 'ABC', -0.05::decimal(18,2))
+  (2, -2.25, false, date '2023-01-01', timestamp '2023-01-01 00:00:00', 'ABC', -0.05::decimal(18,2)),
+  (3, 0.5, true,  date '2024-02-29', timestamp '2024-02-29 23:59:59', 'x', 12.30::decimal(18,2)),
+  (4, 100.0, false, date '1999-12-31', timestamp '1999-12-31 12:00:00', '', 12.00::decimal(18,2))
 ) t(i,f,b,d,ts,s,dec)
 """
-    bq_sql = """
+    bq_sql = r"""
 select
   sum(cast(concat('0x', substr(to_hex(md5(cast(i as string))),1,8)) as int64)) as int_sum,
   sum(cast(concat('0x', substr(to_hex(md5(cast(cast(round(f*1000000) as int64) as string))),1,8)) as int64)) as float_sum,
@@ -563,11 +621,13 @@ select
   sum(cast(concat('0x', substr(to_hex(md5(cast(d as string))),1,8)) as int64)) as date_sum,
   sum(cast(concat('0x', substr(to_hex(md5(cast(unix_micros(ts) as string))),1,8)) as int64)) as ts_sum,
   sum(cast(concat('0x', substr(to_hex(md5(s)),1,8)) as int64)) as str_sum,
-  sum(cast(concat('0x', substr(to_hex(md5(cast(dec as string))),1,8)) as int64)) as dec_sum,
+  sum(cast(concat('0x', substr(to_hex(md5(regexp_replace(cast(dec as string), r'(\.[0-9]*[1-9])0+$|\.0+$', r'\1'))),1,8)) as int64)) as dec_sum,
   count(distinct cast(f as string)) as f_distinct
 from unnest([
   struct(1 as i, 1.5 as f, true as b, date '2024-03-15' as d, timestamp '2024-03-15 13:45:12' as ts, 'abc' as s, numeric '12.34' as dec),
-  struct(2 as i, -2.25 as f, false as b, date '2023-01-01' as d, timestamp '2023-01-01 00:00:00' as ts, 'ABC' as s, numeric '-0.05' as dec)
+  struct(2 as i, -2.25 as f, false as b, date '2023-01-01' as d, timestamp '2023-01-01 00:00:00' as ts, 'ABC' as s, numeric '-0.05' as dec),
+  struct(3 as i, 0.5 as f, true as b, date '2024-02-29' as d, timestamp '2024-02-29 23:59:59' as ts, 'x' as s, numeric '12.30' as dec),
+  struct(4 as i, 100.0 as f, false as b, date '1999-12-31' as d, timestamp '1999-12-31 12:00:00' as ts, '' as s, numeric '12.00' as dec)
 ])
 """
     d = duck.sql(duck_sql)[0]
@@ -575,6 +635,77 @@ from unnest([
     b = {k: int(v) for k, v in brows[0].items()}
     d = {k: int(v) for k, v in d.items()}
     return d, b, d == b
+
+
+def real_sources_problem(duck: DuckLeg):
+    """None when dev.duckdb holds the real load of scripts/load_duckdb_real_sources.sh.
+
+    The real tables have a `users.user_geom` column the fixture lacks, and the loader
+    delivers timestamps as TIMESTAMPTZ (D2) where the extension alone gives TIMESTAMP;
+    together they tell the real load apart from the fixture and from a raw probe load.
+    """
+    try:
+        rows = duck.sql(
+            "select table_name, column_name, data_type from information_schema.columns "
+            "where table_schema = 'thelook_ecommerce' and ("
+            "(table_name = 'users' and column_name = 'user_geom') or "
+            "(table_name = 'orders' and column_name = 'created_at'))")
+    except Exception as e:  # noqa: BLE001
+        return f"cannot read {duck.db}: {e}"
+    found = {(r["table_name"], r["column_name"]): r["data_type"] for r in rows}
+    if ("users", "user_geom") not in found:
+        return ("thelook_ecommerce.users has no user_geom column: dev.duckdb holds the"
+                " fixture, not the real dataset")
+    if found.get(("orders", "created_at")) != "TIMESTAMP WITH TIME ZONE":
+        return (f"thelook_ecommerce.orders.created_at is"
+                f" {found.get(('orders', 'created_at'))}, not TIMESTAMP WITH TIME ZONE:"
+                " a raw-timestamp load breaks the source contract (D2)")
+    return None
+
+
+def layer_of(model: str) -> str:
+    for layer in ("staging", "intermediate", "marts"):
+        if any((REPO / "models" / layer).rglob(f"{model}.sql")):
+            return layer
+    return "?"
+
+
+def keep_run_results(leg: str, out_dir):
+    """Copy target/run_results.json aside before the next build overwrites it."""
+    src = REPO / "target" / "run_results.json"
+    if not src.exists():
+        return None
+    dst = REPO / "target" / f"parity-run_results-{leg}.json"
+    shutil.copyfile(src, dst)
+    if out_dir:
+        shutil.copyfile(src, out_dir / "logs" / f"run_results_{leg}.json")
+    return dst
+
+
+def model_durations(path) -> dict:
+    """{model name: execution_time seconds} from a run_results.json copy."""
+    if not path or not Path(path).exists():
+        return {}
+    data = json.loads(Path(path).read_text())
+    out = {}
+    for r in data.get("results", []):
+        uid = r.get("unique_id", "")
+        if uid.startswith("model.") and r.get("execution_time") is not None:
+            out[uid.split(".")[-1]] = float(r["execution_time"])
+    return out
+
+
+def write_build_log(out_dir, name, cmd, out, wall):
+    """The raw bytes a build printed, for analyses/<dir>/logs/."""
+    if not out_dir:
+        return
+    text = (f"$ {' '.join(cmd)}\n# exit {out.returncode}, wall {wall:.2f} s\n"
+            + out.stdout + ("\n# --- stderr ---\n" + out.stderr if out.stderr else ""))
+    # The logs are committed; the key path stays out of them.
+    for var in ("BQ_KEYFILE", "GOOGLE_APPLICATION_CREDENTIALS"):
+        if os.environ.get(var):
+            text = text.replace(os.environ[var], f"${var}")
+    (out_dir / "logs" / name).write_text(text)
 
 
 def main():
@@ -591,7 +722,31 @@ def main():
                     help="run only the digest self-check (both engines, constant inputs)"
                          " and exit; no build, no models")
     ap.add_argument("--project", default="coreychimpbot")
+    ap.add_argument("--sources", choices=("fixture", "real"), default="fixture",
+                    help="what dev.duckdb reads: `fixture` (default; `make duck` reloads it)"
+                         " or `real` (the tables scripts/load_duckdb_real_sources.sh"
+                         " loaded; only `dbt build --target duckdb` runs, never the"
+                         " fixture loader, which would overwrite them)")
+    ap.add_argument("--bq-source", dest="bq_source", choices=("compiled", "materialised"),
+                    default="compiled",
+                    help="what is measured on BigQuery: `compiled` (default; the DAG"
+                         " inlined into one read-only query per model) or `materialised`"
+                         " (the tables `dbt build --target bigquery` wrote to"
+                         " <project>.<schema>)")
+    ap.add_argument("--out-dir", dest="out_dir", type=Path,
+                    help="also write results.md/.json there and the raw build logs and"
+                         " run_results copies into <out-dir>/logs/"
+                         " (e.g. analyses/value_parity)")
     args = ap.parse_args()
+    # The fixture + compiled defaults are the path every other card and the pre-PR gate
+    # use; their output stays exactly as it was. Durations and the value-parity wording
+    # are only added once one of the new modes is asked for.
+    extended = (args.sources == "real" or args.bq_source == "materialised"
+                or args.out_dir is not None)
+    out_dir = None
+    if args.out_dir is not None:
+        out_dir = (args.out_dir if args.out_dir.is_absolute() else REPO / args.out_dir)
+        (out_dir / "logs").mkdir(parents=True, exist_ok=True)
 
     key = (os.environ.get("BQ_KEYFILE")
            or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
@@ -617,11 +772,53 @@ def main():
     started = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     report = {"generated_at": started, "same_data": args.same_data,
               "models": [], "baseline": {}, "self_check": {}, "legs": {}}
+    if extended:
+        report.update({"sources": args.sources, "bq_source": args.bq_source,
+                       "bq_relation": f"{args.project}.{SCHEMA}"})
+    if args.same_data and args.sources == "fixture":
+        log("WARNING: --same-data with --sources fixture: the DuckDB leg reads the"
+            " fixture and BigQuery the real dataset, so rows and checksums will differ"
+            " and gate. Load the real rows (make fixtures-real) and pass --sources real.")
+    run_results = {"duckdb": REPO / "target" / "parity-run_results-duckdb.json",
+                   "bigquery": REPO / "target" / "parity-run_results-bigquery.json"}
+    duck_build_failed = False
 
     # ---------------------------------------------------------------- DuckDB leg
-    if not args.skip_build:
+    duck = DuckLeg(REPO / "dev.duckdb")
+    if args.sources == "real":
+        problem = (real_sources_problem(duck) if duck.db.exists()
+                   else f"{duck.db} does not exist")
+        if problem:
+            log(f"FATAL: --sources real, but {problem}. Run `make fixtures-real`"
+                " (scripts/load_duckdb_real_sources.sh) first.")
+            return 1
+        log("      dev.duckdb holds the real thelook_ecommerce rows"
+            " (users.user_geom present, timestamps TIMESTAMPTZ)")
+    if not args.skip_build and args.sources == "real":
+        cmd = [str(DBT), "build", "--target", "duckdb"]
+        log("[1/5] dbt build --target duckdb  (real sources; the fixture is NOT reloaded)")
+        t0 = time.time()
+        out = run(cmd, cwd=str(REPO), env=dbt_env())
+        wall = time.time() - t0
+        write_build_log(out_dir, "dbt_build_duckdb.log", cmd, out, wall)
+        keep_run_results("duckdb", out_dir)
+        report["legs"]["duckdb_build"] = {"exit": out.returncode, "wall_s": round(wall, 2),
+                                          "tail": out.stdout[-400:]}
+        log(f"      exit {out.returncode}, wall {wall:.1f} s")
+        if out.returncode != 0:
+            # On real rows a failing test is itself a finding; the models that were
+            # built are still measured, and the run cannot exit 0.
+            duck_build_failed = True
+            log(out.stdout[-3000:])
+            log("      the DuckDB build did not pass; measuring the models that exist.")
+    elif not args.skip_build:
         log("[1/5] make duck  (fixtures + dbt build --target duckdb)")
+        t0 = time.time()
         out = run(["make", "duck"], cwd=str(REPO), env=dbt_env())
+        wall = time.time() - t0
+        if extended:
+            write_build_log(out_dir, "dbt_build_duckdb.log", ["make", "duck"], out, wall)
+            keep_run_results("duckdb", out_dir)
         report["legs"]["duckdb_build"] = {"exit": out.returncode,
                                           "tail": out.stdout[-400:]}
         if out.returncode != 0:
@@ -629,7 +826,6 @@ def main():
             log(out.stderr[-3000:])
             log("FATAL: the DuckDB leg did not build; nothing can be compared.")
             return 1
-    duck = DuckLeg(REPO / "dev.duckdb")
     if not duck.db.exists():
         log(f"FATAL: {duck.db} does not exist. Run `make duck` first.")
         return 1
@@ -668,8 +864,13 @@ def main():
     if bq is not None:
         if not args.skip_build:
             log("[3/5] dbt build --target bigquery (attempt)")
-            out = run([str(DBT), "build", "--target", "bigquery"], cwd=str(REPO),
-                      env=dbt_env())
+            cmd = [str(DBT), "build", "--target", "bigquery"]
+            t0 = time.time()
+            out = run(cmd, cwd=str(REPO), env=bq_build_env(key))
+            wall = time.time() - t0
+            if extended:
+                write_build_log(out_dir, "dbt_build_bigquery.log", cmd, out, wall)
+                keep_run_results("bigquery", out_dir)
             first_err = ""
             if out.returncode != 0:
                 blob = out.stdout + "\n" + out.stderr
@@ -699,23 +900,33 @@ def main():
                     report["legs"]["bigquery_dataset"] = {"error": str(e)}
             report["legs"]["bigquery_build"] = {"exit": out.returncode,
                                                 "first_error": first_err}
+            if extended:
+                report["legs"]["bigquery_build"]["wall_s"] = round(wall, 2)
             log(f"      exit {out.returncode}"
                 + (f" - {first_err[:160]}" if first_err else ""))
-        log("[3/5] compiling the DAG read-only for BigQuery (all layers ephemeral)")
-        tmp = Path(tempfile.mkdtemp(prefix="parity-eph-"))
-        try:
-            compiled = compile_ephemeral_bigquery(tmp)
-        except Exception as e:  # noqa: BLE001
-            log(f"      compile failed: {e}")
-            report["legs"]["bigquery_compile_error"] = str(e)
-            compiled = {}
+        if args.bq_source == "compiled":
+            log("[3/5] compiling the DAG read-only for BigQuery (all layers ephemeral)")
+            tmp = Path(tempfile.mkdtemp(prefix="parity-eph-"))
+            try:
+                compiled = compile_ephemeral_bigquery(tmp)
+            except Exception as e:  # noqa: BLE001
+                log(f"      compile failed: {e}")
+                report["legs"]["bigquery_compile_error"] = str(e)
+                compiled = {}
+        else:
+            log(f"[3/5] measuring the materialised relations in"
+                f" {args.project}.{SCHEMA} (what dbt build --target bigquery wrote)")
 
     # ------------------------------------------------------------------- measure
     log("[4/5] measuring every model on both legs")
     (REPO / "target").mkdir(exist_ok=True)
-    duck_models = {}
+    duck_models, duck_missing = {}, {}
     for m in models:
         cols = duck.schema(m)
+        if not cols and args.sources == "real":
+            # A model the (failed) real-data build never materialised.
+            duck_missing[m] = f"main.{m} does not exist in dev.duckdb"
+            continue
         duck_models[m] = {"columns": cols, "metrics": duck.measure(m, cols)}
     json.dump({m: {"columns": [[c[0], kind_label(c[1]), c[2]] for c in v["columns"]],
                    "metrics": v["metrics"]} for m, v in duck_models.items()},
@@ -732,6 +943,14 @@ def main():
                 bq_models[m] = {"columns": cols, "metrics": bq.measure(m, cols, sql)}
             except Exception as e:  # noqa: BLE001
                 bq_models[m] = {"error": str(e)}
+    elif bq is not None and args.bq_source == "materialised":
+        for m in models:
+            source = f"`{args.project}.{SCHEMA}.{m}`"
+            try:
+                cols = bq.schema_of(source)
+                bq_models[m] = {"columns": cols, "metrics": bq.measure_of(source, cols)}
+            except Exception as e:  # noqa: BLE001
+                bq_models[m] = {"error": str(e)}
     json.dump({m: ({"error": v["error"]} if "error" in v else
                    {"columns": [[c[0], kind_label(c[1]), c[2]] for c in v["columns"]],
                     "metrics": v["metrics"]})
@@ -744,7 +963,15 @@ def main():
         log("[5/5] DuckDB baseline: rebuild and prove the measurements reproduce")
         before = {m: dict(v["metrics"], __cols=[c[0] for c in v["columns"]])
                   for m, v in duck_models.items()}
-        out = run(["make", "duck"], cwd=str(REPO), env=dbt_env())
+        # `make duck` would reload the fixture over the real rows; on real sources the
+        # baseline is the build alone, reading the same loaded tables.
+        cmd = (["make", "duck"] if args.sources == "fixture"
+               else [str(DBT), "build", "--target", "duckdb"])
+        t0 = time.time()
+        out = run(cmd, cwd=str(REPO), env=dbt_env())
+        if extended:
+            write_build_log(out_dir, "dbt_build_duckdb_baseline.log", cmd, out,
+                            time.time() - t0)
         baseline["ran"] = True
         baseline["rebuild_exit"] = out.returncode
         if out.returncode != 0:
@@ -752,7 +979,7 @@ def main():
             baseline["error"] = "the second build failed"
         else:
             mismatches = {}
-            for m in models:
+            for m in duck_models:
                 cols = duck.schema(m)
                 now = dict(duck.measure(m, cols),
                            __cols=[c[0] for c in cols])
@@ -765,7 +992,17 @@ def main():
 
     # ------------------------------------------------------------------ verdicts
     gating_failed, value_failed, unmeasured = [], [], []
+    dur = {}
+    if extended:
+        dur = {leg: model_durations(path) for leg, path in run_results.items()}
+        report["durations_source"] = {leg: (str(p.relative_to(REPO)) if p.exists() else None)
+                                      for leg, p in run_results.items()}
     for m in models:
+        if m in duck_missing:
+            unmeasured.append(m)
+            report["models"].append({"model": m, "verdict": "not_measured",
+                                     "error": duck_missing[m], "runs": []})
+            continue
         if m not in bq_models:
             unmeasured.append(m)
             report["models"].append({"model": m, "verdict": "not_measured",
@@ -781,7 +1018,8 @@ def main():
                                      "columns": len(duck_models[m]["columns"]),
                                      "runs": ["duckdb"]})
             continue
-        verdict, diffs, gated = model_verdict(duck_models[m], bq_models[m])
+        verdict, diffs, gated = model_verdict(duck_models[m], bq_models[m],
+                                              same_rows=args.sources == "real")
         entry = {"model": m, "verdict": verdict,
                  "row_count": {"duckdb": duck_models[m]["metrics"]["__rows"],
                                "bigquery": bq_models[m]["metrics"]["__rows"]},
@@ -794,12 +1032,25 @@ def main():
         elif diffs:
             value_failed.append(m)
 
+    if extended:
+        for entry in report["models"]:
+            m = entry["model"]
+            d, b = dur.get("duckdb", {}).get(m), dur.get("bigquery", {}).get(m)
+            entry["layer"] = layer_of(m)
+            entry["duration_s"] = {"duckdb": d, "bigquery": b,
+                                   "ratio": (round(b / d, 2) if d and b else None)}
+
     # --------------------------------------------------------------------- write
     with open(REPO / "parity-report.json", "w") as fh:
         json.dump(report, fh, indent=2)
     write_markdown(report, args, key)
 
-    if bq is None or not compiled or len(unmeasured) == len(models):
+    if extended:
+        print_summary(report)
+    if out_dir:
+        write_results(report, args, out_dir, duck, duck_build_failed)
+
+    if bq is None or not bq_models or len(unmeasured) == len(models):
         log(f"\nparity: BigQuery leg could not be measured. Parity is NOT established.")
         log("See parity-report.md for the exact reason. DuckDB numbers above are"
             " reported for information only.")
@@ -815,6 +1066,23 @@ def main():
         log("\nparity: the DuckDB baseline did not reproduce; the harness itself"
             " is not trustworthy. See parity-report.md.")
         return 1
+    build_failed = duck_build_failed or (
+        args.bq_source == "materialised"
+        and report["legs"].get("bigquery_build", {}).get("exit", 0) != 0)
+    if args.sources == "real":
+        equal = len(models) - len(value_failed)
+        log(f"\nparity: schema parity holds on all {len(models)} models. On the same"
+            f" input rows, {equal} of {len(models)} match on every check"
+            + (f"; {len(value_failed)} differ on rows and/or values:"
+               f" {', '.join(value_failed)}" if value_failed else "")
+            + ". See parity-report.md.")
+        if build_failed:
+            log("parity: a build did not pass (see the build logs); not a clean run.")
+        return 1 if (build_failed or (value_failed and gated_rows)) else 0
+    if build_failed:
+        log("\nparity: the BigQuery build did not pass; the materialised relations may be"
+            " stale. See parity-report.md.")
+        return 1
     if value_failed:
         log(f"\nparity: schema parity holds on all {len(models)} models. Row counts and"
             f" checksums differ on {len(value_failed)} of them, as expected: the two legs"
@@ -827,8 +1095,142 @@ def main():
     return 0
 
 
+def _secs(v):
+    return "n/a" if v is None else f"{v:.2f}"
+
+
+def _rows_pair(m):
+    rc = m.get("row_count")
+    if isinstance(rc, dict):
+        return rc["duckdb"], rc["bigquery"]
+    return (rc if rc is not None else "n/a"), "n/a"
+
+
+def _ratio(m):
+    r = (m.get("duration_s") or {}).get("ratio")
+    return "n/a" if r is None else f"{r:.1f}x"
+
+
+def print_summary(report):
+    """Per model, the equality result next to both build durations (D5)."""
+    log("\n      model                                       layer         verdict     "
+        " rows duckdb  rows bq  duckdb s    bq s  bq/duck")
+    for m in report["models"]:
+        rd, rb = _rows_pair(m)
+        d = m.get("duration_s") or {}
+        log(f"      {m['model']:43s} {m.get('layer', ''):13s} {m['verdict']:12s}"
+            f" {rd!s:>11} {rb!s:>8} {_secs(d.get('duckdb')):>9}"
+            f" {_secs(d.get('bigquery')):>7} {_ratio(m):>8}")
+
+
+def write_results(report, args, out_dir, duck, duck_build_failed):
+    """<out-dir>/results.{md,json}: generated by the run, never hand-edited."""
+    with open(out_dir / "results.json", "w") as fh:
+        json.dump(report, fh, indent=2)
+    try:
+        version = duck.sql("select version() as v")[0]["v"]
+    except Exception:  # noqa: BLE001
+        version = "unknown"
+    models = report["models"]
+    marts = [m for m in models if m.get("layer") == "marts"]
+    match = [m for m in models if m["verdict"] == "match"]
+    marts_match = [m for m in marts if m["verdict"] == "match"]
+    real = args.sources == "real"
+    flags = (f"--sources {args.sources} --bq-source {args.bq_source}"
+             + (" --same-data" if args.same_data else "")
+             + (" --skip-build" if args.skip_build else ""))
+    lines = []
+    A = lines.append
+    A("# Value parity: results (generated)")
+    A("")
+    A(f"Generated by `scripts/parity.py {flags}` at {report['generated_at']}."
+      f" DuckDB `{version}`; BigQuery relations in `{report.get('bq_relation', '')}`"
+      + (" as materialised by `dbt build --target bigquery`."
+         if args.bq_source == "materialised" else " (inlined compile, read-only)."))
+    A("")
+    if real:
+        A("DuckDB leg: `dev.duckdb` built by `dbt build --target duckdb` over the real"
+          " `thelook_ecommerce` rows that `scripts/load_duckdb_real_sources.sh` copied"
+          " from BigQuery (timestamps delivered as TIMESTAMPTZ, D2).")
+    else:
+        A("DuckDB leg: `dev.duckdb` built by `make duck` over the fixture.")
+    A("")
+    A("Method: per model, on the relation each leg delivered: row count, column names,"
+      " canonical column types, and per column an order-independent checksum (SUM of the"
+      " first 32 bits of `md5(<canonical text>)`), a null count and a distinct count."
+      " The digest is checked on constants on both engines before any model is"
+      " measured. Durations are dbt's per-model `execution_time` from each leg's"
+      " `run_results.json` (copies in `logs/`).")
+    A("")
+    A("## Verdict")
+    A("")
+    A(f"* all models: **{len(match)} of {len(models)}** match on every check.")
+    A(f"* marts: **{len(marts_match)} of {len(marts)}** match on every check.")
+    sc = report.get("self_check") or {}
+    A("* digest self-check: "
+      + ("PASS." if sc.get("match") else ("FAIL." if sc else "not run.")))
+    base = report.get("baseline") or {}
+    if not base.get("ran"):
+        A("* DuckDB-vs-DuckDB baseline: not run (`--skip-build` or `--no-baseline`).")
+    else:
+        A("* DuckDB-vs-DuckDB baseline: "
+          + ("MATCH." if base.get("match") else "**MISMATCH**."))
+    for leg in ("duckdb_build", "bigquery_build"):
+        b = report["legs"].get(leg)
+        if b:
+            A(f"* `{leg}`: exit {b.get('exit')}"
+              + (f", wall {b['wall_s']} s" if b.get("wall_s") is not None else "") + ".")
+    if duck_build_failed:
+        A("* the DuckDB build did **not** pass; see `logs/dbt_build_duckdb.log`.")
+    A("")
+    A("## Per model")
+    A("")
+    A("| layer | model | rows duckdb | rows bigquery | cols | verdict | differences"
+      " | duckdb s | bigquery s | bigquery/duckdb |")
+    A("|---|---|---|---|---|---|---|---|---|---|")
+    order = {"marts": 0, "intermediate": 1, "staging": 2}
+    for m in sorted(models, key=lambda m: (order.get(m.get("layer"), 3), m["model"])):
+        rd, rb = _rows_pair(m)
+        d = m.get("duration_s") or {}
+        A(f"| {m.get('layer', '')} | `{m['model']}` | {rd} | {rb} | {m.get('columns', '')}"
+          f" | {m['verdict']} | {len(m.get('differences') or [])}"
+          f" | {_secs(d.get('duckdb'))} | {_secs(d.get('bigquery'))} | {_ratio(m)} |")
+    tot_d = sum((m.get("duration_s") or {}).get("duckdb") or 0 for m in models)
+    tot_b = sum((m.get("duration_s") or {}).get("bigquery") or 0 for m in models)
+    A("")
+    A(f"Sum of per-model execution time: DuckDB {tot_d:.2f} s, BigQuery {tot_b:.2f} s.")
+    A("")
+    A("## Differences, in full")
+    A("")
+    any_diff = False
+    for m in models:
+        diffs = m.get("differences") or []
+        if not diffs and not m.get("error"):
+            continue
+        any_diff = True
+        A(f"### `{m['model']}` ({m.get('layer', '')}) - {m['verdict']}")
+        A("")
+        if m.get("error"):
+            A("```")
+            A(m["error"])
+            A("```")
+            A("")
+            continue
+        A("| check | column | duckdb | bigquery | detail |")
+        A("|---|---|---|---|---|")
+        for d in diffs:
+            A(f"| {d['check']} | {d.get('column', '')} | `{d['duckdb']}`"
+              f" | `{d['bigquery']}` | {d.get('detail', '')} |")
+        A("")
+    if not any_diff:
+        A("None: every model matched on every check.")
+        A("")
+    (out_dir / "results.md").write_text("\n".join(lines))
+
+
 def write_markdown(report, args, key):
     bq = report["legs"].get("bigquery_build", {})
+    real = report.get("sources") == "real"
     lines = []
     A = lines.append
     A("# Parity report - DuckDB vs BigQuery")
@@ -867,7 +1269,13 @@ def write_markdown(report, args, key):
         A(f"{len(full)} model(s) match on **every** check, values included: "
           + ", ".join(f"`{f}`" for f in full) + ".")
         A("")
-    if valonly:
+    if valonly and real:
+        A(f"{len(valonly)} model(s) match on names and types but differ on rows and/or")
+        A("values **although both legs read the same input rows** (the real dataset,")
+        A("loaded into DuckDB by `scripts/load_duckdb_real_sources.sh`). Each one is a")
+        A("result difference between the targets, listed under Differences.")
+        A("")
+    elif valonly:
         A(f"{len(valonly)} model(s) match on names and types but differ on rows and/or")
         A("values, because the two legs read different source data (the DuckDB fixture")
         A("vs the real dataset). Expected today; cards 5/6 remove the cause.")
@@ -876,28 +1284,44 @@ def write_markdown(report, args, key):
         A(f"{len(notme)} model(s) could not be measured on the BigQuery leg: "
           + ", ".join(f"`{f}`" for f in notme) + ".")
         A("")
-    A("A model that matches values **as well as** schema is the strongest signal in")
-    A("this report: it means the fixture and the real table really are the same rows")
-    A("there, so the checksum is comparing data and not merely always differing.")
-    A("")
+    if not real:
+        A("A model that matches values **as well as** schema is the strongest signal in")
+        A("this report: it means the fixture and the real table really are the same rows")
+        A("there, so the checksum is comparing data and not merely always differing.")
+        A("")
     A("## How to read this")
     A("")
     A("Every model is measured on two independently built legs. Four things are")
     A("compared per model: row count, column names, canonical column types and one")
     A("order-independent checksum per column (plus a null count and a distinct count).")
     A("")
-    A("Gating (a mismatch exits non-zero) is **column names** and **canonical column")
-    A("types**: the part of \"the same data\" that must hold whatever rows the legs")
-    A("read. Row counts and checksums are reported but do not gate by default, because")
-    A("the two legs deliberately read *different source data* today - the DuckDB target")
-    A("reads the deterministic local fixture, the BigQuery target reads the real")
-    A("`bigquery-public-data.thelook_ecommerce`. `--same-data` makes them gate too.")
-    A("")
+    if real:
+        A("Both legs read the same input rows: the real")
+        A("`bigquery-public-data.thelook_ecommerce`, read in place by BigQuery and copied")
+        A("into `dev.duckdb` by `scripts/load_duckdb_real_sources.sh`. Gating is column")
+        A("names and canonical types"
+          + (", and with `--same-data` row counts and every per-column checksum, null"
+             " count and distinct count too." if args.same_data else
+             "; rows and values are reported (`--same-data` makes them gate)."))
+        A("")
+    else:
+        A("Gating (a mismatch exits non-zero) is **column names** and **canonical column")
+        A("types**: the part of \"the same data\" that must hold whatever rows the legs")
+        A("read. Row counts and checksums are reported but do not gate by default, because")
+        A("the two legs deliberately read *different source data* today - the DuckDB target")
+        A("reads the deterministic local fixture, the BigQuery target reads the real")
+        A("`bigquery-public-data.thelook_ecommerce`. `--same-data` makes them gate too.")
+        A("")
     A("## The legs")
     A("")
     A(f"* DuckDB: the materialised `dev.duckdb` (schema `main`), read with the "
       f"`duckdb` CLI.")
-    if bq.get("exit") == 0:
+    if report.get("bq_source") == "materialised":
+        A(f"* BigQuery: the relations `dbt build --target bigquery` materialised in "
+          f"`{report.get('bq_relation')}` were measured directly"
+          + (f" (build exit {bq['exit']})." if bq.get("exit") is not None
+             else " (`--skip-build`: as last built)."))
+    elif bq.get("exit") == 0:
         A("* BigQuery: `dbt build --target bigquery` succeeded; models were measured "
           "through the compiled DAG.")
     elif bq.get("exit") is not None:
@@ -941,22 +1365,35 @@ def write_markdown(report, args, key):
         A(f"## DuckDB-vs-DuckDB baseline: "
           f"{'MATCH' if base.get('match') else 'MISMATCH'}")
         A("")
-        A("`dev.duckdb` was rebuilt from scratch (fixture + `dbt build`) and every")
+        A("`dev.duckdb` was rebuilt from scratch (fixture + `dbt build`) and every"
+          if not real else
+          "`dev.duckdb`'s models were rebuilt (`dbt build`, same loaded rows) and every")
         A("measurement repeated. This is the sanity check that the harness measures a")
         A("deterministic thing: if the engines disagree later, it is a real difference")
         A("and not harness noise.")
         A("")
     A("## Per model")
     A("")
-    A("| model | rows (duckdb) | rows (bigquery) | cols | verdict |")
-    A("|---|---|---|---|---|")
+    timed = "sources" in report
+    if timed:
+        A("| model | rows (duckdb) | rows (bigquery) | cols | verdict "
+          "| duckdb s | bigquery s | bigquery/duckdb |")
+        A("|---|---|---|---|---|---|---|---|")
+    else:
+        A("| model | rows (duckdb) | rows (bigquery) | cols | verdict |")
+        A("|---|---|---|---|---|")
     for m in report["models"]:
         rc = m.get("row_count")
         if isinstance(rc, dict):
             rows = f"{rc['duckdb']} | {rc['bigquery']} "
         else:
             rows = f"{rc} | n/a "
-        A(f"| {m['model']} | {rows}| {m.get('columns', '')} | {m['verdict']} |")
+        line = f"| {m['model']} | {rows}| {m.get('columns', '')} | {m['verdict']} |"
+        if timed:
+            d = m.get("duration_s") or {}
+            line += (f" {_secs(d.get('duckdb'))} | {_secs(d.get('bigquery'))}"
+                     f" | {_ratio(m)} |")
+        A(line)
     A("")
     A("## Differences")
     A("")
@@ -983,8 +1420,9 @@ def write_markdown(report, args, key):
                   + f": {d.get('detail', '')}")
             A("")
         if other:
-            A(f"{len(other)} reported difference(s) (not gating while the legs read"
-              " different source data):")
+            A(f"{len(other)} reported difference(s)"
+              + (" on the same input rows:" if real else
+                 " (not gating while the legs read different source data):"))
             A("")
             for d in other[:8]:
                 A(f"* `{d['check']}`"
