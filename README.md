@@ -32,7 +32,7 @@ profiles.yml            BOTH targets, committed — it holds no credentials
 packages.yml            empty on purpose: every package must work on both targets
 pyproject.toml + uv.lock  dbt itself, pinned (dbt-oss 2.0.5)
 Makefile                make setup | check-env | fixtures | duck | bq | build-both | parity |
-                        polyglot | portability | clean
+                        polyglot | portability | move-to-duckdb | handmove-example | clean
 models/staging/         7 views: rename + cast only, one per source table; the source definition
 models/intermediate/    11 views: the joins and aggregates
 models/marts/           11 tables: fct_*, dim_*, mart_* (dim_date is the date spine)
@@ -419,6 +419,10 @@ make polyglot     # the macro layer end to end: 44 self-check cases on DuckDB, t
                   # for both targets, the decimal ceiling, then the guardrail and its --demo
 make portability  # just the guardrail: compile both targets, scan each render for the other
                   # dialect, fail on a target branch in a model
+make move-to-duckdb    # move the project to a DuckDB-only one in target/duckdb_only and build
+                       # it (scripts/move_to_duckdb.py; see docs/move_to_duckdb.md)
+make handmove-example  # the worked example: three hand-moved models must equal the automatic
+                       # move and build green
 ```
 
 To query a mart after `make duck`, from the repo root. This is the form used for
@@ -710,8 +714,14 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
   violation); the fourth, `assert_order_item_created_at_is_plausible`, does return rows on
   the real data by design — it is `severity: warn` and reports the 137,795 dirty
   `order_items` timestamps on every BigQuery run.
-* **The fallback path (a separate project for whatever cannot be transpiled) does
-  not exist here.** It is card 7's job; this project is deliberately one tree.
+* **The fallback path exists as a procedure, not as a second repository.**
+  `make move-to-duckdb` (`scripts/move_to_duckdb.py`) turns this project into a
+  DuckDB-only one. It inlines the 175 seam call sites and rewrites 3 non-model files,
+  and the result builds green with the same 196 nodes and compiles byte-identical to
+  this project's DuckDB render. See `docs/move_to_duckdb.md` for the
+  procedure, a worked hand-move of three models, and the verdict (keep one project).
+  What is not verified: the procedure on any project other than this one, and a
+  two-repo setup run over time.
 
 ## Known dbt v2 findings
 
