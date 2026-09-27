@@ -928,8 +928,11 @@ were wrong in exactly this way and were corrected during implementation:
    date `generate_series` needs an explicit interval and returns `TIMESTAMP[]`, so the DuckDB
    branch casts back to `date[]`.
 3. **The FROM alias above** — a relation-level difference, not an expression-level one.
-4. **Division typing.** `safe_divide` must be `DOUBLE`/`FLOAT64` (that is BigQuery's SAFE_DIVIDE),
-   so the two money metrics that want decimal rounding keep `round(x / nullif(y, 0), 2)` cast to
+4. **Division typing.** `safe_divide` must be `DOUBLE`/`FLOAT64`. BigQuery's SAFE_DIVIDE returns
+   its inputs' type (`NUMERIC` on two `NUMERIC` inputs) and DuckDB keeps `decimal / decimal` as
+   DECIMAL, so both branches cast both sides to the float type — that is what makes
+   `mart_product_performance.gross_margin_rate` `DOUBLE`/`FLOAT64` rather than `NUMERIC`. So the
+   two money metrics that want decimal rounding keep `round(x / nullif(y, 0), 2)` cast to
    `money_type()`. Deliberate, documented in the macro's docstring.
 5. **The source database name** (`bigquery-public-data` vs `dev`) belongs to a relation, not an
    expression, so it stays in `models/staging/_thelook__sources.yml` — the single allowlisted
@@ -1078,15 +1081,16 @@ renderer are implemented but unexercised here.
   scratch and re-measured; every model reproduced exactly).
 * **All 29 models measured on both legs.** No model went unmeasured.
 * **One gating mismatch — a real defect, not a source-data difference.**
-  `mart_product_performance.gross_margin_rate` is `DOUBLE` on DuckDB and `NUMERIC` on BigQuery.
+  `mart_product_performance.gross_margin_rate` was `DOUBLE` on DuckDB and `NUMERIC` on BigQuery.
   Cause: `bigquery__safe_divide` renders BigQuery's `SAFE_DIVIDE(<a>, <b>)` on the inputs' own
   types, and `SAFE_DIVIDE` returns the input type — on two `NUMERIC` inputs that is `NUMERIC`,
   while the `default__safe_divide` branch casts both sides to float. The macro's docstring says it
   is float-typed on purpose, so the BigQuery branch is not doing what it says. The other two
   callers (`int_products__returns.return_rate`, `mart_cohort_retention.retention_rate`) are safe:
   their inputs are integers, so `SAFE_DIVIDE` yields `FLOAT64` and the canonical types agree.
-  **Not fixed in this card** — it is the macro layer's, and fixing it here would hide the finding.
-  A follow-up card carries the one-line fix.
+  Not fixed in card 4 — it is the macro layer's, and fixing it there would have hidden the finding.
+  **Fixed in card 7** with the one-line change: `bigquery__safe_divide` now casts both sides to
+  `float_type()` before `SAFE_DIVIDE`, so this gating mismatch is gone.
 * **28 of the 29 models differ on rows/values**, because the two legs read different data: 3,000
   fixture orders vs 124,952 real, 20,000 fixture events vs 2,425,698 real, and so on. Those
   checksums are reported, not gated, until both legs read one dataset; `--same-data` promotes

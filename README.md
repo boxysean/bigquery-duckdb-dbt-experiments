@@ -158,7 +158,7 @@ are exactly those renders). Measured on this machine:
 | `month_start(expr)` | `cast(date_trunc('month', expr) as timestamp)` | `timestamp_trunc(expr, month)` | delegated to `timestamp_trunc_to(expr, 'month')` | ×4 |
 | `month_number(expr)` | `extract(year …) * 100 + extract(month …)` | identical | EXTRACT is spelt the same; the dispatch is kept for one seam shape | ×4 |
 | `seconds_between(a, b)` | `cast(date_diff('microsecond', a, b) as double) / 1000000.0` | `cast(timestamp_diff(b, a, microsecond) as float64) / 1000000.0` | BigQuery's DATE_DIFF takes DATEs, so it needs TIMESTAMP_DIFF, arguments reversed | ×2 |
-| `safe_divide(n, d)` | `cast(n as double) / nullif(cast(d as double), 0)` | `safe_divide(n, d)` | BigQuery's SAFE_DIVIDE is NULL-on-zero and FLOAT64; the DuckDB branch reproduces both | ×3 |
+| `safe_divide(n, d)` | `cast(n as double) / nullif(cast(d as double), 0)` | `safe_divide(cast(n as float64), cast(d as float64))` | BigQuery's SAFE_DIVIDE is NULL-on-zero but returns its inputs' type, so both branches cast both sides to the float type | ×3 |
 | `regexp_contains(expr, pattern)` | `regexp_matches(expr, pattern)` | `regexp_contains(expr, pattern)` | same RE2 engine, different function name | no — self-check + render |
 | `generate_surrogate_key(cols)` | `md5(concat_ws('\\|\\|', cols))` | `to_hex(md5(concat(cast(… as string), '\\|\\|', …)))` | BigQuery has no CONCAT_WS, its CONCAT takes only STRING, and MD5 returns BYTES | ×3 |
 
@@ -262,9 +262,11 @@ Five things the seam had to work around, all of them measured here:
    **element**, DuckDB binds the same text to the **table** (giving a `STRUCT(unnest
    DATE)`), so DuckDB needs `as date_day__unnest(date_day)` — which BigQuery rejects.
    `unnest` itself stays plain SQL; only the alias is dispatched (`unnest_alias`).
-4. **Division typing.** BigQuery's `SAFE_DIVIDE` returns FLOAT64, and DuckDB would keep
-   `decimal / decimal` as DECIMAL, so `safe_divide` casts both sides to `double`. That
-   is right for rates (and the self-check asserts `typeof` is `DOUBLE`), but it means
+4. **Division typing.** BigQuery's `SAFE_DIVIDE` returns its inputs' type (`NUMERIC`
+   on two `NUMERIC` inputs), and DuckDB keeps `decimal / decimal` as DECIMAL, so
+   `safe_divide` casts both sides to the float type on both targets. That is what makes
+   `mart_product_performance.gross_margin_rate` `DOUBLE`/`FLOAT64` rather than
+   `NUMERIC`. It is right for rates (and the self-check asserts `typeof` is `DOUBLE`), but it means
    the two money metrics that want *decimal* rounding —
    `mart_daily_revenue.average_order_value` and `mart_customer_summary.average_order_value`
    — keep `round(x / nullif(y, 0), 2)` cast to `money_type()` instead. That is a
@@ -601,9 +603,11 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
   *itself* before it measures anything: the digest self-check (both engines hash a
   fixture of constants to the same numbers) and the DuckDB-vs-DuckDB baseline
   (`dev.duckdb` is rebuilt from scratch and every measurement has to reproduce).
-  Both pass. The run exits 1, on one real mismatch it found —
-  `mart_product_performance.gross_margin_rate` is `DOUBLE` on DuckDB and `NUMERIC`
-  on BigQuery — see "What is NOT verified".
+  Both pass. That run exited 1 on one real mismatch it found —
+  `mart_product_performance.gross_margin_rate` was `DOUBLE` on DuckDB and `NUMERIC`
+  on BigQuery. Card 7 fixed it (the BigQuery branch of `safe_divide` now casts both
+  sides), so the run no longer fails on a type mismatch. Value parity is still not
+  established — see "What is NOT verified".
 
 ## What is NOT verified
 
@@ -666,15 +670,17 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
   `make parity` compares all 29 models on both targets and separates the two kinds of
   difference that exist today:
 
-  * **A real defect it found.** `mart_product_performance.gross_margin_rate` is
-    `DOUBLE` on DuckDB and `NUMERIC` on BigQuery. `bigquery__safe_divide` renders
-    BigQuery's `SAFE_DIVIDE` on the column's own type, and `SAFE_DIVIDE` returns the
-    input type, so on two `NUMERIC` inputs it returns `NUMERIC` while the DuckDB
-    branch casts to `DOUBLE`. The macro's own docstring says it is float-typed on
-    purpose, so the BigQuery branch is not doing what it says. This is what makes
-    the run exit 1. `int_products__returns.return_rate` and
-    `mart_cohort_retention.retention_rate` call the same macro but are safe: their
-    inputs are integers, so `SAFE_DIVIDE` yields `FLOAT64` and the two types agree.
+  * **A real defect it found, since fixed.** Card 4 found
+    `mart_product_performance.gross_margin_rate` was `DOUBLE` on DuckDB and `NUMERIC`
+    on BigQuery. `bigquery__safe_divide` rendered BigQuery's `SAFE_DIVIDE` on the
+    column's own type, and `SAFE_DIVIDE` returns the input type, so on two `NUMERIC`
+    inputs it returned `NUMERIC` while the DuckDB branch cast to `DOUBLE`. That was
+    the gating mismatch that made the run exit 1. Card 7 fixed it with a one-line
+    change: `bigquery__safe_divide` now casts both sides to `float_type()` before
+    calling `SAFE_DIVIDE`, so there is no gating type mismatch left.
+    `int_products__returns.return_rate` and `mart_cohort_retention.retention_rate`
+    call the same macro and were never affected: their inputs are integers, so
+    `SAFE_DIVIDE` yields `FLOAT64` either way.
   * **Different source data.** 28 of the 29 models differ on row counts and
     checksums, because the DuckDB leg reads the fixture and the BigQuery leg reads
     the real dataset — 3,000 fixture orders against 124,952 real ones, 20,000
