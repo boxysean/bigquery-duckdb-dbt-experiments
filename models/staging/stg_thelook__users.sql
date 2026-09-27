@@ -7,11 +7,11 @@ with source as (
 renamed as (
 
     select
-        cast(id as bigint)                              as user_id,
+        cast(id as {{ int_type() }})                              as user_id,
         cast(first_name as {{ string_type() }})         as first_name,
         cast(last_name as {{ string_type() }})          as last_name,
         cast(email as {{ string_type() }})              as email,
-        cast(age as bigint)                             as age,
+        cast(age as {{ int_type() }})                             as age,
         cast(gender as {{ string_type() }})             as gender,
         cast(state as {{ string_type() }})              as state,
         cast(street_address as {{ string_type() }})     as street_address,

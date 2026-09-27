@@ -25,9 +25,9 @@ select
     centers.name,
     centers.latitude,
     centers.longitude,
-    cast(coalesce(stock.inventory_units, 0) as bigint)                  as inventory_units,
-    cast(coalesce(stock.open_units, 0) as bigint)                       as open_units,
-    cast(coalesce(stock.sold_units, 0) as bigint)                       as sold_units,
+    cast(coalesce(stock.inventory_units, 0) as {{ int_type() }})                  as inventory_units,
+    cast(coalesce(stock.open_units, 0) as {{ int_type() }})                       as open_units,
+    cast(coalesce(stock.sold_units, 0) as {{ int_type() }})                       as sold_units,
     cast(coalesce(stock.open_inventory_value, 0) as {{ money_type() }}) as open_inventory_value
 from centers
 left join stock

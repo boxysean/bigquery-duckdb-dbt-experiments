@@ -7,7 +7,7 @@ with source as (
 renamed as (
 
     select
-        cast(id as bigint)                      as distribution_center_id,
+        cast(id as {{ int_type() }})                      as distribution_center_id,
         cast(name as {{ string_type() }})       as name,
         cast(latitude as {{ float_type() }})    as latitude,
         cast(longitude as {{ float_type() }})   as longitude

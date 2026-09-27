@@ -317,6 +317,48 @@ models:
       - name: open_inventory_value
         description: Sum of the open units' cost, USD.
 
+  - name: dim_date
+    description: >
+      Grain: one row per UTC calendar date from the first to the last order date,
+      inclusive, keyed by date_day. A date spine: days with no orders are present.
+      Calendar attributes of each date; weeks are ISO (Monday = 1 .. Sunday = 7).
+      Ordered by date_day.
+    columns:
+      - name: date_day
+        description: The UTC calendar date (DATE); primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: date_month
+        description: The date's UTC calendar month as 'YYYY-MM' text.
+        data_tests:
+          - not_null
+      - name: month_start_at
+        description: First instant of the date's UTC calendar month (naive UTC timestamp).
+        data_tests:
+          - not_null
+      - name: year_number
+        description: Calendar year, e.g. 2024.
+      - name: month_of_year
+        description: Calendar month number, 1 (January) .. 12 (December).
+      - name: day_of_month
+        description: Day of the month, 1 .. 31.
+      - name: day_of_week_iso
+        description: ISO day of the week, 1 (Monday) .. 7 (Sunday).
+        data_tests:
+          - not_null
+      - name: is_weekend
+        description: True when the date is a Saturday or Sunday (day_of_week_iso >= 6).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+      - name: days_since_first_order
+        description: Whole days from the first order date to date_day (0 on the first date).
+        data_tests:
+          - not_null
+
   - name: fct_inventory_items
     description: >
       Grain: one row per inventory item (one physical unit), keyed by
@@ -381,6 +423,10 @@ models:
         data_tests:
           - unique
           - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
       - name: order_count
         description: Orders placed on the date, any status.
       - name: order_item_count

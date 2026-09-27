@@ -8,7 +8,7 @@ SHELL := /bin/bash
 DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup check-env fixtures duck bq build-both parity clean
+.PHONY: help setup check-env fixtures duck bq build-both parity polyglot portability clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -22,6 +22,10 @@ help:
 	@printf '                    refuses with exit 2 when the machine has none)\n'
 	@printf '  make build-both   both targets, in that order\n'
 	@printf '  make parity       compare row counts per mart model across both targets\n'
+	@printf '  make polyglot     the macro layer end to end: self-check on DuckDB, renders\n'
+	@printf '                    for both targets, the decimal ceiling, the guardrail\n'
+	@printf '  make portability  compile both targets and scan each render for the other\n'
+	@printf '                    dialect (scripts/check_portability.py)\n'
 	@printf '  make clean        remove target/ and the local dev.duckdb file\n\n'
 	@printf 'See README.md, in particular the "What is verified" section.\n'
 
@@ -49,6 +53,16 @@ build-both: duck bq
 
 parity: check-env
 	bash scripts/parity.sh
+
+# The macro layer in one command (SPEC 7.4); the script re-runs both prerequisites
+# itself so it also works on its own.
+polyglot: check-env fixtures
+	bash scripts/polyglot_check.sh
+
+# The guardrail: no BigQuery-only token in the DuckDB render, no DuckDB-only token in
+# the BigQuery render, no target branching in models/ or tests/. Needs dev.duckdb.
+portability: check-env
+	python3 scripts/check_portability.py
 
 # `dbt clean` is deliberately not used: it resolves the duckdb profile first,
 # which opens the very file it is asked to delete, and the failing exit that

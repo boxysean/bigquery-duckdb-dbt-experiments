@@ -289,8 +289,14 @@ drop the named ones, and keep the grain exactly as stated.
     (surrogate) PK; `cohort_month`, `activity_month`, `months_since_cohort` (bigint),
     `customers`, `orders`, `revenue`, `retention_rate` (float: cohort customers active in that
     month ÷ the cohort's month-0 customers). `order by cohort_month, activity_month`.
+22. `dim_date` — **added by card 3 (t_44abf1ef), see section 7.6.** Grain: one row per UTC
+    calendar date from the first to the last order date, inclusive. `date_day` (DATE) PK;
+    `date_month`, `month_start_at`, `year_number`, `month_of_year`, `day_of_month`,
+    `day_of_week_iso`, `is_weekend`, `days_since_first_order`. `order by date_day`.
+    It is the model that makes the date macros load-bearing rather than dead code, and
+    `mart_daily_revenue.revenue_date` has a `relationships` test against it.
 
-Total: 7 + 11 + 10 = **28 models**.
+Total: 7 + 11 + 11 = **29 models** (card 2 shipped 28; card 3 added `dim_date`, section 7.6).
 
 ## 6. Definition of done for the whole card
 
@@ -299,7 +305,231 @@ Total: 7 + 11 + 10 = **28 models**.
 2. `dbt build` is idempotent — run it twice, second run also exits 0.
 3. `dbt parse --target bigquery` exits 0 (only proof available without credentials; call it
    out honestly as a parse, not a build).
-4. Model count is 28 (in the 25–35 band).
+4. Model count is 28 (in the 25–35 band). *(Card 3 raised it to 29 with `dim_date`, section
+   7.6; still inside the band.)*
 5. `README.md` states what is verified and what is not, with the real command output.
 6. `NOTES.md` (this card) lists every source column deliberately dropped, renamed or cast,
    and why.
+
+---
+
+# SPEC — the transpile macro layer (card t_44abf1ef)
+
+Everything below is the design contract for card 3. Sections 0–6 above are still authoritative
+for the model tree and still describe the code you are editing. This card **moves** the
+cross-target seam into `macros/polyglot/`, adds the macro families BigQuery and DuckDB differ on,
+adds the guardrail that makes "portable" measurable, and adds one model that makes the new date
+macros load-bearing instead of dead code.
+
+Rules that do not change: never touch `main`, never commit, `profiles.yml` is off limits, no dbt
+packages, `make duck` must stay green and idempotent, and **no model may contain a
+`{% if target.type %}` branch** — divergence lives in `macros/` only.
+
+## 7.1 Layout
+
+```
+macros/polyglot/types.sql       int_type, string_type, float_type, timestamp_type, money_type,
+                                decimal_type(p,s), type_bigint_array
+macros/polyglot/casting.sql     safe_cast, to_string, to_utc_timestamp
+macros/polyglot/selection.sql   except_columns
+macros/polyglot/structs.sql     struct_literal
+macros/polyglot/arrays.sql      generate_series, generate_date_series
+macros/polyglot/dates.sql       date_diff_days, format_date_str, format_month, timestamp_trunc_to,
+                                day_of_week_iso, month_start, month_number, seconds_between
+macros/polyglot/math.sql        safe_divide
+macros/polyglot/strings.sql     regexp_contains
+macros/polyglot/keys.sql        generate_surrogate_key
+macros/polyglot/self_check.sql  polyglot_render, polyglot_selfcheck
+analyses/polyglot_showcase.sql  one query that calls every macro (compiled, never run)
+```
+
+`macros/cross_target.sql` is **deleted**; its macros move into the files above with their names
+and behaviour unchanged. Every macro keeps the existing house style: an entry-point macro that
+does `{{ return(adapter.dispatch('<name>', 'bq_duckdb_experiments')()) }}`, a `default__<name>`
+(DuckDB) branch and a `bigquery__<name>` branch, and a Jinja `{# ... #}` docstring on the
+entry point that says **what it does and why the two dialects differ** (one paragraph; name the
+concrete syntax on each side).
+
+## 7.2 The macros (exact renderings — do not invent another spelling)
+
+| macro | DuckDB (`default__`) | BigQuery | why they differ |
+|---|---|---|---|
+| `int_type()` | `bigint` | `int64` | BQ has one integer type, INT64; DuckDB's canonical 64-bit int is BIGINT |
+| `string_type()` | `varchar` | `string` | DuckDB keeps the SQL-standard name |
+| `float_type()` | `double` | `float64` | as above |
+| `timestamp_type()` | `timestamp` | `timestamp` | same name, different meaning (see `to_utc_timestamp`) |
+| `money_type()` | `decimal(18,2)` | `numeric` | BQ NUMERIC is fixed 38,9; DuckDB needs an explicit width/scale |
+| `decimal_type(p,s)` | `decimal(p,s)`, **raises** when `p > 38` | `numeric` when `p <= 38 and s <= 9`, else `bignumeric` | DuckDB DECIMAL tops out at 38 digits; BIGNUMERIC has no DuckDB equivalent (rule below) |
+| `type_bigint_array()` | `bigint[]` | `array<int64>` | DuckDB writes the `T[]` suffix, BQ the `ARRAY<T>` parameterised type |
+| `safe_cast(expr, type)` | `try_cast(<expr> as <type>)` | `safe_cast(<expr> as <type>)` | BQ spells the NULL-on-failure cast SAFE_CAST; DuckDB spells it TRY_CAST |
+| `to_string(expr)` | `cast(<expr> as varchar)` | `cast(<expr> as string)` | via `string_type()` (unchanged) |
+| `to_utc_timestamp(expr)` | `timezone('UTC', cast(<expr> as timestamptz))` | `cast(<expr> as timestamp)` | unchanged; the deliberate time-zone decision |
+| `except_columns(cols)` | `* exclude (a, b)` | `* except (a, b)` | BQ calls the star modifier EXCEPT, DuckDB calls it EXCLUDE |
+| `struct_literal(fields)` | `{'a': 1, 'b': 2}` | `struct(1 as a, 2 as b)` | BQ's constructor takes named fields; DuckDB's struct literal is a map-like `{'k': v}` |
+| `generate_series(a, b[, step])` | `generate_series(a, b[, step])` | `generate_array(a, b[, step])` | BQ's array generator is GENERATE_ARRAY, DuckDB's is GENERATE_SERIES |
+| `generate_date_series(a, b, step)` | `cast(generate_series(a, b, interval <step>) as date[])` | `generate_date_array(a, b, interval <step>)` | BQ returns ARRAY<DATE>; DuckDB's date series is TIMESTAMP[], so the macro casts it back |
+| `date_diff_days(later, earlier)` | `date_diff('day', <earlier>, <later>)` | `date_diff(<later>, <earlier>, day)` | the arguments are **reversed** between the engines |
+| `format_date_str(expr, fmt)` | `strftime(<expr>, '<fmt>')` | `format_date(<expr>, '<fmt>')` | BQ's FORMAT_DATE vs DuckDB's STRFTIME |
+| `format_month(expr)` | `strftime(<expr>, '%Y-%m')` | `format_date(<expr>, '%Y-%m')` | the one format the marts need |
+| `timestamp_trunc_to(expr, g)` | `date_trunc('<g>', <expr>)` | `timestamp_trunc(<expr>, <g>)` | BQ's part is a bare keyword, DuckDB's is a quoted string; BQ has TIMESTAMP_TRUNC, DuckDB only DATE_TRUNC |
+| `day_of_week_iso(expr)` | `extract(isodow from <expr>)` | `(extract(dayofweek from <expr>) + 6) % 7 + 1` | DuckDB's `isodow` is already ISO (Mon=1); BQ's `dayofweek` is Sun=1, so the macro must do arithmetic |
+| `month_start(expr)` | unchanged | unchanged | now delegates to `timestamp_trunc_to(expr, 'month')` on DuckDB |
+| `safe_divide(n, d)` | `cast(<n> as double) / nullif(cast(<d> as double), 0)` | `safe_divide(<n>, <d>)` | BQ's SAFE_DIVIDE is NULL-on-zero-division and returns FLOAT64; the DuckDB branch must reproduce both the semantics **and** the type |
+| `regexp_contains(expr, pattern)` | `regexp_matches(<expr>, <pattern>)` | `regexp_contains(<expr>, <pattern>)` | same regex engine, different function name |
+| `generate_surrogate_key(cols)` | unchanged | unchanged | the two `concat` semantics, documented already |
+| `month_number(expr)`, `seconds_between(a,b)` | unchanged | unchanged | already portable branches |
+
+Argument hygiene, all of it enforced with `exceptions.raise_compiler_error`:
+`except_columns` with an empty list, `timestamp_trunc_to` with a granularity outside
+`second|minute|hour|day|week|month|quarter|year`, `generate_date_series` with a step outside
+`<n> (day|week|month|quarter|year)` (`n >= 1`), and `struct_literal` with an empty field list.
+`unnest(...)` is **not** a macro: the name and semantics are identical on both engines — say that
+in `arrays.sql` so nobody adds it later.
+
+## 7.3 The decimal ceiling (the rule, decided here)
+
+BigQuery NUMERIC is 38,9 and BIGNUMERIC is 76.76 digits (38 integer digits + 38 fractional).
+DuckDB's DECIMAL is capped at **38 digits total** and rejects anything wider
+(`Binder Error: DECIMAL type width must be between 1 and 38`).
+
+The rule, implemented in `decimal_type(p, s)` and documented in its docstring:
+
+* `p <= 38` → DuckDB `decimal(p, s)`; BigQuery `numeric` if `s <= 9` else `bignumeric`.
+* `p > 38` → on BigQuery `bignumeric`; on DuckDB **`raise_compiler_error`** naming the ceiling and
+  the two legal ways out (declare a narrower decimal, or `float_type()` and accept 15–16
+  significant digits). It must **never** silently render `double`, because a silent float is
+  exactly the failure mode the card calls out.
+
+## 7.4 The guardrail: `scripts/check_portability.py`
+
+Python 3 (stdlib only, `python3`), runnable from the repo root, exit 0 = portable, exit 1 = not.
+It is the number the card asks for, so it must print counts, not adjectives.
+
+1. **Compile both targets** into separate trees so both renders survive:
+   `.venv/bin/dbt compile --target duckdb --target-path target/portability/duckdb` and the same with
+   `--target bigquery` (export `DBT_PROFILES_DIR` to the repo root; the DuckDB leg needs the
+   fixture, so tell the caller to run `make fixtures` when `dev.duckdb` is missing).
+2. **Scan the compiled SQL** under `target/portability/<target>/compiled/bq_duckdb_experiments/`
+   (both `models/` and `analyses/`), after **stripping SQL comments** (`--` to end of line and
+   `/* */`) so prose cannot trip it.
+   * DuckDB render must not contain any BigQuery-only token:
+     `float64`, `safe_cast`, `safe_divide`, `generate_array`, `generate_date_array`,
+     `regexp_contains`, `format_date`, `timestamp_trunc`, `timestamp_diff`, `bignumeric`,
+     `struct(`, `* except (`, `array<`, `date_diff(` not followed by a quote, `bigquery-public-data`.
+   * BigQuery render must not contain any DuckDB-only token:
+     `try_cast`, `regexp_matches`, `strftime`, `generate_series`, `list_value`, `struct_pack`,
+     `epoch_ms`, `* exclude (`, `bigint[]`, `::`, `date_trunc('`, `date_diff('`, and
+     `dev.thelook_ecommerce` (the BigQuery render must never name the local fixture catalog).
+   * Every token in those lists was measured against DuckDB 1.5.5 (`int64` is *accepted* by DuckDB,
+     so it is deliberately **not** a DuckDB-direction token; `float64` is rejected, so it is).
+3. **Purity check**: no file under `models/` or `tests/` may contain `target.type`, `target.name`,
+   `target.database`, `target.schema` or `adapter.type`. One allowlist entry, with its reason in the
+   source: `models/staging/_thelook__sources.yml` (the source *database* name is the single thing
+   that is genuinely target-dependent; it is declared in one line and cannot live in a model).
+4. **Output**: one line per finding (`path:line: token 'x' -> <the line>`), then a summary of the
+   form `compiled files checked: N (models: M, analyses: K)`, `BigQuery-only tokens in the DuckDB
+   render: 0/15`, `DuckDB-only tokens in the BigQuery render: 0/13`, `target-branch findings: 0`,
+   and `PORTABLE` or `NOT PORTABLE: n finding(s)`. Exit accordingly.
+5. **`--demo`** proves the guardrail can fail. It writes a temporary
+   `models/intermediate/_portability_demo.sql` containing both a raw BigQuery-only call
+   (`select regexp_contains('a','a') as demo`) and a `{% if target.type == 'bigquery' %}` branch,
+   recompiles the DuckDB leg, asserts the checker now reports ≥1 finding of each kind with the demo
+   file named in the output, deletes the file (in a `finally`), re-checks, asserts clean, and prints
+   `demo: the guardrail failed as designed, then passed again`. It exits 0 only if both halves held.
+
+Makefile: add `polyglot` (`check-env` + `fixtures` + `bash scripts/polyglot_check.sh`) and
+`portability` (`check-env` + `python3 scripts/check_portability.py`), with help lines. Leave
+`duck`, `bq`, `build-both` and `parity` as they are.
+
+`scripts/polyglot_check.sh` (bash, `set -euo pipefail`) is the whole macro layer in one command:
+`check_env.sh`; `load_duckdb_sources.sh`; `dbt run-operation polyglot_selfcheck --target duckdb`;
+`dbt run-operation polyglot_render --target duckdb` and `--target bigquery` (tee both to
+`target/polyglot_render_<target>.txt`); `python3 scripts/check_portability.py`; then
+`python3 scripts/check_portability.py --demo`. Each step prints its own pass/fail line.
+
+## 7.5 `polyglot_render` and `polyglot_selfcheck` (the macros' own tests)
+
+`dbt run-operation` works on **both** targets on this machine, including `--target bigquery`
+with no credentials, as long as the macro does not query the warehouse (verified).
+
+* `polyglot_render(include_bignumeric=false)` — for the current target, `log()` one line per macro
+  invocation in the form `render <macro-name> <target.type> :: <rendered sql>`. With
+  `include_bignumeric=true` it also renders `decimal_type(77,38)`, which therefore **fails on
+  DuckDB by design** (that is how the ceiling rule is demonstrated) and prints `bignumeric` on
+  BigQuery.
+* `polyglot_selfcheck()` — DuckDB only. For every macro it builds a SQL expression, runs it with
+  `run_query`, and compares against the expected value/type using `typeof()` where the type is the
+  point. Print `selfcheck ok  <name>` / `selfcheck FAIL <name> expected <x> got <y>`, and
+  `raise_compiler_error` at the end if anything failed. On a non-DuckDB target it logs
+  `selfcheck skipped: <target.type> cannot be executed here (no credentials; render-only)` and
+  exits 0. Required cases (the card's ten dialect differences plus the type macros), all with
+  constant inputs so they are deterministic:
+  `safe_cast('42', int_type())` = 42 and `typeof` `BIGINT`; `safe_cast('nope', int_type())` = null;
+  `safe_divide(1, 0)` = null; `safe_divide(1, 4)` = 0.25 with `typeof` `DOUBLE`;
+  `date_diff_days(date '2024-03-15', date '2024-03-01')` = 14;
+  `format_month(timestamp '2024-03-15 13:45:00')` = `2024-03`;
+  `timestamp_trunc_to(timestamp '2024-03-15 13:45:12', 'hour')` = `2024-03-15 13:00:00`;
+  `day_of_week_iso(date '2024-03-15')` = 5 (a Friday);
+  `generate_series(1, 5)` = `[1,2,3,4,5]`, `generate_series(1, 9, 3)` = `[1,4,7]`,
+  `sum(unnest(...))` shape check;
+  `generate_date_series(date '2024-03-01', date '2024-03-05')` has 5 elements and `typeof` `DATE[]`;
+  `regexp_contains('LifeOS', '^Life')` = true and `regexp_contains('LifeOS', '^Nope')` = false;
+  `except_columns(['b'])` used as `select {{ except_columns(['b']) }} from (select 1 as a, 2 as b)`
+  returns exactly the columns `[a]`;
+  `struct_literal([['a', 1], ['b', 2]])` gives `s.a` = 1, `s.b` = 2 on both engines' access syntax;
+  `typeof(cast([] as {{ type_bigint_array() }}))` = `BIGINT[]`;
+  `typeof(...)` of `int_type()`, `string_type()`, `float_type()`, `timestamp_type()`,
+  `money_type()`, `decimal_type(38, 9)` = `BIGINT`, `VARCHAR`, `DOUBLE`, `TIMESTAMP`,
+  `DECIMAL(18,2)`, `DECIMAL(38,9)`.
+  Where an expression cannot be written as `select <expr>` (the star modifier), use the shape above
+  and check the returned column names rather than a value.
+
+## 7.6 Models this card touches
+
+Behaviour-preserving refactors (the rendered SQL and every number must be unchanged):
+
+* every `cast(<x> as bigint)` in `models/` → `cast(<x> as {{ int_type() }})`;
+* `int_products__returns.return_rate` → `{{ safe_divide('item_returns.returned_units', 'item_returns.units_sold') }}`;
+* `mart_product_performance.gross_margin_rate` → `{{ safe_divide('sales.gross_margin', 'sales.gross_revenue') }}`;
+* `mart_cohort_retention.retention_rate` → `{{ safe_divide('cohort_months.customers', 'cohort_sizes.cohort_customers') }}`;
+* `month_start()` keeps its call sites and now delegates to `timestamp_trunc_to(expr, 'month')`.
+* **Leave** `mart_daily_revenue.average_order_value` and `mart_customer_summary.average_order_value`
+  as decimal division (`round(x / nullif(y, 0), 2)` cast to `money_type()`): they want *decimal*
+  rounding, and `safe_divide` is float-typed on purpose (that is BigQuery's SAFE_DIVIDE). Note this
+  in the `safe_divide` docstring and in the README's "where a macro could not hide the difference"
+  list.
+
+One new model, `models/marts/dim_date.sql` (29 models total, still inside the 25–35 band) — the
+model that stops the date macros being dead code. Grain: **one row per UTC calendar date from the
+first to the last order date, inclusive**. Built from `int_orders__daily` for the min/max, expanded
+with `unnest(generate_date_series(min_date, max_date))`. Columns: `date_day` (**DATE**, PK),
+`date_month` (`string_type()`, via `format_month`), `month_start_at` (`timestamp_type()`, via
+`month_start`), `year_number`, `month_of_year`, `day_of_month` (ints, `int_type()`),
+`day_of_week_iso` (via `day_of_week_iso`), `is_weekend` (boolean, `day_of_week_iso >= 6`),
+`days_since_first_order` (`int_type()`, via `date_diff_days(date_day, first_date)`). Document the
+model and every column in `models/marts/_marts__models.yml`; tests: `unique` + `not_null` on
+`date_day`, `not_null` on `date_month`, `month_start_at`, `day_of_week_iso`, `is_weekend`,
+`days_since_first_order`, `accepted_values` on `is_weekend`, and
+`mart_daily_revenue.revenue_date → dim_date.date_day` as a `relationships` test.
+
+## 7.7 Definition of done for this card
+
+1. `make duck` exits 0 (29 models + every test) and is idempotent; nothing regresses.
+2. `dbt ls --resource-type model --quiet --target duckdb | wc -l` → 29.
+3. `dbt compile --target bigquery` exits 0; `dbt run-operation polyglot_render --target bigquery`
+   exits 0 and prints a BigQuery rendering for every macro.
+4. `dbt run-operation polyglot_selfcheck --target duckdb` exits 0 with every case `ok`.
+5. `dbt run-operation polyglot_render --args '{include_bignumeric: true}' --target duckdb` **fails**
+   with the decimal-ceiling message (expected failure, captured), and the same command with
+   `--target bigquery` prints `bignumeric`.
+6. `python3 scripts/check_portability.py` exits 0 with the counts printed;
+   `python3 scripts/check_portability.py --demo` exits 0 having shown it report findings and then
+   pass again; `bash scripts/polyglot_check.sh` (i.e. `make polyglot`) exits 0.
+7. `README.md` documents the macro layer (the table above, with a "load-bearing in a model" vs
+   "exercised by the self-check" column), the guardrail with its real output, the decimal-ceiling
+   rule, and a **"where a macro could not hide the difference"** list containing at least: the
+   decimal ceiling, DuckDB's TIMESTAMP[] date series vs BigQuery's ARRAY<DATE>, division typing
+   (decimal vs float64), and the source-database name outside `macros/`.
+8. `NOTES.md` gets a card-3 section with the real command output, the count of macros, and which
+   dialect difference was hardest.
+9. Report the total macro count at the end of `NOTES.md` and in the run summary.

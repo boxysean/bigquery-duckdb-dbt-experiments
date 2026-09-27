@@ -846,3 +846,144 @@ A `dbt show --inline` whose query ended in its own `limit 50` failed with
 11. **The time-zone handling on the real path.** It assumes DuckDB's `bigquery` extension
     returns TIMESTAMP as TIMESTAMPTZ (SPEC section 2). Only the fixture, which is loaded as
     `timestamptz`, has exercised it.
+
+---
+
+# NOTES — card t_44abf1ef (the transpile macro layer)
+
+Scope: SPEC section 7 (7.1–7.7). The model tree of card 2 is the base; this card moves the
+cross-target seam into `macros/polyglot/`, adds the macro families the two dialects differ on,
+adds the guardrail that makes "portable" a number, and adds one model (`dim_date`) that makes the
+new date macros load-bearing instead of dead code. `profiles.yml`, `dbt_project.yml` and
+`packages.yml` are untouched, `main` is untouched, nothing is committed by the agents that wrote
+the code.
+
+## Counts
+
+* **28 macros**: 26 dialect macros + 2 `run-operation` macros (`polyglot_render`,
+  `polyglot_selfcheck`). 52 branch macros in total (26 × `default__`/`bigquery__` pairs).
+* 11 files in `macros/polyglot/`; `analyses/polyglot_showcase.sql`; `scripts/check_portability.py`;
+  `scripts/polyglot_check.sh`; `models/marts/dim_date.sql`.
+* 29 models (7 staging + 11 intermediate + 11 marts) and 168 tests = **197 build nodes**,
+  all successful, twice in a row. `dbt compile --target bigquery` also compiles the analysis:
+  `29 models | 168 tests | 1 analysis | 198 success`.
+* Nine of the 26 dialect macros are not called by any model in this warehouse yet
+  (`decimal_type`, `type_bigint_array`, `safe_cast`, `except_columns`, `struct_literal`,
+  `generate_series`, `format_date_str`, `timestamp_trunc_to`, `regexp_contains`). They are not
+  untested: the self-check executes their DuckDB branch, the renders show their BigQuery branch,
+  and the showcase analysis calls every one of them on every compile.
+
+## Files
+
+Created:
+
+| file | what |
+|---|---|
+| `macros/polyglot/types.sql` | `int_type`, `string_type`, `float_type`, `timestamp_type`, `money_type`, `decimal_type(p,s)`, `type_bigint_array` |
+| `macros/polyglot/casting.sql` | `safe_cast`, `to_string`, `to_utc_timestamp` |
+| `macros/polyglot/selection.sql` | `except_columns` |
+| `macros/polyglot/structs.sql` | `struct_literal` |
+| `macros/polyglot/arrays.sql` | `generate_series`, `generate_date_series`, `unnest_alias` |
+| `macros/polyglot/dates.sql` | `date_diff_days`, `format_date_str`, `format_month`, `timestamp_trunc_to`, `day_of_week_iso`, `month_start`, `month_number`, `seconds_between` |
+| `macros/polyglot/math.sql` | `safe_divide` |
+| `macros/polyglot/strings.sql` | `regexp_contains` |
+| `macros/polyglot/keys.sql` | `generate_surrogate_key` |
+| `macros/polyglot/self_check.sql` | `polyglot_render(include_bignumeric)`, `polyglot_selfcheck()` |
+| `analyses/polyglot_showcase.sql` | one query calling every macro; compiled for both targets, never run |
+| `models/marts/dim_date.sql` | the date spine (1415 rows on the fixture), the model that uses the date macros |
+| `scripts/check_portability.py` | the guardrail (15 BigQuery-only + 13 DuckDB-only tokens, both directions, plus the target-branch check on `models/` and `tests/`), with `--demo` |
+| `scripts/polyglot_check.sh` | `make polyglot`: check-env, fixture, self-check, both renders, the decimal ceiling, the guardrail, the guardrail's `--demo` |
+
+Deleted: `macros/cross_target.sql` (its 10 macros moved into the files above, names and
+behaviour unchanged).
+
+Modified: 18 model files and `models/marts/_marts__models.yml` (the `int_type()` refactor,
+`safe_divide` in three rates, `dim_date`'s docs and tests), `Makefile` (`polyglot`, `portability`
+targets plus help lines), `README.md`, `SPEC.md` (section 5 totals), this file.
+
+## The hardest difference
+
+**The `unnest(...)` alias in `FROM`** — the one place the macro layer had to *grow a helper*
+rather than add a branch. `cross join unnest(<array>) as date_day` binds `date_day` to the
+element on BigQuery and to the **table** on DuckDB, so on DuckDB `date_day` is a
+`STRUCT(unnest DATE)` and `strftime(<struct>, …)` does not resolve; DuckDB needs
+`as date_day__unnest(date_day)`, which BigQuery rejects. `unnest` itself stays plain SQL (its name
+and semantics really are identical) and only the alias is dispatched, as `unnest_alias`.
+
+The most dangerous to get *wrong* is **`day_of_week_iso`**: BigQuery's `DAYOFWEEK` numbers Sunday
+1 (DuckDB's `isodow` is already ISO), and BigQuery has no `%` operator, so the branch is
+`(mod(extract(dayofweek from x) + 5, 7) + 1)`. A wrong formula still executes on DuckDB and would
+only be caught by reading BigQuery's documentation — there is no way to run it here. Same class of
+trap: `FORMAT_DATE` takes the format string **first**, and BigQuery's bare `WEEK` starts on Sunday
+where DuckDB's `'week'` is ISO (`week(monday)` is rendered for that case). Three SPEC renderings
+were wrong in exactly this way and were corrected during implementation:
+`format_date(fmt, expr)` not `format_date(expr, fmt)`, `mod(...)` not `%`, and `week(monday)`.
+
+## Places a macro could not hide the difference
+
+1. **The decimal ceiling.** BIGNUMERIC (76.76 digits) has no DuckDB equivalent; DuckDB DECIMAL
+   stops at 38 digits. `decimal_type(p > 38)` is a compiler error on DuckDB and `bignumeric` on
+   BigQuery — never a silent `double`.
+2. **Date series element type.** BigQuery `GENERATE_DATE_ARRAY` returns `ARRAY<DATE>`; DuckDB's
+   date `generate_series` needs an explicit interval and returns `TIMESTAMP[]`, so the DuckDB
+   branch casts back to `date[]`.
+3. **The FROM alias above** — a relation-level difference, not an expression-level one.
+4. **Division typing.** `safe_divide` must be `DOUBLE`/`FLOAT64` (that is BigQuery's SAFE_DIVIDE),
+   so the two money metrics that want decimal rounding keep `round(x / nullif(y, 0), 2)` cast to
+   `money_type()`. Deliberate, documented in the macro's docstring.
+5. **The source database name** (`bigquery-public-data` vs `dev`) belongs to a relation, not an
+   expression, so it stays in `models/staging/_thelook__sources.yml` — the single allowlisted
+   target read in the whole model tree.
+6. **A documented caveat, not solved:** `generate_date_series(…, '1 month')` drifts on DuckDB when
+   it starts on a month end (DuckDB adds the interval to the previous element:
+   `2024-01-31 → 02-29 → 03-29`). BigQuery is unmeasurable here. `arrays.sql` says to start month
+   steps on the 1st.
+
+## Verification (every command run on this machine, 2026-09-26)
+
+| command | result |
+|---|---|
+| `make duck` ×2 | exit 0 both times, `29 models \| 168 tests`, `197 total \| 197 success` (5.5 s second run) |
+| `dbt ls --resource-type model --quiet --target duckdb \| wc -l` | `29` |
+| `dbt compile --target bigquery` | exit 0, `29 models \| 168 tests \| 1 analysis` |
+| `dbt run-operation polyglot_selfcheck --target duckdb` | exit 0, `selfcheck: all 44 cases ok on duckdb` |
+| `dbt run-operation polyglot_render --target bigquery` | exit 0, 31 renderings |
+| `dbt run-operation polyglot_render --args '{include_bignumeric: true}' --target bigquery` | exit 0, `render decimal_type bigquery :: bignumeric` |
+| … the same with `--target duckdb` | **exit 1** with the ceiling message (expected failure) |
+| `python3 scripts/check_portability.py` | exit 0, `PORTABLE`: 30 files, 0/15, 0/13, 0 target branches |
+| `python3 scripts/check_portability.py --demo` | exit 0: `NOT PORTABLE: 2 finding(s)` with the demo file, then `PORTABLE` |
+| `make portability`, `make polyglot` | exit 0, `polyglot check: all steps ok` |
+| my own SQL on `dev.duckdb` | 3 rewritten rates equal the old formula row for row (0 differing rows), mart row counts unchanged (3000/8000/10000/400/200/10/1040/200/400/864 + dim_date 1415), gross revenue still `642483.63`, `dim_date` contiguous and its calendar attributes correct on every row |
+| my own adversarial leak (a model with raw `safe_cast`/`timestamp_trunc`/`array<int64>`/`bignumeric`/`float64`/`strftime`) | guardrail exited 1 with 6 findings (5/15 DuckDB-side, 1/13 BigQuery-side), then back to `PORTABLE` when removed |
+
+## What is NOT verified for card 3
+
+1. **Every `bigquery__` branch is rendered, never executed.** 26 of them. Rendering proves the Jinja
+   branch was taken and looks like BigQuery syntax; it does not prove BigQuery accepts it. In
+   particular the five macros `dim_date` introduced (`generate_date_series`, `day_of_week_iso`,
+   `format_date_str`, `date_diff_days`, `unnest_alias`) have never run anywhere except DuckDB.
+2. **The guardrail is a blacklist.** It fails on the 15/13 tokens listed in the README; a
+   BigQuery-only construct outside that list would pass. It also cannot tell whether the *DuckDB*
+   render would run on BigQuery — only that it carries no token it knows about.
+3. **`decimal_type`'s BigQuery branch is unexecuted**, so "`numeric` for `(38,9)`" is a rule from
+   BigQuery's documentation, not a measurement. A `p = 38, s = 9` value needing all 38 integer
+   digits would not fit BigQuery's NUMERIC (38,9 means 29 integer digits + 9 fractional) — the rule
+   maps `p <= 38 and s <= 9` to NUMERIC, which is right for the shapes this project casts but is a
+   judgement call, not a measured guarantee.
+4. **`generate_date_series` month/quarter/year steps** drift on DuckDB from a month-end start
+   (measured); BigQuery's behaviour in that case is unmeasured. `make polyglot`'s self-check only
+   uses month-start dates.
+5. **The self-check's BigQuery half is skipped by design** (`selfcheck skipped: bigquery cannot be
+   executed here`), so `make polyglot` on a machine without credentials proves the DuckDB half only.
+
+## Process note (honest)
+
+The macro library, `dim_date`, the guardrail and the shell wrapper were written by Claude Code in
+three print-mode runs. The **third run was cut off mid-flight** by Claude Code's weekly subscription
+limit (`429 ... You've hit your weekly limit · resets 10am (Europe/Vienna)`; `--fallback-model haiku`
+returns the same 429, and no other coding CLI — codex, opencode — is installed on this box). It had
+already written `scripts/check_portability.py`, `scripts/polyglot_check.sh` and the `Makefile`
+targets, but had not verified them. Bruno therefore verified the guardrail here, including an
+**independent adversarial leak** the script's own `--demo` does not use, and wrote the README,
+`SPEC.md` and this NOTES section by hand. Costs: run 1 `$2.06` (63 turns), run 2 `$0.88` (29 turns),
+run 3 `$1.07` (39 turns, aborted) = **$4.01**.
