@@ -10,6 +10,15 @@
 #
 #   scripts/run_bq.sh            # extra args are passed through to dbt build
 #
+# Credentials: the profile reads BQ_KEYFILE (a service-account key file, with
+# method: service-account) or falls back to gcloud application-default
+# credentials. Even with credentials this can still fail on the BigQuery side:
+# the target dataset coreychimpbot.experiments_dev does not exist and the account
+# used here is denied bigquery.datasets.create, so every model fails with
+# "Dataset ... was not found" (card t_52340fa8). scripts/parity.py measures the
+# same models read-only, without writing a dataset, which is how parity is
+# measured today.
+#
 set -uo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
@@ -21,8 +30,15 @@ if [ -f "$adc" ]; then
     printf '[bq] using gcloud application-default credentials at %s\n' "$adc"
 elif [ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]; then
     printf '[bq] using the key file in GOOGLE_APPLICATION_CREDENTIALS=%s\n' "$GOOGLE_APPLICATION_CREDENTIALS"
-    printf '[bq] NOTE: profiles.yml uses method: oauth. For a service-account key file,\n'
-    printf '[bq]       set method: service-account and keyfile: <path> in the bigquery output.\n'
+    printf '[bq] NOTE: profiles.yml uses method: oauth by default. For a service-account key file,\n'
+    printf '[bq]       export BQ_KEYFILE=<path> instead (the profile reads it, with\n'
+    printf '[bq]       BQ_AUTH_METHOD=service-account).\n'
+elif [ -n "${BQ_KEYFILE:-}" ]; then
+    # The profile reads this variable itself (profiles.yml > bigquery > keyfile),
+    # so nothing has to be copied: method becomes service-account, keyfile the path.
+    export BQ_AUTH_METHOD="${BQ_AUTH_METHOD:-service-account}"
+    printf '[bq] using the service-account key file in BQ_KEYFILE=%s (method=%s)\n' \
+        "$BQ_KEYFILE" "$BQ_AUTH_METHOD"
 else
     cat <<'EOF'
 [bq] BigQuery target is CONFIGURED but NOT RUNNABLE on this machine: no Google

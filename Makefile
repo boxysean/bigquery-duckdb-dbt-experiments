@@ -21,7 +21,10 @@ help:
 	@printf '  make bq           dbt build --target bigquery  (needs Google credentials;\n'
 	@printf '                    refuses with exit 2 when the machine has none)\n'
 	@printf '  make build-both   both targets, in that order\n'
-	@printf '  make parity       compare row counts per mart model across both targets\n'
+	@printf '  make parity       compare every model across both targets: row count,\n'
+	@printf '                    column names, canonical column types and a per-column\n'
+	@printf '                    order-independent checksum; writes parity-report.md and\n'
+	@printf '                    .json and exits non-zero on a real mismatch\n'
 	@printf '  make polyglot     the macro layer end to end: self-check on DuckDB, renders\n'
 	@printf '                    for both targets, the decimal ceiling, the guardrail\n'
 	@printf '  make portability  compile both targets and scan each render for the other\n'
@@ -52,7 +55,7 @@ bq: check-env
 build-both: duck bq
 
 parity: check-env
-	bash scripts/parity.sh
+	python3 scripts/parity.py
 
 # The macro layer in one command (SPEC 7.4); the script re-runs both prerequisites
 # itself so it also works on its own.
