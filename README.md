@@ -51,6 +51,8 @@ scripts/parity.py       every model, both targets: rows, names, types, per-colum
                         (make parity)
 SPEC.md                 the design contract for the model tree
 NOTES.md                the build record: every decision, deviation and command output
+docs/challenges.md      every challenge hit, in order, with its evidence, and the verdict
+docs/gaps.md            what could not be established here, and why
 ```
 
 `seeds/` is deliberately absent. The DuckDB fixture is generated SQL loaded out of
@@ -371,9 +373,11 @@ default is 1 GB so that no accidental query in this repository can be expensive.
 How many bytes a full build over the real `thelook_ecommerce` tables would scan
 has not been measured. If it is over the ceiling, the build fails rather than bills.
 
-This target has **never been connected**. `make bq` checks for credentials first
-and exits 2 with an explanation rather than surfacing a driver authentication
-error.
+With `BQ_KEYFILE` set, this target **builds all 29 models against the real dataset**
+(`196 total | 195 success | 1 warn`, 2026-09-27). Without credentials, `make bq` checks
+for them first and exits 2 with an explanation rather than surfacing a driver
+authentication error. What it took is in `docs/challenges.md`; what is still unknown is in
+`docs/gaps.md`.
 
 To make the leg real, pick one:
 
@@ -625,21 +629,16 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
 
 ## What is NOT verified
 
-* **The BigQuery target has been *measured read-only*, and has still never been
-  *materialised*.** There was no Google credential on this machine when the earlier
-  cards were written; there is one now (a service-account key file, used through the
-  same `BQ_KEYFILE` variable the profile reads), and card 4 exercised it. What that
-  proves: the compiled SQL for all 29 models really does execute on BigQuery and
-  returns the real `bigquery-public-data.thelook_ecommerce` rows, so every
-  `bigquery__` macro branch in the model tree is now *executed*, not merely
-  inspected, and the column names and canonical types line up. What it does not
-  prove: `dbt build --target bigquery` still fails, with
-  `Access Denied: Project coreychimpbot: User does not have bigquery.datasets.create
-  permission in project coreychimpbot`. The target dataset `coreychimpbot.experiments_dev`
-  does not exist, the project has no other dataset the account could write to, and
-  the account may not create one, so no model has ever been *materialised* in
-  BigQuery and `make bq` still exits non-zero. Enforcement of `maximum_bytes_billed`
-  is also still unconfirmed (the harness sets it per query and no query hit it).
+* **The BigQuery target is *materialised* now; its cost ceiling and table options are
+  not verified.** Card 4 first measured it read-only, because the dataset
+  `coreychimpbot.experiments_dev` did not exist and the account was denied
+  `bigquery.datasets.create`. The dataset exists now: a read-only `datasets.get` returns
+  HTTP 200. With `BQ_KEYFILE` set, `make bq` materialises all 29 models against the real
+  `bigquery-public-data.thelook_ecommerce` rows and exits 0 with
+  `196 total | 195 success | 1 warn` (2026-09-27). So every `bigquery__` macro branch
+  in the model tree is *executed*, not merely inspected. Still unverified: enforcement
+  of `maximum_bytes_billed` (no query has come near the 1 GB ceiling), and
+  partitioning/clustering (no model uses either).
 * **The macro layer's BigQuery side has now been *run*, but only inside the model
   tree.** `polyglot_render --target bigquery` and the guardrail consume rendered
   text, so as *tools* they still only inspect: a rendering that looks right but is
