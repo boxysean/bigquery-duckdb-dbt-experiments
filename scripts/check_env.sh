@@ -121,4 +121,5 @@ fi
 
 printf '\nall prerequisites present. The duckdb target is ready:\n'
 printf '  make duck        # dbt build against the local DuckDB file\n'
-printf '  make bq          # configured, but needs Google credentials (see README)\n'
+printf '  make bq          # dbt build against BigQuery; needs a credential named in the\n'
+printf '                  # environment (BQ_KEYFILE or GOOGLE_APPLICATION_CREDENTIALS, see README)\n'

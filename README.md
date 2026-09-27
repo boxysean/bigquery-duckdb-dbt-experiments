@@ -6,14 +6,23 @@ and against a local **DuckDB** file, with the dialect differences pushed into
 project power both with using macros to help transpile."*
 
 **Status: a 29-model warehouse over `thelook_ecommerce`, built and tested on
-DuckDB only, with every dialect difference in `macros/polyglot/`.** The model
+both targets, with every dialect difference in `macros/polyglot/`.** The model
 tree is the one described in `SPEC.md`: 7 staging views, 11 intermediate views and
 11 mart tables over the 7 tables of Google's public
 `bigquery-public-data.thelook_ecommerce` dataset. On the `duckdb` target the whole
-tree builds and 168 tests pass, twice in a row. That run reads a **generated
+tree builds and 167 tests pass, twice in a row. That run reads a **generated
 fixture**: invented data with the real schema, not the real dataset (see "The
-DuckDB fixture"). On the `bigquery` target the project compiles and parses. **It
-never runs there:** this machine has no Google credentials.
+DuckDB fixture") — it keeps reading the fixture until a real dataset has been
+loaded into it; value equality between the two legs is what the value-equality
+work is for. On the `bigquery` target the project compiles, parses and **runs**:
+with a named credential, `make bq` materialises all 29 models against the real
+`bigquery-public-data.thelook_ecommerce` rows (`196 total | 195 success | 1 warn`,
+2026-09-27), so the `bigquery__` macro branches are executed, not merely inspected.
+The credential is not ambient — nothing is exported by default, so a bare `dbt`
+invocation finds none. Name it with `BQ_KEYFILE` (the service-account key, at
+`~/.config/gcp/coreychimpbot-sa.json`, outside the repository) or
+`GOOGLE_APPLICATION_CREDENTIALS`, or point `profiles.yml` at it; without one,
+`make bq` exits 2 with an explanation instead of an authentication error.
 
 The transpile seam is **28 macros** in `macros/polyglot/`, one per dialect
 difference, each dispatching on the adapter; the DuckDB branch of every one of them
@@ -98,10 +107,10 @@ Conventions, all stated in the model docs:
 * Surrogate keys are used only where the grain has no natural key: user × month,
   product × center, and cohort × activity month.
 
-Every model and every column has a description. The tests are 165 generic tests
+Every model and every column has a description. The tests are 163 generic tests
 (`unique`/`not_null` on every key, `not_null` on every foreign key, `relationships`
 across the marts, `accepted_values` on status/gender/traffic_source/event_type/department)
-and 3 singular tests — 197 build nodes in total (`29 models | 168 tests`).
+and 4 singular tests — 196 build nodes in total (`29 models | 167 tests`).
 
 ## The macro layer (`macros/polyglot/`)
 
@@ -303,9 +312,9 @@ BigQuery's behaviour in that case is not measurable here. Start month steps on t
 
 ## The DuckDB fixture
 
-**Why it exists:** there are no Google credentials on this machine, so the real
-dataset cannot be read from here. The fixture lets the complete model tree run and
-be tested locally, unchanged.
+**Why it exists:** when it was written there were no Google credentials on this
+machine, and the real dataset has still not been loaded into DuckDB. The fixture
+lets the complete model tree run and be tested locally, unchanged.
 
 **What it is:** `scripts/fixtures/thelook_ecommerce.sql` generates the 7 tables in
 `dev.duckdb`, schema `thelook_ecommerce`. It copies the real tables' column names, column
@@ -451,7 +460,7 @@ call cannot find the profile, set `DBT_PROFILES_DIR` to the repo root:
 ```
 
 `make duck`, verbatim excerpts. The run also prints the 7 `check-env` lines, the
-fixture's 24 `ok` checks and 197 `Succeeded`/`Passed` lines:
+fixture's 24 `ok` checks and 196 `Succeeded`/`Passed` lines:
 
 ```
 Row counts:
@@ -467,12 +476,12 @@ Fixture loaded and coherent.
 .../.venv/bin/dbt build --target duckdb
    dbt-oss 2.0.5
 ...
- Succeeded model main.fct_orders (table) [157 of 197 in 0.21s]
+ Succeeded model main.fct_orders (table) [157 of 196 in 0.55s]
 ...
 ==================== Execution Summary =====================
-Finished 'build' successfully for target 'duckdb' [5.5s]
-Processed: 29 models | 168 tests
-Summary: 197 total | 197 success
+Finished 'build' successfully for target 'duckdb' [12.6s]
+Processed: 29 models | 167 tests
+Summary: 196 total | 196 success
 ```
 
 The build now has no warnings: the two skeleton-era warnings (unused layer
@@ -480,17 +489,19 @@ configuration paths and "nothing to do") disappeared once each layer had models.
 
 ## What is verified
 
-Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0.
+Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0; the test counts
+and the `make duck` timings below were re-measured on 2026-09-27 (the counts moved because the
+boolean `accepted_values` test was removed — `docs/challenges.md` 5.2).
 
 **The model tree, on DuckDB, on the fixture:**
 
-* `make duck` exits 0 twice in a row: `Processed: 29 models | 168 tests`,
-  `Summary: 197 total | 197 success` both times ([5.5s] on the second run). The
+* `make duck` exits 0 twice in a row: `Processed: 29 models | 167 tests`,
+  `Summary: 196 total | 196 success` both times ([12.6s] on the second run). The
   fixture is reloaded from scratch each time, so the second run shows the whole
   pipeline is idempotent.
 * `dbt ls --resource-type model --target duckdb --quiet | wc -l` → `29`: 7 staging,
   11 intermediate and 11 marts (card 3 added the eleventh, `dim_date`).
-* The 168 tests are 165 generic tests plus 3 singular tests. The SPEC's 10 cross-mart
+* The 167 tests are 163 generic tests plus 4 singular tests. The SPEC's 10 cross-mart
   `relationships` tests all exist and pass:
   `fct_orders.user_id → dim_users`,
   `fct_order_items.{order_id → fct_orders, user_id → dim_users, product_id → dim_products,
@@ -584,8 +595,9 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
 
 * `dbt compile --target bigquery` → exit 0:
   `Finished 'compile' successfully for target 'bigquery'`,
-  `Processed: 29 models | 168 tests | 1 analysis`. The rendered SQL uses the BigQuery
-  branches: `numeric`, `float64`, `int64`, `timestamp_trunc(..., month)`,
+  `Processed: 29 models | 167 tests | 61 analyses` (the showcase plus the 60 transport
+  measurement scenarios under `analyses/`). The rendered SQL uses the BigQuery branches:
+  `numeric`, `float64`, `int64`, `timestamp_trunc(..., month)`,
   `timestamp_trunc(..., week(monday))`, `timestamp_diff(..., microsecond)`,
   `safe_divide(...)`, `safe_cast(... as int64)`, `date_diff(..., ..., day)`,
   `generate_date_array(..., interval 1 day)`, `struct(1 as a, 2 as b)`,
