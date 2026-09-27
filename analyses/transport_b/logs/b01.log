@@ -1,0 +1,15 @@
+# b01: the GCS permission surface the service account actually has
+# No object or bucket was modified. The point is the smallest possible
+# credential footprint: enough to list, read and write objects, nothing else.
+
+GET https://storage.googleapis.com/storage/v1/b?project=coreychimpbot
+  -> 403 {"error": {"code": 403, "message": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com does not have storage.buckets.list access to the Google Cloud project. Permission 'storage.buckets.list' denied on resource (or it may not exist).", "errors": [{"message": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com does not have storage.buckets.list access to the Google Cloud project. Permission 'stor
+
+GET https://storage.googleapis.com/storage/v1/b/coreychimpbot-experiments
+  -> 403 {"error": {"code": 403, "message": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com does not have storage.buckets.get access to the Google Cloud Storage bucket. Permission 'storage.buckets.get' denied on resource '//storage.googleapis.com/projects/_/buckets/coreychimpbot-experiments' (or it may not exist).", "errors": [{"message": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com does not h
+
+GET https://storage.googleapis.com/storage/v1/b/coreychimpbot-experiments/o?maxResults=5
+  -> 200 {"kind": "storage#objects", "nextPageToken": "CiZ0cmFuc3BvcnRfYi9iMjIvYS0wMDAwMDAwMDAwMDQucGFycXVldA==", "items": [{"kind": "storage#object", "id": "coreychimpbot-experiments/transport_b/b22/a-000000000000.parquet/1790525971603766", "selfLink": "https://www.googleapis.com/storage/v1/b/coreychimpbot-experiments/o/transport_b%2Fb22%2Fa-000000000000.parquet", "mediaLink": "https://storage.googleapis.
+
+GET https://storage.googleapis.com/storage/v1/b/coreychimpbot-experiments/o/transport_b%2Fb22%2Fa-000000000000.parquet
+  -> 200 {"kind": "storage#object", "id": "coreychimpbot-experiments/transport_b/b22/a-000000000000.parquet/1790525971603766", "selfLink": "https://www.googleapis.com/storage/v1/b/coreychimpbot-experiments/o/transport_b%2Fb22%2Fa-000000000000.parquet", "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/coreychimpbot-experiments/o/transport_b%2Fb22%2Fa-000000000000.parquet?generation=1790525

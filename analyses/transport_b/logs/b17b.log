@@ -1,0 +1,36 @@
+# b17b: the JSON column after the CSV round trip (b14b)
+# sql: analyses/transport_b/sql/b17b_json_csv_read.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 0.55s  exit 0  peak RSS 46876 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b17b.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b17b: the JSON column, after the CSV round trip (b14b). What DuckDB sees on the other
+-- side of a CSV file is a VARCHAR that happens to contain JSON text.
+CREATE SECRET tb_http (TYPE http, BEARER_TOKEN '__TOKEN__');
+CREATE TABLE tb_json_csv AS SELECT * FROM read_csv('https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b14b/json-000000000000.csv', header = true);
+SELECT 'csv' AS src, column_name, column_type FROM (DESCRIBE SELECT * FROM tb_json_csv);
+SELECT id, j, typeof(j) AS duckdb_type FROM tb_json_csv ORDER BY id;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌─────────┬─────────────┬─────────────┐
+│   src   │ column_name │ column_type │
+│ varchar │   varchar   │   varchar   │
+├─────────┼─────────────┼─────────────┤
+│ csv     │ id          │ BIGINT      │
+│ csv     │ j           │ VARCHAR     │
+└─────────┴─────────────┴─────────────┘
+┌───────┬───────────────────────────────┬─────────────┐
+│  id   │               j               │ duckdb_type │
+│ int64 │            varchar            │   varchar   │
+├───────┼───────────────────────────────┼─────────────┤
+│     1 │ {"a":[1,2],"k":1,"s":"héllo"} │ VARCHAR     │
+│     2 │ NULL                          │ VARCHAR     │
+└───────┴───────────────────────────────┴─────────────┘
+

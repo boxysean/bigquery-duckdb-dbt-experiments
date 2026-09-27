@@ -1,0 +1,26 @@
+# b08: wildcards are not a thing on generic HTTPS URLs
+# sql: analyses/transport_b/sql/b08_http_glob.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 0.08s  exit 1  peak RSS 35692 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b08.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b08: wildcards over a plain HTTPS URL. DuckDB refuses `*` on generic HTTP paths by
+-- default; the flag it suggests only stops the refusal, it does not turn the URL into a
+-- glob (b08b shows the request that follows and the 404 it gets).
+CREATE SECRET tb_http (TYPE http, BEARER_TOKEN '__TOKEN__');
+SELECT count(*) FROM read_parquet('https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/*.parquet');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+Invalid Input Error: Globs (`*`) for generic HTTP file is are not supported.
+Consider `SET allow_asterisks_in_http_paths = true;` to allow this behaviour
+
+LINE 1: SELECT count(*) FROM read_parquet('https://storage.googleapis.com/coreychimpbot...
+                             ^
+

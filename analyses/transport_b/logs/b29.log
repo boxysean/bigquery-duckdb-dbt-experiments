@@ -1,0 +1,339 @@
+# b29: does the loaded table match what DuckDB wrote? (values, not just counts)
+# source: the DuckDB dump b26 wrote (values cast to text in DuckDB)
+# destination: the two BigQuery tables loaded from the same Parquet file —
+#   transport_b_reverse      loaded by this harness' own upload + jobs.insert
+#   transport_b_reverse_ext  loaded by the extension's bigquery_load (b28)
+# comparison: 1,000 rows, every column, values parsed rather than string-matched
+#   (decimals as Decimal, JSON columns parsed with json.loads, BYTES via hex)
+
+--- transport_b_reverse list-column shape
+{
+ "arr_i[OFFSET(0)]": {
+  "status": 200,
+  "value": [
+   {
+    "v": {
+     "f": [
+      {
+       "v": "1"
+      }
+     ]
+    }
+   },
+   {
+    "v": {
+     "f": [
+      {
+       "v": "2"
+      }
+     ]
+    }
+   },
+   {
+    "v": {
+     "f": [
+      {
+       "v": "3"
+      }
+     ]
+    }
+   }
+  ],
+  "error": null
+ },
+ "arr_i.list[OFFSET(0)].element": {
+  "status": 200,
+  "value": "1",
+  "error": null
+ }
+}
+
+--- transport_b_reverse
+{
+ "query_status": 200,
+ "declared_schema": [
+  {
+   "name": "id",
+   "type": "INTEGER",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "n",
+   "type": "NUMERIC",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "d",
+   "type": "FLOAT",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "s",
+   "type": "STRING",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "b",
+   "type": "BOOLEAN",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "dt",
+   "type": "DATE",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "ts",
+   "type": "TIMESTAMP",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "tstz",
+   "type": "TIMESTAMP",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "bin",
+   "type": "BYTES",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "arr_i",
+   "type": "RECORD",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "st",
+   "type": "RECORD",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "arr_st",
+   "type": "RECORD",
+   "mode": "NULLABLE"
+  }
+ ],
+ "source_rows": 1000,
+ "loaded_rows": 1000,
+ "ids_match": true,
+ "mismatch_counts": {
+  "n": 0,
+  "d": 0,
+  "s": 0,
+  "b": 0,
+  "dt": 0,
+  "ts": 0,
+  "tstz": 0,
+  "bin": 0,
+  "arr_i": 0,
+  "st": 0,
+  "arr_st": 0
+ },
+ "mismatch_examples": {},
+ "list_column_shape": {
+  "arr_i[OFFSET(0)]": {
+   "status": 200,
+   "value": [
+    {
+     "v": {
+      "f": [
+       {
+        "v": "1"
+       }
+      ]
+     }
+    },
+    {
+     "v": {
+      "f": [
+       {
+        "v": "2"
+       }
+      ]
+     }
+    },
+    {
+     "v": {
+      "f": [
+       {
+        "v": "3"
+       }
+      ]
+     }
+    }
+   ],
+   "error": null
+  },
+  "arr_i.list[OFFSET(0)].element": {
+   "status": 200,
+   "value": "1",
+   "error": null
+  }
+ }
+}
+
+--- transport_b_reverse_ext list-column shape
+{
+ "arr_i[OFFSET(0)]": {
+  "status": 200,
+  "value": [
+   {
+    "v": {
+     "f": [
+      {
+       "v": "1"
+      }
+     ]
+    }
+   },
+   {
+    "v": {
+     "f": [
+      {
+       "v": "2"
+      }
+     ]
+    }
+   },
+   {
+    "v": {
+     "f": [
+      {
+       "v": "3"
+      }
+     ]
+    }
+   }
+  ],
+  "error": null
+ },
+ "arr_i.list[OFFSET(0)].element": {
+  "status": 200,
+  "value": "1",
+  "error": null
+ }
+}
+
+--- transport_b_reverse_ext
+{
+ "query_status": 200,
+ "declared_schema": [
+  {
+   "name": "id",
+   "type": "INTEGER",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "n",
+   "type": "NUMERIC",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "d",
+   "type": "FLOAT",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "s",
+   "type": "STRING",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "b",
+   "type": "BOOLEAN",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "dt",
+   "type": "DATE",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "ts",
+   "type": "TIMESTAMP",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "tstz",
+   "type": "TIMESTAMP",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "bin",
+   "type": "BYTES",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "arr_i",
+   "type": "RECORD",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "st",
+   "type": "RECORD",
+   "mode": "NULLABLE"
+  },
+  {
+   "name": "arr_st",
+   "type": "RECORD",
+   "mode": "NULLABLE"
+  }
+ ],
+ "source_rows": 1000,
+ "loaded_rows": 1000,
+ "ids_match": true,
+ "mismatch_counts": {
+  "n": 0,
+  "d": 0,
+  "s": 0,
+  "b": 0,
+  "dt": 0,
+  "ts": 0,
+  "tstz": 0,
+  "bin": 0,
+  "arr_i": 0,
+  "st": 0,
+  "arr_st": 0
+ },
+ "mismatch_examples": {},
+ "list_column_shape": {
+  "arr_i[OFFSET(0)]": {
+   "status": 200,
+   "value": [
+    {
+     "v": {
+      "f": [
+       {
+        "v": "1"
+       }
+      ]
+     }
+    },
+    {
+     "v": {
+      "f": [
+       {
+        "v": "2"
+       }
+      ]
+     }
+    },
+    {
+     "v": {
+      "f": [
+       {
+        "v": "3"
+       }
+      ]
+     }
+    }
+   ],
+   "error": null
+  },
+  "arr_i.list[OFFSET(0)].element": {
+   "status": 200,
+   "value": "1",
+   "error": null
+  }
+ }
+}

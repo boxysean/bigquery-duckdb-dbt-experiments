@@ -1,0 +1,2068 @@
+{
+  "generated_at": "2026-09-27T16:27:31+00:00",
+  "started_at": "2026-09-27T16:20:08+00:00",
+  "run_id": "20260927T162008Z",
+  "runs": [
+    {
+      "finished_at": "2026-09-27T16:06:59+00:00",
+      "run_id": "20260927T155949Z"
+    },
+    {
+      "run_id": "20260927T161047Z",
+      "started_at": "2026-09-27T16:10:48+00:00",
+      "finished_at": "2026-09-27T16:18:31+00:00",
+      "scenarios": [
+        "b01",
+        "b02",
+        "b03",
+        "b03b",
+        "b04",
+        "b05",
+        "b06",
+        "b06b",
+        "b07",
+        "b07b",
+        "b07c",
+        "b07d",
+        "b08",
+        "b08b",
+        "b09",
+        "b10",
+        "b11",
+        "b12",
+        "b13",
+        "b13b",
+        "b13c",
+        "b14",
+        "b14b",
+        "b15",
+        "b16",
+        "b17",
+        "b17b",
+        "b18",
+        "b18b",
+        "b19",
+        "b20",
+        "b21",
+        "b22",
+        "b22b",
+        "b23",
+        "b24",
+        "b25",
+        "b26",
+        "b27",
+        "b28",
+        "b29",
+        "b30",
+        "b31"
+      ]
+    },
+    {
+      "run_id": "20260927T161929Z",
+      "started_at": "2026-09-27T16:19:29+00:00",
+      "finished_at": "2026-09-27T16:19:58+00:00",
+      "scenarios": [
+        "b22",
+        "b22b",
+        "b22c",
+        "b23",
+        "b24"
+      ]
+    },
+    {
+      "run_id": "20260927T162008Z",
+      "started_at": "2026-09-27T16:20:08+00:00",
+      "finished_at": "2026-09-27T16:27:31+00:00",
+      "scenarios": [
+        "b01",
+        "b02",
+        "b03",
+        "b03b",
+        "b04",
+        "b05",
+        "b06",
+        "b06b",
+        "b07",
+        "b07b",
+        "b07c",
+        "b07d",
+        "b08",
+        "b08b",
+        "b09",
+        "b10",
+        "b11",
+        "b12",
+        "b13",
+        "b13b",
+        "b13c",
+        "b14",
+        "b14b",
+        "b15",
+        "b16",
+        "b17",
+        "b17b",
+        "b18",
+        "b18b",
+        "b19",
+        "b20",
+        "b21",
+        "b22",
+        "b22b",
+        "b22c",
+        "b23",
+        "b24",
+        "b25",
+        "b26",
+        "b27",
+        "b28",
+        "b29",
+        "b30",
+        "b31"
+      ]
+    }
+  ],
+  "duckdb_cli": "/home/hermes/.local/bin/duckdb",
+  "duckdb_version": "v1.5.5 (Variegata) d8cdaa33fd",
+  "billing_project": "coreychimpbot",
+  "bucket": "coreychimpbot-experiments",
+  "prefix": "transport_b",
+  "host_cpus": 3,
+  "scenarios": [
+    {
+      "key": "b01",
+      "title": "the GCS permission surface the service account actually has",
+      "log": "analyses/transport_b/logs/b01.log",
+      "wall_s": 1.34,
+      "status": "ok",
+      "metrics": {
+        "http_status": {
+          "buckets.list": 403,
+          "bucket.get": 403,
+          "objects.list": 200,
+          "object.get": 200
+        },
+        "error_lines": []
+      }
+    },
+    {
+      "key": "b02",
+      "title": "EXPORT DATA one mart to GCS as Parquet",
+      "log": "analyses/transport_b/logs/b02.log",
+      "wall_s": 3.11,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_jUDHznv9GPMD7sj1C4WLfBIVrY_Q",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 769,
+        "total_bytes_processed": 287144,
+        "total_bytes_billed": 10485760,
+        "total_slot_ms": 302,
+        "export_file_count": 1,
+        "export_row_count": 2761,
+        "objects": {
+          "files": 1,
+          "total_bytes": 220580,
+          "max_bytes": 220580,
+          "min_bytes": 220580,
+          "median_bytes": 220580,
+          "names": [
+            "transport_b/b02/mart_daily_revenue-000000000000.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b03",
+      "title": "EXPORT DATA usa_names (5,552,452 rows) \u2014 the Transport A table",
+      "log": "analyses/transport_b/logs/b03.log",
+      "wall_s": 3.25,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_QV51KCsYJqhnq5q3tdufSw_S3256",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 1986,
+        "total_bytes_processed": 171432506,
+        "total_bytes_billed": 171966464,
+        "total_slot_ms": 10588,
+        "export_file_count": 6,
+        "export_row_count": 5552452,
+        "objects": {
+          "files": 6,
+          "total_bytes": 18625829,
+          "max_bytes": 3105704,
+          "min_bytes": 3103169,
+          "median_bytes": 3104613,
+          "names": [
+            "transport_b/b03/usa_names-000000000000.parquet",
+            "transport_b/b03/usa_names-000000000001.parquet",
+            "transport_b/b03/usa_names-000000000002.parquet",
+            "transport_b/b03/usa_names-000000000003.parquet",
+            "transport_b/b03/usa_names-000000000004.parquet",
+            "transport_b/b03/usa_names-000000000005.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b03b",
+      "title": "read the usa_names export (5,552,452 rows) \u2014 Transport A's head-to-head table",
+      "log": "analyses/transport_b/logs/b03b.log",
+      "wall_s": 3.12,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 45556,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": []
+      }
+    },
+    {
+      "key": "b04",
+      "title": "EXPORT DATA an 8.0 GB table: what the 1 GB-per-file limit does",
+      "log": "analyses/transport_b/logs/b04.log",
+      "wall_s": 8.66,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_3nUW9myVPobXV9yz74pIuKAKClxH",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 5842,
+        "total_bytes_processed": 8025119188,
+        "total_bytes_billed": 8025800704,
+        "total_slot_ms": 284206,
+        "export_file_count": 59,
+        "export_row_count": 58937715,
+        "objects": {
+          "files": 59,
+          "total_bytes": 1361557716,
+          "max_bytes": 27112967,
+          "min_bytes": 22119143,
+          "median_bytes": 22172925,
+          "names": [
+            "transport_b/b04/citibike-000000000000.parquet",
+            "transport_b/b04/citibike-000000000001.parquet",
+            "transport_b/b04/citibike-000000000002.parquet",
+            "transport_b/b04/citibike-000000000003.parquet",
+            "transport_b/b04/citibike-000000000004.parquet",
+            "transport_b/b04/citibike-000000000005.parquet",
+            "transport_b/b04/citibike-000000000006.parquet",
+            "transport_b/b04/citibike-000000000007.parquet",
+            "transport_b/b04/citibike-000000000008.parquet",
+            "transport_b/b04/citibike-000000000009.parquet",
+            "transport_b/b04/citibike-000000000010.parquet",
+            "transport_b/b04/citibike-000000000011.parquet",
+            "transport_b/b04/citibike-000000000012.parquet",
+            "transport_b/b04/citibike-000000000013.parquet",
+            "transport_b/b04/citibike-000000000014.parquet",
+            "transport_b/b04/citibike-000000000015.parquet",
+            "transport_b/b04/citibike-000000000016.parquet",
+            "transport_b/b04/citibike-000000000017.parquet",
+            "transport_b/b04/citibike-000000000018.parquet",
+            "transport_b/b04/citibike-000000000019.parquet",
+            "transport_b/b04/citibike-000000000020.parquet",
+            "transport_b/b04/citibike-000000000021.parquet",
+            "transport_b/b04/citibike-000000000022.parquet",
+            "transport_b/b04/citibike-000000000023.parquet",
+            "transport_b/b04/citibike-000000000024.parquet",
+            "transport_b/b04/citibike-000000000025.parquet",
+            "transport_b/b04/citibike-000000000026.parquet",
+            "transport_b/b04/citibike-000000000027.parquet",
+            "transport_b/b04/citibike-000000000028.parquet",
+            "transport_b/b04/citibike-000000000029.parquet",
+            "transport_b/b04/citibike-000000000030.parquet",
+            "transport_b/b04/citibike-000000000031.parquet",
+            "transport_b/b04/citibike-000000000032.parquet",
+            "transport_b/b04/citibike-000000000033.parquet",
+            "transport_b/b04/citibike-000000000034.parquet",
+            "transport_b/b04/citibike-000000000035.parquet",
+            "transport_b/b04/citibike-000000000036.parquet",
+            "transport_b/b04/citibike-000000000037.parquet",
+            "transport_b/b04/citibike-000000000038.parquet",
+            "transport_b/b04/citibike-000000000039.parquet",
+            "transport_b/b04/citibike-000000000040.parquet",
+            "transport_b/b04/citibike-000000000041.parquet",
+            "transport_b/b04/citibike-000000000042.parquet",
+            "transport_b/b04/citibike-000000000043.parquet",
+            "transport_b/b04/citibike-000000000044.parquet",
+            "transport_b/b04/citibike-000000000045.parquet",
+            "transport_b/b04/citibike-000000000046.parquet",
+            "transport_b/b04/citibike-000000000047.parquet",
+            "transport_b/b04/citibike-000000000048.parquet",
+            "transport_b/b04/citibike-000000000049.parquet",
+            "transport_b/b04/citibike-000000000050.parquet",
+            "transport_b/b04/citibike-000000000051.parquet",
+            "transport_b/b04/citibike-000000000052.parquet",
+            "transport_b/b04/citibike-000000000053.parquet",
+            "transport_b/b04/citibike-000000000054.parquet",
+            "transport_b/b04/citibike-000000000055.parquet",
+            "transport_b/b04/citibike-000000000056.parquet",
+            "transport_b/b04/citibike-000000000057.parquet",
+            "transport_b/b04/citibike-000000000058.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b05",
+      "title": "the same shape as b04, dry run: predicted bytes before spending any",
+      "log": "analyses/transport_b/logs/b05.log",
+      "wall_s": 0.59,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "dry_run": true,
+        "total_bytes_processed": 8025119188,
+        "cache_hit": false,
+        "statement_type": "DRY_RUN",
+        "rows_returned": 0,
+        "first_row": null,
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b06",
+      "title": "read_parquet over gs:// without HMAC keys (no secret)",
+      "log": "analyses/transport_b/logs/b06.log",
+      "wall_s": 0.4,
+      "status": "error",
+      "metrics": {
+        "exit_code": 1,
+        "peak_rss_kb": 39024,
+        "errors_expected": true,
+        "error_lines": [
+          "HTTP Error: HTTP GET error reading 'gs://coreychimpbot-experiments/transport_b/b02' in region '' (HTTP 403 Forbidden)"
+        ],
+        "rows": []
+      }
+    },
+    {
+      "key": "b06b",
+      "title": "read_parquet over gs:// with a TYPE gcs secret holding placeholder keys",
+      "log": "analyses/transport_b/logs/b06b.log",
+      "wall_s": 0.44,
+      "status": "error",
+      "metrics": {
+        "exit_code": 1,
+        "peak_rss_kb": 47716,
+        "errors_expected": true,
+        "error_lines": [
+          "HTTP Error: HTTP GET error reading 'gs://coreychimpbot-experiments/transport_b/b02' in region '' (HTTP 403 Forbidden)"
+        ],
+        "rows": []
+      }
+    },
+    {
+      "key": "b07",
+      "title": "read_parquet over the GCS XML API with an http secret carrying a bearer token",
+      "log": "analyses/transport_b/logs/b07.log",
+      "wall_s": 1.42,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 40556,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": []
+      }
+    },
+    {
+      "key": "b07b",
+      "title": "the same bearer-token secret with SCOPE set",
+      "log": "analyses/transport_b/logs/b07b.log",
+      "wall_s": 2.45,
+      "status": "error",
+      "metrics": {
+        "exit_code": 1,
+        "peak_rss_kb": 40300,
+        "errors_expected": true,
+        "error_lines": [
+          "HTTP Error: HTTP GET error on 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/mart_daily_revenue-000000000000.parquet' (HTTP 0 Internal Server Error)"
+        ],
+        "rows": []
+      }
+    },
+    {
+      "key": "b07c",
+      "title": "control: same URL, no secret at all",
+      "log": "analyses/transport_b/logs/b07c.log",
+      "wall_s": 2.3,
+      "status": "error",
+      "metrics": {
+        "exit_code": 1,
+        "peak_rss_kb": 40064,
+        "errors_expected": true,
+        "error_lines": [
+          "HTTP Error: HTTP GET error on 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/mart_daily_revenue-000000000000.parquet' (HTTP 0 Internal Server Error)"
+        ],
+        "rows": []
+      }
+    },
+    {
+      "key": "b07d",
+      "title": "control: same URL, a bogus bearer token",
+      "log": "analyses/transport_b/logs/b07d.log",
+      "wall_s": 1.56,
+      "status": "error",
+      "metrics": {
+        "exit_code": 1,
+        "peak_rss_kb": 40304,
+        "errors_expected": true,
+        "error_lines": [
+          "HTTP Error: HTTP GET error on 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/mart_daily_revenue-000000000000.parquet' (HTTP 0 Internal Server Error)"
+        ],
+        "rows": []
+      }
+    },
+    {
+      "key": "b08",
+      "title": "wildcards are not a thing on generic HTTPS URLs",
+      "log": "analyses/transport_b/logs/b08.log",
+      "wall_s": 0.08,
+      "status": "error",
+      "metrics": {
+        "exit_code": 1,
+        "peak_rss_kb": 35692,
+        "errors_expected": true,
+        "error_lines": [
+          "Invalid Input Error: Globs (`*`) for generic HTTP file is are not supported."
+        ],
+        "rows": []
+      }
+    },
+    {
+      "key": "b08b",
+      "title": "the flag DuckDB suggests for b08",
+      "log": "analyses/transport_b/logs/b08b.log",
+      "wall_s": 0.33,
+      "status": "error",
+      "metrics": {
+        "exit_code": 1,
+        "peak_rss_kb": 39792,
+        "errors_expected": true,
+        "error_lines": [
+          "HTTP Error: HTTP GET error on 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/*.parquet' (HTTP 404 Not Found)"
+        ],
+        "rows": []
+      }
+    },
+    {
+      "key": "b09",
+      "title": "read all 59 objects of the b04 export over HTTPS as one DuckDB list",
+      "log": "analyses/transport_b/logs/b09.log",
+      "wall_s": 20.73,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 51328,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": [],
+        "urls": 59
+      }
+    },
+    {
+      "key": "b10",
+      "title": "the same export pulled down with the GCS JSON API, then read locally",
+      "log": "analyses/transport_b/logs/b10.log",
+      "wall_s": 0.41,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 40320,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": [],
+        "objects_downloaded": 59,
+        "bytes_downloaded": 1361557716,
+        "download_wall_s": 186.55,
+        "download_median_file_s": 3.031,
+        "local_dir": "/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b10"
+      }
+    },
+    {
+      "key": "b11",
+      "title": "the exported mart Parquet, as DuckDB sees it",
+      "log": "analyses/transport_b/logs/b11.log",
+      "wall_s": 1.9,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 43368,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": [
+          [
+            {
+              "2019-01-15": "2019-01-21",
+              "1": "1",
+              "24.000000000": "17.500000000",
+              "11.304000020": "7.700000023",
+              "12.695999980": "9.799999977"
+            },
+            {
+              "2019-01-15": "2019-01-24",
+              "1": "0",
+              "24.000000000": "89.000000000",
+              "11.304000020": "49.543999941",
+              "12.695999980": "39.456000059"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "key": "b12",
+      "title": "create the type-probe tables",
+      "log": "analyses/transport_b/logs/b12.log",
+      "wall_s": 7.77,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_7kJ5f9CKwUZziVkZjXPdL5yZ-WO_",
+        "statement_type": "SCRIPT",
+        "total_bytes_processed": 10485760,
+        "total_bytes_billed": 10485760,
+        "total_slot_ms": 3029,
+        "duration_ms": 6783,
+        "export_file_count": null,
+        "export_row_count": null,
+        "cache_hit": null,
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b13",
+      "title": "EXPORT DATA the nested/repeated type table as Parquet",
+      "log": "analyses/transport_b/logs/b13.log",
+      "wall_s": 3.28,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_GQXrEbOTyFbdOf2y7kXuKBHPNpEi",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 850,
+        "total_bytes_processed": 190,
+        "total_bytes_billed": 10485760,
+        "total_slot_ms": 496,
+        "export_file_count": 1,
+        "export_row_count": 2,
+        "objects": {
+          "files": 1,
+          "total_bytes": 5883,
+          "max_bytes": 5883,
+          "min_bytes": 5883,
+          "median_bytes": 5883,
+          "names": [
+            "transport_b/b13/types-000000000000.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b13b",
+      "title": "EXPORT DATA BIGNUMERIC + GEOGRAPHY as Parquet",
+      "log": "analyses/transport_b/logs/b13b.log",
+      "wall_s": 3.25,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_LEXcGAJBvgQLsphJtusCmz1aSdmk",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 695,
+        "total_bytes_processed": 88,
+        "total_bytes_billed": 10485760,
+        "total_slot_ms": 545,
+        "export_file_count": 1,
+        "export_row_count": 2,
+        "objects": {
+          "files": 1,
+          "total_bytes": 1516,
+          "max_bytes": 1516,
+          "min_bytes": 1516,
+          "median_bytes": 1516,
+          "names": [
+            "transport_b/b13b/edge-000000000000.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b13c",
+      "title": "EXPORT DATA JSON as Parquet",
+      "log": "analyses/transport_b/logs/b13c.log",
+      "wall_s": 3.24,
+      "status": "error",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_9wP-RDrKfmSsbeDjznTKXlraeMN4",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 551,
+        "total_bytes_processed": null,
+        "total_bytes_billed": null,
+        "total_slot_ms": 31,
+        "export_file_count": 0,
+        "export_row_count": 0,
+        "objects": {
+          "files": 0,
+          "total_bytes": 0,
+          "max_bytes": 0,
+          "min_bytes": 0,
+          "median_bytes": 0,
+          "names": []
+        },
+        "errors": [
+          "Error while reading data, error message: Type JSON is not currently supported for parquet exports."
+        ],
+        "error_lines": [
+          "Error while reading data, error message: Type JSON is not currently supported for parquet exports."
+        ],
+        "errors_expected": true
+      }
+    },
+    {
+      "key": "b14",
+      "title": "the documented refusal: nested/repeated data to CSV",
+      "log": "analyses/transport_b/logs/b14.log",
+      "wall_s": 0.74,
+      "status": "error",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_Zp-Ee2HYaTPj_e2sz-afLlFO19CF",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 276,
+        "total_bytes_processed": null,
+        "total_bytes_billed": null,
+        "total_slot_ms": 33,
+        "export_file_count": 0,
+        "export_row_count": 0,
+        "objects": {
+          "files": 0,
+          "total_bytes": 0,
+          "max_bytes": 0,
+          "min_bytes": 0,
+          "median_bytes": 0,
+          "names": []
+        },
+        "errors": [
+          "Only simple types may be exported as CSV but variable has type ARRAY<INT64>"
+        ],
+        "error_lines": [
+          "Only simple types may be exported as CSV but variable has type ARRAY<INT64>"
+        ],
+        "errors_expected": true
+      }
+    },
+    {
+      "key": "b14b",
+      "title": "the CSV export that IS allowed for JSON (b13c's control)",
+      "log": "analyses/transport_b/logs/b14b.log",
+      "wall_s": 3.23,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_Vtb4a6OlT-wHoBCQO_tcC1_h2TS2",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 1026,
+        "total_bytes_processed": 48,
+        "total_bytes_billed": 10485760,
+        "total_slot_ms": 643,
+        "export_file_count": 1,
+        "export_row_count": 2,
+        "objects": {
+          "files": 1,
+          "total_bytes": 51,
+          "max_bytes": 51,
+          "min_bytes": 51,
+          "median_bytes": 51,
+          "names": [
+            "transport_b/b14b/json-000000000000.csv"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b15",
+      "title": "the CSV export that IS allowed (flat table)",
+      "log": "analyses/transport_b/logs/b15.log",
+      "wall_s": 3.28,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_O-cuMC_onOL5GS-TnWiJfQF_ly0e",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 1011,
+        "total_bytes_processed": 153,
+        "total_bytes_billed": 10485760,
+        "total_slot_ms": 318,
+        "export_file_count": 1,
+        "export_row_count": 2,
+        "objects": {
+          "files": 1,
+          "total_bytes": 304,
+          "max_bytes": 304,
+          "min_bytes": 304,
+          "median_bytes": 304,
+          "names": [
+            "transport_b/b15/flat-000000000000.csv"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b16",
+      "title": "the same flat rows as Parquet, for the comparison",
+      "log": "analyses/transport_b/logs/b16.log",
+      "wall_s": 3.28,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_C8QA4xSEfCUrhDSijIU5GdJJAYdQ",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 782,
+        "total_bytes_processed": 153,
+        "total_bytes_billed": 10485760,
+        "total_slot_ms": 422,
+        "export_file_count": 1,
+        "export_row_count": 2,
+        "objects": {
+          "files": 1,
+          "total_bytes": 4255,
+          "max_bytes": 4255,
+          "min_bytes": 4255,
+          "median_bytes": 4255,
+          "names": [
+            "transport_b/b16/flat-000000000000.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b17",
+      "title": "the same rows as CSV (b15) and as Parquet (b16), read side by side",
+      "log": "analyses/transport_b/logs/b17.log",
+      "wall_s": 1.16,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 46212,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": [
+          [
+            {
+              "csv": "parquet",
+              "b": "b",
+              "BOOLEAN": "BOOLEAN"
+            },
+            {
+              "csv": "csv",
+              "b": "bn",
+              "BOOLEAN": "DOUBLE"
+            },
+            {
+              "csv": "parquet",
+              "b": "bn",
+              "BOOLEAN": "DOUBLE"
+            },
+            {
+              "csv": "csv",
+              "b": "byt",
+              "BOOLEAN": "VARCHAR"
+            },
+            {
+              "csv": "parquet",
+              "b": "byt",
+              "BOOLEAN": "BLOB"
+            },
+            {
+              "csv": "csv",
+              "b": "d",
+              "BOOLEAN": "DATE"
+            },
+            {
+              "csv": "parquet",
+              "b": "d",
+              "BOOLEAN": "DATE"
+            },
+            {
+              "csv": "csv",
+              "b": "dt",
+              "BOOLEAN": "TIMESTAMP"
+            },
+            {
+              "csv": "parquet",
+              "b": "dt",
+              "BOOLEAN": "TIMESTAMP"
+            },
+            {
+              "csv": "csv",
+              "b": "f64",
+              "BOOLEAN": "DOUBLE"
+            },
+            {
+              "csv": "parquet",
+              "b": "f64",
+              "BOOLEAN": "DOUBLE"
+            },
+            {
+              "csv": "csv",
+              "b": "i64",
+              "BOOLEAN": "BIGINT"
+            },
+            {
+              "csv": "parquet",
+              "b": "i64",
+              "BOOLEAN": "BIGINT"
+            },
+            {
+              "csv": "csv",
+              "b": "id",
+              "BOOLEAN": "BIGINT"
+            },
+            {
+              "csv": "parquet",
+              "b": "id",
+              "BOOLEAN": "BIGINT"
+            },
+            {
+              "csv": "csv",
+              "b": "n",
+              "BOOLEAN": "DOUBLE"
+            },
+            {
+              "csv": "parquet",
+              "b": "n",
+              "BOOLEAN": "DECIMAL(38,9)"
+            },
+            {
+              "csv": "csv",
+              "b": "n_small",
+              "BOOLEAN": "DOUBLE"
+            },
+            {
+              "csv": "parquet",
+              "b": "n_small",
+              "BOOLEAN": "DECIMAL(38,9)"
+            },
+            {
+              "csv": "csv",
+              "b": "s",
+              "BOOLEAN": "VARCHAR"
+            },
+            {
+              "csv": "parquet",
+              "b": "s",
+              "BOOLEAN": "VARCHAR"
+            },
+            {
+              "csv": "csv",
+              "b": "t",
+              "BOOLEAN": "TIME"
+            },
+            {
+              "csv": "parquet",
+              "b": "t",
+              "BOOLEAN": "TIME WITH TIME ZONE"
+            },
+            {
+              "csv": "csv",
+              "b": "ts",
+              "BOOLEAN": "TIMESTAMP"
+            },
+            {
+              "csv": "parquet",
+              "b": "ts",
+              "BOOLEAN": "TIMESTAMP"
+            }
+          ],
+          [
+            {
+              "csv": "csv",
+              "1": "2",
+              "1.2345678901234568e+28": "NULL",
+              "-1e-09": "NULL",
+              "1.2345678901234568e+37": "NULL",
+              "2024-01-02 03:04:05.678901": "NULL"
+            }
+          ],
+          [
+            {
+              "parquet": "parquet",
+              "1": "2",
+              "12345678901234567890123456789.123456789": "NULL",
+              "-0.000000001": "NULL",
+              "1.234567890123457e+37": "NULL",
+              "2024-01-02 03:04:05.678901": "NULL"
+            }
+          ]
+        ],
+        "parquet_url": [
+          "https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b16/flat-000000000000.parquet"
+        ],
+        "csv_url": [
+          "https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b15/flat-000000000000.csv"
+        ]
+      }
+    },
+    {
+      "key": "b17b",
+      "title": "the JSON column after the CSV round trip (b14b)",
+      "log": "analyses/transport_b/logs/b17b.log",
+      "wall_s": 0.55,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 46876,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": [
+          [
+            {
+              "csv": "csv",
+              "id": "j",
+              "BIGINT": "VARCHAR"
+            }
+          ],
+          [
+            {
+              "1": "2",
+              "{\"a\":[1,2],\"k\":1,\"s\":\"h\u00e9llo\"}": "NULL",
+              "VARCHAR": "VARCHAR"
+            }
+          ]
+        ],
+        "json_csv_url": [
+          "https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b14b/json-000000000000.csv"
+        ]
+      }
+    },
+    {
+      "key": "b18",
+      "title": "read the nested/repeated Parquet export",
+      "log": "analyses/transport_b/logs/b18.log",
+      "wall_s": 1.1,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 41344,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": [
+          [
+            {
+              "1": "2",
+              "9007199254740993": "NULL",
+              "1.5": "NULL",
+              "12345678901234567890123456789.123456789": "NULL",
+              "-0.000000001": "NULL",
+              "h\u00e9llo \u2192 w\u00f6rld": "NULL",
+              "\\x01\\x02\\xFF": "NULL",
+              "true": "NULL",
+              "2024-01-02": "NULL",
+              "2024-01-02 03:04:05.678901": "NULL",
+              "03:04:05.678901+00": "NULL",
+              "[1, 2, 3]": "[]",
+              "[a, b]": "[]",
+              "{'a': 1, 'b': x}": "NULL",
+              "[{'x': 1, 'y': y}, {'x': 2, 'y': z}]": "[]",
+              "{'inner_list': [{'z': q}, {'z': r}]}": "NULL"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "key": "b18b",
+      "title": "read the BIGNUMERIC/GEOGRAPHY Parquet export",
+      "log": "analyses/transport_b/logs/b18b.log",
+      "wall_s": 1.1,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 40688,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": [
+          [
+            {
+              "1": "2",
+              "1.234567890123457e+37": "NULL",
+              "POINT (-122.40000000000002 37.7)": "NULL"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "key": "b19",
+      "title": "two EXPORT DATA statements in one request (one script, two child jobs)",
+      "log": "analyses/transport_b/logs/b19.log",
+      "wall_s": 5.4,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_Xv-P6EIkPpNcNMR4ikjgYdXlCfNG",
+        "statement_type": "SCRIPT",
+        "total_bytes_processed": 661896,
+        "total_bytes_billed": 20971520,
+        "total_slot_ms": 1736,
+        "duration_ms": 3100,
+        "export_file_count": null,
+        "export_row_count": null,
+        "cache_hit": null,
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b20",
+      "title": "the workaround: a script with two EXPORT DATA statements",
+      "log": "analyses/transport_b/logs/b20.log",
+      "wall_s": 3.0,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_uYMvODz9RwxOmDBANU5XR86ZkHlA",
+        "statement_type": "SCRIPT",
+        "job_duration_ms": 2341,
+        "total_bytes_processed": 661896,
+        "total_bytes_billed": 20971520,
+        "total_slot_ms": 748,
+        "export_file_count": null,
+        "export_row_count": null,
+        "objects": {
+          "files": 2,
+          "total_bytes": 463661,
+          "max_bytes": 243063,
+          "min_bytes": 220598,
+          "median_bytes": 243063,
+          "names": [
+            "transport_b/b20/cohort-000000000000.parquet",
+            "transport_b/b20/revenue-000000000000.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b21",
+      "title": "the wrong workaround: UNION ALL merges the tables into one file set",
+      "log": "analyses/transport_b/logs/b21.log",
+      "wall_s": 3.17,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_G7Muolq1YFvyxQWqXGRcGhD7q2MD",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 1119,
+        "total_bytes_processed": 105360,
+        "total_bytes_billed": 20971520,
+        "total_slot_ms": 930,
+        "export_file_count": 2,
+        "export_row_count": 6585,
+        "objects": {
+          "files": 2,
+          "total_bytes": 56662,
+          "max_bytes": 47902,
+          "min_bytes": 8760,
+          "median_bytes": 47902,
+          "names": [
+            "transport_b/b21/merged-000000000000.parquet",
+            "transport_b/b21/merged-000000000001.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b22",
+      "title": "row order, export A (no ORDER BY)",
+      "log": "analyses/transport_b/logs/b22.log",
+      "wall_s": 5.45,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_NteXXvMtolhGHESVHp-Zv4vKgeMG",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 2980,
+        "total_bytes_processed": 121162410,
+        "total_bytes_billed": 121634816,
+        "total_slot_ms": 34319,
+        "export_file_count": 17,
+        "export_row_count": 4038747,
+        "objects": {
+          "files": 17,
+          "total_bytes": 14972256,
+          "max_bytes": 883580,
+          "min_bytes": 878624,
+          "median_bytes": 880325,
+          "names": [
+            "transport_b/b22/a-000000000000.parquet",
+            "transport_b/b22/a-000000000001.parquet",
+            "transport_b/b22/a-000000000002.parquet",
+            "transport_b/b22/a-000000000003.parquet",
+            "transport_b/b22/a-000000000004.parquet",
+            "transport_b/b22/a-000000000005.parquet",
+            "transport_b/b22/a-000000000006.parquet",
+            "transport_b/b22/a-000000000007.parquet",
+            "transport_b/b22/a-000000000008.parquet",
+            "transport_b/b22/a-000000000009.parquet",
+            "transport_b/b22/a-000000000010.parquet",
+            "transport_b/b22/a-000000000011.parquet",
+            "transport_b/b22/a-000000000012.parquet",
+            "transport_b/b22/a-000000000013.parquet",
+            "transport_b/b22/a-000000000014.parquet",
+            "transport_b/b22/a-000000000015.parquet",
+            "transport_b/b22/a-000000000016.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b22b",
+      "title": "row order, export B (identical SQL, second run)",
+      "log": "analyses/transport_b/logs/b22b.log",
+      "wall_s": 5.5,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_pexnbTuCbiHlz6kAKnbAZEtUP7Ey",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 3637,
+        "total_bytes_processed": 121162410,
+        "total_bytes_billed": 121634816,
+        "total_slot_ms": 45871,
+        "export_file_count": 17,
+        "export_row_count": 4038747,
+        "objects": {
+          "files": 17,
+          "total_bytes": 14972256,
+          "max_bytes": 883580,
+          "min_bytes": 878624,
+          "median_bytes": 880325,
+          "names": [
+            "transport_b/b22/b-000000000000.parquet",
+            "transport_b/b22/b-000000000001.parquet",
+            "transport_b/b22/b-000000000002.parquet",
+            "transport_b/b22/b-000000000003.parquet",
+            "transport_b/b22/b-000000000004.parquet",
+            "transport_b/b22/b-000000000005.parquet",
+            "transport_b/b22/b-000000000006.parquet",
+            "transport_b/b22/b-000000000007.parquet",
+            "transport_b/b22/b-000000000008.parquet",
+            "transport_b/b22/b-000000000009.parquet",
+            "transport_b/b22/b-000000000010.parquet",
+            "transport_b/b22/b-000000000011.parquet",
+            "transport_b/b22/b-000000000012.parquet",
+            "transport_b/b22/b-000000000013.parquet",
+            "transport_b/b22/b-000000000014.parquet",
+            "transport_b/b22/b-000000000015.parquet",
+            "transport_b/b22/b-000000000016.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b22c",
+      "title": "row order, export D (identical SQL, third run)",
+      "log": "analyses/transport_b/logs/b22c.log",
+      "wall_s": 5.6,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_MsPtIXf8jyOljvs2uLDYj7O9gSs4",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 3971,
+        "total_bytes_processed": 121162410,
+        "total_bytes_billed": 121634816,
+        "total_slot_ms": 27086,
+        "export_file_count": 17,
+        "export_row_count": 4038747,
+        "objects": {
+          "files": 17,
+          "total_bytes": 14972256,
+          "max_bytes": 883580,
+          "min_bytes": 878624,
+          "median_bytes": 880325,
+          "names": [
+            "transport_b/b22/d-000000000000.parquet",
+            "transport_b/b22/d-000000000001.parquet",
+            "transport_b/b22/d-000000000002.parquet",
+            "transport_b/b22/d-000000000003.parquet",
+            "transport_b/b22/d-000000000004.parquet",
+            "transport_b/b22/d-000000000005.parquet",
+            "transport_b/b22/d-000000000006.parquet",
+            "transport_b/b22/d-000000000007.parquet",
+            "transport_b/b22/d-000000000008.parquet",
+            "transport_b/b22/d-000000000009.parquet",
+            "transport_b/b22/d-000000000010.parquet",
+            "transport_b/b22/d-000000000011.parquet",
+            "transport_b/b22/d-000000000012.parquet",
+            "transport_b/b22/d-000000000013.parquet",
+            "transport_b/b22/d-000000000014.parquet",
+            "transport_b/b22/d-000000000015.parquet",
+            "transport_b/b22/d-000000000016.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b23",
+      "title": "row order with ORDER BY temp (and what the sort does to the file count)",
+      "log": "analyses/transport_b/logs/b23.log",
+      "wall_s": 5.51,
+      "status": "ok",
+      "metrics": {
+        "http_status": 200,
+        "job_id": "job_ZRVBUADAdHxIurzZi3Z2ok2obqnN",
+        "statement_type": "EXPORT_DATA",
+        "job_duration_ms": 4549,
+        "total_bytes_processed": 121162410,
+        "total_bytes_billed": 121634816,
+        "total_slot_ms": 9331,
+        "export_file_count": 1,
+        "export_row_count": 4038747,
+        "objects": {
+          "files": 1,
+          "total_bytes": 11694763,
+          "max_bytes": 11694763,
+          "min_bytes": 11694763,
+          "median_bytes": 11694763,
+          "names": [
+            "transport_b/b23/c-000000000000.parquet"
+          ]
+        },
+        "errors": [],
+        "error_lines": [],
+        "errors_expected": false
+      }
+    },
+    {
+      "key": "b24",
+      "title": "row order evidence: three identical exports and one ORDER BY, compared",
+      "log": "analyses/transport_b/logs/b24.log",
+      "wall_s": 2.38,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 705064,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": [
+          [
+            {
+              "A (no ORDER BY), file 0": "A, file 1",
+              "237833": "238054",
+              "4cb29205efb85eb6ca87e047838a378f": "d28275cb555862308a6570acc846d1f5"
+            },
+            {
+              "A (no ORDER BY), file 0": "B (same SQL, second run), file 0",
+              "237833": "238054",
+              "4cb29205efb85eb6ca87e047838a378f": "d28275cb555862308a6570acc846d1f5"
+            },
+            {
+              "A (no ORDER BY), file 0": "B, file 1",
+              "237833": "237833",
+              "4cb29205efb85eb6ca87e047838a378f": "4cb29205efb85eb6ca87e047838a378f"
+            },
+            {
+              "A (no ORDER BY), file 0": "D (same SQL, third run), file 0",
+              "237833": "237833",
+              "4cb29205efb85eb6ca87e047838a378f": "4cb29205efb85eb6ca87e047838a378f"
+            },
+            {
+              "A (no ORDER BY), file 0": "D, file 1",
+              "237833": "238054",
+              "4cb29205efb85eb6ca87e047838a378f": "d28275cb555862308a6570acc846d1f5"
+            },
+            {
+              "A (no ORDER BY), file 0": "C (ORDER BY temp), file 0",
+              "237833": "4038747",
+              "4cb29205efb85eb6ca87e047838a378f": "f0bc98d9502d2c2a149d17bf22eb39fd"
+            }
+          ],
+          [
+            {
+              "A file 0: temp decreases": "B file 0: temp decreases",
+              "118548": "118400"
+            },
+            {
+              "A file 0: temp decreases": "D file 0: temp decreases",
+              "118548": "118548"
+            },
+            {
+              "A file 0: temp decreases": "C file 0: temp decreases",
+              "118548": "0"
+            }
+          ],
+          [
+            {
+              "A file 0: first/last temp": "C file 0: first/last temp",
+              "-99.3": "-114.3",
+              "110.0": "110.0"
+            }
+          ]
+        ],
+        "files": {
+          "A1": "/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/A1.parquet",
+          "A2": "/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/A2.parquet",
+          "B1": "/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/B1.parquet",
+          "B2": "/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/B2.parquet",
+          "D1": "/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/D1.parquet",
+          "D2": "/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/D2.parquet",
+          "C1": "/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/C1.parquet"
+        },
+        "object_counts": {
+          "b22": 17,
+          "b22b": 17,
+          "b23": 1
+        }
+      }
+    },
+    {
+      "key": "b25",
+      "title": "the extension's own forward path: bigquery_extract",
+      "log": "analyses/transport_b/logs/b25.log",
+      "wall_s": 8.69,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 55492,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": []
+      }
+    },
+    {
+      "key": "b26",
+      "title": "the reverse direction, step 1: DuckDB writes Parquet",
+      "log": "analyses/transport_b/logs/b26.log",
+      "wall_s": 0.1,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 36864,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": [
+          [
+            {
+              "id": "n",
+              "INT64": "FIXED_LEN_BYTE_ARRAY",
+              "INT_64": "DECIMAL",
+              "NULL": "DecimalType(scale=9, precision=38)",
+              "BIGINT": "DECIMAL(38,9)"
+            },
+            {
+              "id": "d",
+              "INT64": "DOUBLE",
+              "INT_64": "NULL",
+              "NULL": "NULL",
+              "BIGINT": "DOUBLE"
+            },
+            {
+              "id": "ts",
+              "INT64": "INT64",
+              "INT_64": "TIMESTAMP_MICROS",
+              "NULL": "TimestampType(isAdjustedToUTC=0, unit=TimeUnit(MILLIS=<null>, MICROS=MicroSeconds(), NANOS=<null>))",
+              "BIGINT": "TIMESTAMP"
+            },
+            {
+              "id": "tstz",
+              "INT64": "INT64",
+              "INT_64": "TIMESTAMP_MICROS",
+              "NULL": "TimestampType(isAdjustedToUTC=1, unit=TimeUnit(MILLIS=<null>, MICROS=MicroSeconds(), NANOS=<null>))",
+              "BIGINT": "TIMESTAMP WITH TIME ZONE"
+            },
+            {
+              "id": "arr_i",
+              "INT64": "NULL",
+              "INT_64": "LIST",
+              "NULL": "NULL",
+              "BIGINT": "NULL"
+            },
+            {
+              "id": "st",
+              "INT64": "NULL",
+              "INT_64": "NULL",
+              "NULL": "NULL",
+              "BIGINT": "NULL"
+            },
+            {
+              "id": "arr_st",
+              "INT64": "NULL",
+              "INT_64": "LIST",
+              "NULL": "NULL",
+              "BIGINT": "NULL"
+            }
+          ]
+        ],
+        "parquet_path": "/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/reverse_src.parquet",
+        "parquet_bytes": 56912
+      }
+    },
+    {
+      "key": "b27",
+      "title": "the reverse direction, step 2: upload the Parquet, load it, read the schema back",
+      "log": "analyses/transport_b/logs/b27.log",
+      "wall_s": 3.87,
+      "status": "ok",
+      "metrics": {
+        "upload_http_status": 200,
+        "object": "transport_b/b27/reverse_src.parquet",
+        "upload_wall_s": 0.53,
+        "load_http_status": 200,
+        "load_job_id": "job_mpT90tyaZc1HMMgOejaRmwdrAxO1",
+        "load_wall_s": 3.34,
+        "load_output_rows": 1000,
+        "load_output_bytes": 160170,
+        "table_schema": [
+          {
+            "name": "id",
+            "type": "INTEGER",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "n",
+            "type": "NUMERIC",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "d",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "s",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "b",
+            "type": "BOOLEAN",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dt",
+            "type": "DATE",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "ts",
+            "type": "TIMESTAMP",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "tstz",
+            "type": "TIMESTAMP",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "bin",
+            "type": "BYTES",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "arr_i",
+            "type": "RECORD",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "st",
+            "type": "RECORD",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "arr_st",
+            "type": "RECORD",
+            "mode": "NULLABLE"
+          }
+        ],
+        "table_num_rows": 1000,
+        "errors": [],
+        "error_lines": []
+      }
+    },
+    {
+      "key": "b28",
+      "title": "the extension's own reverse path: bigquery_load from a DuckDB table",
+      "log": "analyses/transport_b/logs/b28.log",
+      "wall_s": 3.55,
+      "status": "ok",
+      "metrics": {
+        "exit_code": 0,
+        "peak_rss_kb": 67456,
+        "errors_expected": false,
+        "error_lines": [],
+        "rows": [
+          [
+            {
+              "id": "n",
+              "INT64": "FIXED_LEN_BYTE_ARRAY",
+              "INT_64": "DECIMAL",
+              "NULL": "DecimalType(scale=9, precision=38)",
+              "BIGINT": "DECIMAL(38,9)"
+            },
+            {
+              "id": "d",
+              "INT64": "DOUBLE",
+              "INT_64": "NULL",
+              "NULL": "NULL",
+              "BIGINT": "DOUBLE"
+            },
+            {
+              "id": "ts",
+              "INT64": "INT64",
+              "INT_64": "TIMESTAMP_MICROS",
+              "NULL": "TimestampType(isAdjustedToUTC=0, unit=TimeUnit(MILLIS=<null>, MICROS=MicroSeconds(), NANOS=<null>))",
+              "BIGINT": "TIMESTAMP"
+            },
+            {
+              "id": "tstz",
+              "INT64": "INT64",
+              "INT_64": "TIMESTAMP_MICROS",
+              "NULL": "TimestampType(isAdjustedToUTC=1, unit=TimeUnit(MILLIS=<null>, MICROS=MicroSeconds(), NANOS=<null>))",
+              "BIGINT": "TIMESTAMP WITH TIME ZONE"
+            },
+            {
+              "id": "arr_i",
+              "INT64": "NULL",
+              "INT_64": "LIST",
+              "NULL": "NULL",
+              "BIGINT": "NULL"
+            },
+            {
+              "id": "st",
+              "INT64": "NULL",
+              "INT_64": "NULL",
+              "NULL": "NULL",
+              "BIGINT": "NULL"
+            },
+            {
+              "id": "arr_st",
+              "INT64": "NULL",
+              "INT_64": "LIST",
+              "NULL": "NULL",
+              "BIGINT": "NULL"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "key": "b29",
+      "title": "does the loaded table match what DuckDB wrote? (values, not just counts)",
+      "log": "analyses/transport_b/logs/b29.log",
+      "wall_s": 0.0,
+      "status": "ok",
+      "metrics": {
+        "transport_b_reverse": {
+          "query_status": 200,
+          "declared_schema": [
+            {
+              "name": "id",
+              "type": "INTEGER",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "n",
+              "type": "NUMERIC",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "d",
+              "type": "FLOAT",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "s",
+              "type": "STRING",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "b",
+              "type": "BOOLEAN",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "dt",
+              "type": "DATE",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "ts",
+              "type": "TIMESTAMP",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "tstz",
+              "type": "TIMESTAMP",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "bin",
+              "type": "BYTES",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "arr_i",
+              "type": "RECORD",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "st",
+              "type": "RECORD",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "arr_st",
+              "type": "RECORD",
+              "mode": "NULLABLE"
+            }
+          ],
+          "source_rows": 1000,
+          "loaded_rows": 1000,
+          "ids_match": true,
+          "mismatch_counts": {
+            "n": 0,
+            "d": 0,
+            "s": 0,
+            "b": 0,
+            "dt": 0,
+            "ts": 0,
+            "tstz": 0,
+            "bin": 0,
+            "arr_i": 0,
+            "st": 0,
+            "arr_st": 0
+          },
+          "mismatch_examples": {},
+          "list_column_shape": {
+            "arr_i[OFFSET(0)]": {
+              "status": 200,
+              "value": [
+                {
+                  "v": {
+                    "f": [
+                      {
+                        "v": "1"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "v": {
+                    "f": [
+                      {
+                        "v": "2"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "v": {
+                    "f": [
+                      {
+                        "v": "3"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "error": null
+            },
+            "arr_i.list[OFFSET(0)].element": {
+              "status": 200,
+              "value": "1",
+              "error": null
+            }
+          }
+        },
+        "transport_b_reverse_ext": {
+          "query_status": 200,
+          "declared_schema": [
+            {
+              "name": "id",
+              "type": "INTEGER",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "n",
+              "type": "NUMERIC",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "d",
+              "type": "FLOAT",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "s",
+              "type": "STRING",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "b",
+              "type": "BOOLEAN",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "dt",
+              "type": "DATE",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "ts",
+              "type": "TIMESTAMP",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "tstz",
+              "type": "TIMESTAMP",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "bin",
+              "type": "BYTES",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "arr_i",
+              "type": "RECORD",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "st",
+              "type": "RECORD",
+              "mode": "NULLABLE"
+            },
+            {
+              "name": "arr_st",
+              "type": "RECORD",
+              "mode": "NULLABLE"
+            }
+          ],
+          "source_rows": 1000,
+          "loaded_rows": 1000,
+          "ids_match": true,
+          "mismatch_counts": {
+            "n": 0,
+            "d": 0,
+            "s": 0,
+            "b": 0,
+            "dt": 0,
+            "ts": 0,
+            "tstz": 0,
+            "bin": 0,
+            "arr_i": 0,
+            "st": 0,
+            "arr_st": 0
+          },
+          "mismatch_examples": {},
+          "list_column_shape": {
+            "arr_i[OFFSET(0)]": {
+              "status": 200,
+              "value": [
+                {
+                  "v": {
+                    "f": [
+                      {
+                        "v": "1"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "v": {
+                    "f": [
+                      {
+                        "v": "2"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "v": {
+                    "f": [
+                      {
+                        "v": "3"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "error": null
+            },
+            "arr_i.list[OFFSET(0)].element": {
+              "status": 200,
+              "value": "1",
+              "error": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "key": "b30",
+      "title": "what this run cost, from the job statistics and Google's price pages",
+      "log": "analyses/transport_b/logs/b30.log",
+      "wall_s": 0.0,
+      "status": "ok",
+      "metrics": {
+        "jobs_seen": 19,
+        "export_data_jobs": 15,
+        "bytes_processed_total": 16718523210,
+        "bytes_billed_total": 8820621312,
+        "gcs_bytes_written_and_still_present": 2799846857,
+        "gcs_objects": 190,
+        "on_demand_cost_usd_this_run": 0.050139,
+        "note_on_free_tier": "the first 1 TiB of query data per month is free, so the real invoice impact of this run is $0 unless the shared 1 TiB/month account allowance is already spent; the number above is what it costs at list price if it is not covered",
+        "gcs_storage_usd_per_month_if_left": 0.0678,
+        "gcs_egress_if_read_to_this_box_usd": 0.31291,
+        "pricing_constants": {
+          "bigquery_on_demand_usd_per_tib": 6.25,
+          "bigquery_free_tib_per_month": 1.0,
+          "bigquery_minimum_bytes_billed": 10485760,
+          "extract_job": "free (batch export, shared slot pool, up to 50 TiB/day)",
+          "storage_read_api_usd_per_tib": 1.1,
+          "storage_read_api_free_tib_per_month": 300.0,
+          "gcs_standard_us_multi_region_usd_per_gib_month": 0.026,
+          "gcs_internet_egress_usd_per_gib": 0.12,
+          "gcs_class_a_ops_usd_per_1000": 0.01,
+          "gcs_class_b_ops_usd_per_1000": 0.0004,
+          "sources": [
+            "https://cloud.google.com/bigquery/pricing#data-extraction",
+            "https://cloud.google.com/storage/pricing"
+          ]
+        }
+      }
+    },
+    {
+      "key": "b31",
+      "title": "cleanup: leave the bucket and the dataset as they were found",
+      "log": "analyses/transport_b/logs/b31.log",
+      "wall_s": 0.0,
+      "status": "ok",
+      "metrics": {
+        "objects_deleted": 190,
+        "objects_remaining": 0,
+        "tables_left": [
+          "dim_date",
+          "dim_distribution_centers",
+          "dim_products",
+          "dim_users",
+          "fct_inventory_items",
+          "fct_order_items",
+          "fct_orders",
+          "int_cohorts__user_months",
+          "int_events__sessions",
+          "int_inventory__by_product_center",
+          "int_inventory_items__enriched",
+          "int_order_items__enriched",
+          "int_orders__daily",
+          "int_orders__item_rollup",
+          "int_products__returns",
+          "int_products__sales",
+          "int_users__first_order_cohort",
+          "int_users__lifetime_orders",
+          "mart_cohort_retention",
+          "mart_customer_summary",
+          "mart_daily_revenue",
+          "mart_product_performance",
+          "stg_thelook__distribution_centers",
+          "stg_thelook__events",
+          "stg_thelook__inventory_items",
+          "stg_thelook__order_items",
+          "stg_thelook__orders",
+          "stg_thelook__products",
+          "stg_thelook__users"
+        ],
+        "drops": [
+          "transport_b_types: 200",
+          "transport_b_types_flat: 200",
+          "transport_b_types_json: 200",
+          "transport_b_types_edge: 200",
+          "transport_b_reverse: 200",
+          "transport_b_reverse_ext: 200"
+        ]
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "key": "b02",
+      "total_bytes_processed": 287144,
+      "total_bytes_billed": 10485760,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b03",
+      "total_bytes_processed": 171432506,
+      "total_bytes_billed": 171966464,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b04",
+      "total_bytes_processed": 8025119188,
+      "total_bytes_billed": 8025800704,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b05",
+      "total_bytes_processed": 8025119188,
+      "total_bytes_billed": null,
+      "statement_type": "DRY_RUN"
+    },
+    {
+      "key": "b12",
+      "total_bytes_processed": 10485760,
+      "total_bytes_billed": 10485760,
+      "statement_type": "SCRIPT"
+    },
+    {
+      "key": "b13",
+      "total_bytes_processed": 190,
+      "total_bytes_billed": 10485760,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b13b",
+      "total_bytes_processed": 88,
+      "total_bytes_billed": 10485760,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b13c",
+      "total_bytes_processed": null,
+      "total_bytes_billed": null,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b14",
+      "total_bytes_processed": null,
+      "total_bytes_billed": null,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b14b",
+      "total_bytes_processed": 48,
+      "total_bytes_billed": 10485760,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b15",
+      "total_bytes_processed": 153,
+      "total_bytes_billed": 10485760,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b16",
+      "total_bytes_processed": 153,
+      "total_bytes_billed": 10485760,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b19",
+      "total_bytes_processed": 661896,
+      "total_bytes_billed": 20971520,
+      "statement_type": "SCRIPT"
+    },
+    {
+      "key": "b20",
+      "total_bytes_processed": 661896,
+      "total_bytes_billed": 20971520,
+      "statement_type": "SCRIPT"
+    },
+    {
+      "key": "b21",
+      "total_bytes_processed": 105360,
+      "total_bytes_billed": 20971520,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b22",
+      "total_bytes_processed": 121162410,
+      "total_bytes_billed": 121634816,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b22b",
+      "total_bytes_processed": 121162410,
+      "total_bytes_billed": 121634816,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b22c",
+      "total_bytes_processed": 121162410,
+      "total_bytes_billed": 121634816,
+      "statement_type": "EXPORT_DATA"
+    },
+    {
+      "key": "b23",
+      "total_bytes_processed": 121162410,
+      "total_bytes_billed": 121634816,
+      "statement_type": "EXPORT_DATA"
+    }
+  ],
+  "pricing": {
+    "bigquery_on_demand_usd_per_tib": 6.25,
+    "bigquery_free_tib_per_month": 1.0,
+    "bigquery_minimum_bytes_billed": 10485760,
+    "extract_job": "free (batch export, shared slot pool, up to 50 TiB/day)",
+    "storage_read_api_usd_per_tib": 1.1,
+    "storage_read_api_free_tib_per_month": 300.0,
+    "gcs_standard_us_multi_region_usd_per_gib_month": 0.026,
+    "gcs_internet_egress_usd_per_gib": 0.12,
+    "gcs_class_a_ops_usd_per_1000": 0.01,
+    "gcs_class_b_ops_usd_per_1000": 0.0004,
+    "sources": [
+      "https://cloud.google.com/bigquery/pricing#data-extraction",
+      "https://cloud.google.com/storage/pricing"
+    ]
+  }
+}

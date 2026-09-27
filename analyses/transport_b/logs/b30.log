@@ -1,0 +1,34 @@
+# b30: what this run cost, from the job statistics and Google's price pages
+# Pricing constants below come from Google's pages (read 2026-09-27); the byte counts
+# come from the job resources this harness recorded, not from an estimate.
+# Batch export jobs (extract jobs, i.e. the extension's bigquery_extract) are free;
+# EXPORT DATA statements are billed as queries. Both are in this run.
+
+{
+ "jobs_seen": 19,
+ "export_data_jobs": 15,
+ "bytes_processed_total": 16718523210,
+ "bytes_billed_total": 8820621312,
+ "gcs_bytes_written_and_still_present": 2799846857,
+ "gcs_objects": 190,
+ "on_demand_cost_usd_this_run": 0.050139,
+ "note_on_free_tier": "the first 1 TiB of query data per month is free, so the real invoice impact of this run is $0 unless the shared 1 TiB/month account allowance is already spent; the number above is what it costs at list price if it is not covered",
+ "gcs_storage_usd_per_month_if_left": 0.0678,
+ "gcs_egress_if_read_to_this_box_usd": 0.31291,
+ "pricing_constants": {
+  "bigquery_on_demand_usd_per_tib": 6.25,
+  "bigquery_free_tib_per_month": 1.0,
+  "bigquery_minimum_bytes_billed": 10485760,
+  "extract_job": "free (batch export, shared slot pool, up to 50 TiB/day)",
+  "storage_read_api_usd_per_tib": 1.1,
+  "storage_read_api_free_tib_per_month": 300.0,
+  "gcs_standard_us_multi_region_usd_per_gib_month": 0.026,
+  "gcs_internet_egress_usd_per_gib": 0.12,
+  "gcs_class_a_ops_usd_per_1000": 0.01,
+  "gcs_class_b_ops_usd_per_1000": 0.0004,
+  "sources": [
+   "https://cloud.google.com/bigquery/pricing#data-extraction",
+   "https://cloud.google.com/storage/pricing"
+  ]
+ }
+}

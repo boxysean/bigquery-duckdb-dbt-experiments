@@ -1,0 +1,38 @@
+# b03b: read the usa_names export (5,552,452 rows) — Transport A's head-to-head table
+# sql: analyses/transport_b/sql/b09_read_multi_https.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 3.12s  exit 0  peak RSS 45556 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b03b.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b09: read a whole multi-file export in DuckDB, over HTTPS, with the object list the
+-- harness read back from the bucket. ['https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000000.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000001.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000002.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000003.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000004.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000005.parquet'] is substituted with a DuckDB list literal.
+-- The count is checked against the source table's row count and against
+-- exportDataStatistics.rowCount from the export job (b04).
+CREATE SECRET tb_http (TYPE http, BEARER_TOKEN '__TOKEN__');
+SELECT count(*) AS rows_read FROM read_parquet(['https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000000.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000001.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000002.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000003.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000004.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000005.parquet']);
+SELECT count(*) AS files,
+       min(c) AS min_rows_per_file,
+       max(c) AS max_rows_per_file
+FROM (SELECT filename, count(*) AS c FROM read_parquet(['https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000000.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000001.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000002.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000003.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000004.parquet', 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b03/usa_names-000000000005.parquet'], filename=true) GROUP BY filename);
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌───────────┐
+│ rows_read │
+│   int64   │
+├───────────┤
+│   5552452 │
+└───────────┘
+┌───────┬───────────────────┬───────────────────┐
+│ files │ min_rows_per_file │ max_rows_per_file │
+│ int64 │       int64       │       int64       │
+├───────┼───────────────────┼───────────────────┤
+│     6 │            924971 │            925837 │
+└───────┴───────────────────┴───────────────────┘
+

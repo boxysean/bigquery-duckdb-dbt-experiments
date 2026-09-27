@@ -1,0 +1,31 @@
+# b06b: read_parquet over gs:// with a TYPE gcs secret holding placeholder keys
+# sql: analyses/transport_b/sql/b06b_gs_fake_hmac.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 0.44s  exit 1  peak RSS 47716 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b06b.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b06b: same object, with a `TYPE gcs` secret carrying placeholder HMAC keys.
+INSTALL azure;
+LOAD azure;
+CREATE SECRET tb_gcs (TYPE gcs, KEY_ID 'placeholder-access-key', SECRET 'placeholder-secret');
+SELECT count(*) FROM read_parquet('gs://coreychimpbot-experiments/transport_b/b02/*.parquet');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+HTTP Error: HTTP GET error reading 'gs://coreychimpbot-experiments/transport_b/b02' in region '' (HTTP 403 Forbidden)
+
+SignatureDoesNotMatch: Access denied.
+
+Authentication Failure - this is usually caused by invalid or missing credentials.
+* Credentials are provided, but they did not work.
+* See https://duckdb.org/docs/stable/extensions/httpfs/s3api.html
+
+LINE 1: SELECT count(*) FROM read_parquet('gs://coreychimpbot-experiments/transport_b...
+                             ^
+

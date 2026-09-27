@@ -1,0 +1,79 @@
+# b13c: EXPORT DATA JSON as Parquet
+# sql: analyses/transport_b/sql/b13c_export_json_parquet.sql
+# wall (job insert + poll) 3.24s  http 200  job job_9wP-RDrKfmSsbeDjznTKXlraeMN4
+# statementType EXPORT_DATA  state DONE
+# expected to fail: True
+# objects under gs://coreychimpbot-experiments/transport_b/b13c/: 0
+
+-- b13c: JSON to Parquet. The documented export limitations do not mention it; the job
+-- fails with the error text this scenario is here to capture.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b13c/json-*.parquet',
+  format='PARQUET',
+  overwrite=true) AS
+SELECT * FROM `coreychimpbot.experiments_dev.transport_b_types_json`
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "q7JjqXMLSZ4HmDwkVFOWNQ==",
+ "id": "coreychimpbot:US.job_9wP-RDrKfmSsbeDjznTKXlraeMN4",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_9wP-RDrKfmSsbeDjznTKXlraeMN4?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b13c: JSON to Parquet. The documented export limitations do not mention it; the job\n-- fails with the error text this scenario is here to capture.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b13c/json-*.parquet',\n  format='PARQUET',\n  overwrite=true) AS\nSELECT * FROM `coreychimpbot.experiments_dev.transport_b_types_json`\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_9wP-RDrKfmSsbeDjznTKXlraeMN4",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526263308",
+  "startTime": "1790526263443",
+  "endTime": "1790526263859",
+  "query": {
+   "totalSlotMs": "31",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "coreychimpbot",
+     "datasetId": "experiments_dev",
+     "tableId": "transport_b_types_json"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "0",
+    "rowCount": "0"
+   }
+  },
+  "totalSlotMs": "31",
+  "finalExecutionDurationMs": "223"
+ },
+ "status": {
+  "errorResult": {
+   "reason": "invalid",
+   "message": "Error while reading data, error message: Type JSON is not currently supported for parquet exports."
+  },
+  "errors": [
+   {
+    "reason": "invalid",
+    "message": "Error while reading data, error message: Type JSON is not currently supported for parquet exports."
+   }
+  ],
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+

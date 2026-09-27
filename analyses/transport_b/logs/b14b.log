@@ -1,0 +1,151 @@
+# b14b: the CSV export that IS allowed for JSON (b13c's control)
+# sql: analyses/transport_b/sql/b14b_export_json_csv.sql
+# wall (job insert + poll) 3.23s  http 200  job job_Vtb4a6OlT-wHoBCQO_tcC1_h2TS2
+# statementType EXPORT_DATA  state DONE
+# expected to fail: False
+# objects under gs://coreychimpbot-experiments/transport_b/b14b/: 1
+
+-- b14b: JSON as CSV. Not nested, not repeated — so the CSV rule does not apply to it,
+-- and this is the comparison that makes b13c specific to Parquet rather than to JSON.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b14b/json-*.csv',
+  format='CSV',
+  overwrite=true,
+  header=true) AS
+SELECT * FROM `coreychimpbot.experiments_dev.transport_b_types_json`
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "JweyvYXBJhDxU2SQr37uSw==",
+ "id": "coreychimpbot:US.job_Vtb4a6OlT-wHoBCQO_tcC1_h2TS2",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_Vtb4a6OlT-wHoBCQO_tcC1_h2TS2?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b14b: JSON as CSV. Not nested, not repeated \u2014 so the CSV rule does not apply to it,\n-- and this is the comparison that makes b13c specific to Parquet rather than to JSON.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b14b/json-*.csv',\n  format='CSV',\n  overwrite=true,\n  header=true) AS\nSELECT * FROM `coreychimpbot.experiments_dev.transport_b_types_json`\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_Vtb4a6OlT-wHoBCQO_tcC1_h2TS2",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526267739",
+  "startTime": "1790526267961",
+  "endTime": "1790526268765",
+  "totalBytesProcessed": "48",
+  "query": {
+   "queryPlan": [
+    {
+     "name": "S00: Output",
+     "id": "0",
+     "startMs": "1790526268067",
+     "endMs": "1790526268571",
+     "waitRatioAvg": 0.0020325203252032522,
+     "waitMsAvg": "1",
+     "waitRatioMax": 0.0020325203252032522,
+     "waitMsMax": "1",
+     "readRatioAvg": 0.008130081300813009,
+     "readMsAvg": "4",
+     "readRatioMax": 0.008130081300813009,
+     "readMsMax": "4",
+     "computeRatioAvg": 0.028455284552845527,
+     "computeMsAvg": "14",
+     "computeRatioMax": 0.028455284552845527,
+     "computeMsMax": "14",
+     "writeRatioAvg": 1,
+     "writeMsAvg": "492",
+     "writeRatioMax": 1,
+     "writeMsMax": "492",
+     "shuffleOutputBytes": "0",
+     "shuffleOutputBytesSpilled": "0",
+     "recordsRead": "2",
+     "recordsWritten": "2",
+     "parallelInputs": "1",
+     "completedParallelInputs": "1",
+     "status": "COMPLETE",
+     "steps": [
+      {
+       "kind": "READ",
+       "substeps": [
+        "$1:id, $2:j",
+        "FROM coreychimpbot.experiments_dev.transport_b_types_json"
+       ]
+      },
+      {
+       "kind": "WRITE",
+       "substeps": [
+        "$1, $2",
+        "TO __stage00_output"
+       ]
+      }
+     ],
+     "slotMs": "643",
+     "computeMode": "BIGQUERY"
+    }
+   ],
+   "estimatedBytesProcessed": "48",
+   "timeline": [
+    {
+     "elapsedMs": "744",
+     "totalSlotMs": "643",
+     "pendingUnits": "0",
+     "completedUnits": "1",
+     "estimatedRunnableUnits": "0"
+    }
+   ],
+   "totalPartitionsProcessed": "0",
+   "totalBytesProcessed": "48",
+   "totalBytesBilled": "10485760",
+   "billingTier": 1,
+   "totalSlotMs": "643",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "coreychimpbot",
+     "datasetId": "experiments_dev",
+     "tableId": "transport_b_types_json"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "1",
+    "rowCount": "2"
+   },
+   "performanceInsights": {
+    "avgPreviousExecutionMs": "515"
+   },
+   "transferredBytes": "0",
+   "metadataCacheStatistics": {
+    "tableMetadataCacheUsage": [
+     {
+      "tableReference": {
+       "projectId": "coreychimpbot",
+       "datasetId": "experiments_dev",
+       "tableId": "transport_b_types_json"
+      },
+      "unusedReason": "OTHER_REASON",
+      "explanation": "Table does not have CMETA."
+     }
+    ]
+   }
+  },
+  "totalSlotMs": "643",
+  "finalExecutionDurationMs": "680"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+transport_b/b14b/json-000000000000.csv  51 bytes  2026-09-27T16:24:28.533Z

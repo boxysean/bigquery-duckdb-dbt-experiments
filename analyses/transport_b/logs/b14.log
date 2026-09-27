@@ -1,0 +1,81 @@
+# b14: the documented refusal: nested/repeated data to CSV
+# sql: analyses/transport_b/sql/b14_export_types_csv_nested.sql
+# wall (job insert + poll) 0.74s  http 200  job job_Zp-Ee2HYaTPj_e2sz-afLlFO19CF
+# statementType EXPORT_DATA  state DONE
+# expected to fail: True
+# objects under gs://coreychimpbot-experiments/transport_b/b14/: 0
+
+-- b14: the documented refusal. "You cannot export nested and repeated data in CSV
+-- format." Same table as b13, format CSV. Expected to fail; the error text is the point.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b14/types-*.csv',
+  format='CSV',
+  overwrite=true) AS
+SELECT * FROM `coreychimpbot.experiments_dev.transport_b_types`
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "LlWXWmAStwY1mmQybErBqA==",
+ "id": "coreychimpbot:US.job_Zp-Ee2HYaTPj_e2sz-afLlFO19CF",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_Zp-Ee2HYaTPj_e2sz-afLlFO19CF?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b14: the documented refusal. \"You cannot export nested and repeated data in CSV\n-- format.\" Same table as b13, format CSV. Expected to fail; the error text is the point.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b14/types-*.csv',\n  format='CSV',\n  overwrite=true) AS\nSELECT * FROM `coreychimpbot.experiments_dev.transport_b_types`\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_Zp-Ee2HYaTPj_e2sz-afLlFO19CF",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526266734",
+  "startTime": "1790526266848",
+  "endTime": "1790526267010",
+  "query": {
+   "totalSlotMs": "33",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "coreychimpbot",
+     "datasetId": "experiments_dev",
+     "tableId": "transport_b_types"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "0",
+    "rowCount": "0"
+   }
+  },
+  "totalSlotMs": "33",
+  "finalExecutionDurationMs": "36"
+ },
+ "status": {
+  "errorResult": {
+   "reason": "invalidQuery",
+   "location": "query",
+   "message": "Only simple types may be exported as CSV but variable has type ARRAY<INT64>"
+  },
+  "errors": [
+   {
+    "reason": "invalidQuery",
+    "location": "query",
+    "message": "Only simple types may be exported as CSV but variable has type ARRAY<INT64>"
+   }
+  ],
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+

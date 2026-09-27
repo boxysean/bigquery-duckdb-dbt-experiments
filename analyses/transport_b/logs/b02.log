@@ -1,0 +1,151 @@
+# b02: EXPORT DATA one mart to GCS as Parquet
+# sql: analyses/transport_b/sql/b02_export_mart.sql
+# wall (job insert + poll) 3.11s  http 200  job job_jUDHznv9GPMD7sj1C4WLfBIVrY_Q
+# statementType EXPORT_DATA  state DONE
+# expected to fail: False
+# objects under gs://coreychimpbot-experiments/transport_b/b02/: 1
+
+-- b02: the smallest export that still exercises the whole route.
+-- One mart, one wildcard, PARQUET. mart_daily_revenue is 2,761 rows / 287,144 bytes
+-- of BigQuery logical storage.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b02/mart_daily_revenue-*.parquet',
+  format='PARQUET',
+  overwrite=true) AS
+SELECT * FROM `coreychimpbot.experiments_dev.mart_daily_revenue`
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "XnCchPml7VPHWLL13nrw4A==",
+ "id": "coreychimpbot:US.job_jUDHznv9GPMD7sj1C4WLfBIVrY_Q",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_jUDHznv9GPMD7sj1C4WLfBIVrY_Q?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b02: the smallest export that still exercises the whole route.\n-- One mart, one wildcard, PARQUET. mart_daily_revenue is 2,761 rows / 287,144 bytes\n-- of BigQuery logical storage.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b02/mart_daily_revenue-*.parquet',\n  format='PARQUET',\n  overwrite=true) AS\nSELECT * FROM `coreychimpbot.experiments_dev.mart_daily_revenue`\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_jUDHznv9GPMD7sj1C4WLfBIVrY_Q",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526010016",
+  "startTime": "1790526010151",
+  "endTime": "1790526010785",
+  "totalBytesProcessed": "287144",
+  "query": {
+   "queryPlan": [
+    {
+     "name": "S00: Output",
+     "id": "0",
+     "startMs": "1790526010253",
+     "endMs": "1790526010710",
+     "waitRatioAvg": 0.0045871559633027525,
+     "waitMsAvg": "2",
+     "waitRatioMax": 0.0045871559633027525,
+     "waitMsMax": "2",
+     "readRatioAvg": 0.011467889908256881,
+     "readMsAvg": "5",
+     "readRatioMax": 0.011467889908256881,
+     "readMsMax": "5",
+     "computeRatioAvg": 0.0871559633027523,
+     "computeMsAvg": "38",
+     "computeRatioMax": 0.0871559633027523,
+     "computeMsMax": "38",
+     "writeRatioAvg": 1,
+     "writeMsAvg": "436",
+     "writeRatioMax": 1,
+     "writeMsMax": "436",
+     "shuffleOutputBytes": "0",
+     "shuffleOutputBytesSpilled": "0",
+     "recordsRead": "2761",
+     "recordsWritten": "2761",
+     "parallelInputs": "1",
+     "completedParallelInputs": "1",
+     "status": "COMPLETE",
+     "steps": [
+      {
+       "kind": "READ",
+       "substeps": [
+        "$1:revenue_date, $2:order_count, $3:order_item_count, $4:customer_count, $5:gross_revenue, $6:total_cost, $7:gross_margin, $8:average_order_value, $9:returned_item_count",
+        "FROM coreychimpbot.experiments_dev.mart_daily_revenue"
+       ]
+      },
+      {
+       "kind": "WRITE",
+       "substeps": [
+        "$1, $2, $3, $4, $5, $6, $7, $8, $9",
+        "TO __stage00_output"
+       ]
+      }
+     ],
+     "slotMs": "302",
+     "computeMode": "BIGQUERY"
+    }
+   ],
+   "estimatedBytesProcessed": "287144",
+   "timeline": [
+    {
+     "elapsedMs": "575",
+     "totalSlotMs": "302",
+     "pendingUnits": "0",
+     "completedUnits": "1",
+     "estimatedRunnableUnits": "0"
+    }
+   ],
+   "totalPartitionsProcessed": "0",
+   "totalBytesProcessed": "287144",
+   "totalBytesBilled": "10485760",
+   "billingTier": 1,
+   "totalSlotMs": "302",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "coreychimpbot",
+     "datasetId": "experiments_dev",
+     "tableId": "mart_daily_revenue"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "1",
+    "rowCount": "2761"
+   },
+   "performanceInsights": {
+    "avgPreviousExecutionMs": "522"
+   },
+   "transferredBytes": "0",
+   "metadataCacheStatistics": {
+    "tableMetadataCacheUsage": [
+     {
+      "tableReference": {
+       "projectId": "coreychimpbot",
+       "datasetId": "experiments_dev",
+       "tableId": "mart_daily_revenue"
+      },
+      "unusedReason": "OTHER_REASON",
+      "explanation": "Table does not have CMETA."
+     }
+    ]
+   }
+  },
+  "totalSlotMs": "302",
+  "finalExecutionDurationMs": "512"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+transport_b/b02/mart_daily_revenue-000000000000.parquet  220580 bytes  2026-09-27T16:20:10.677Z

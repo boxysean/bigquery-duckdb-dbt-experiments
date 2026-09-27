@@ -1,0 +1,165 @@
+# b03: EXPORT DATA usa_names (5,552,452 rows) — the Transport A table
+# sql: analyses/transport_b/sql/b03_export_usa_names.sql
+# wall (job insert + poll) 3.25s  http 200  job job_QV51KCsYJqhnq5q3tdufSw_S3256
+# statementType EXPORT_DATA  state DONE
+# expected to fail: False
+# objects under gs://coreychimpbot-experiments/transport_b/b03/: 6
+
+-- b03: the head-to-head table. Transport A (card 5) materialised this exact table
+-- through the Storage Read API in 11.7 s (11.2 s and 22.2 s in other runs) and 120 MiB
+-- of peak RSS. Transport B's total is this export job plus the read-back.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b03/usa_names-*.parquet',
+  format='PARQUET',
+  overwrite=true) AS
+SELECT * FROM `bigquery-public-data.usa_names.usa_1910_2013`
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "ZyWYHcIP+N8osX2aBS5CMQ==",
+ "id": "coreychimpbot:US.job_QV51KCsYJqhnq5q3tdufSw_S3256",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_QV51KCsYJqhnq5q3tdufSw_S3256?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b03: the head-to-head table. Transport A (card 5) materialised this exact table\n-- through the Storage Read API in 11.7 s (11.2 s and 22.2 s in other runs) and 120 MiB\n-- of peak RSS. Transport B's total is this export job plus the read-back.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b03/usa_names-*.parquet',\n  format='PARQUET',\n  overwrite=true) AS\nSELECT * FROM `bigquery-public-data.usa_names.usa_1910_2013`\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_QV51KCsYJqhnq5q3tdufSw_S3256",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526013343",
+  "startTime": "1790526013617",
+  "endTime": "1790526015329",
+  "totalBytesProcessed": "171432506",
+  "query": {
+   "queryPlan": [
+    {
+     "name": "S00: Output",
+     "id": "0",
+     "startMs": "1790526013714",
+     "endMs": "1790526015263",
+     "waitRatioAvg": 0.0008517887563884157,
+     "waitMsAvg": "1",
+     "waitRatioMax": 0.0008517887563884157,
+     "waitMsMax": "1",
+     "readRatioAvg": 0.009369676320272573,
+     "readMsAvg": "11",
+     "readRatioMax": 0.01192504258943782,
+     "readMsMax": "14",
+     "computeRatioAvg": 0.8492333901192505,
+     "computeMsAvg": "997",
+     "computeRatioMax": 1,
+     "computeMsMax": "1174",
+     "writeRatioAvg": 0.7291311754684838,
+     "writeMsAvg": "856",
+     "writeRatioMax": 0.8228279386712095,
+     "writeMsMax": "966",
+     "shuffleOutputBytes": "0",
+     "shuffleOutputBytesSpilled": "0",
+     "recordsRead": "5552452",
+     "recordsWritten": "5552452",
+     "parallelInputs": "6",
+     "completedParallelInputs": "6",
+     "status": "COMPLETE",
+     "steps": [
+      {
+       "kind": "READ",
+       "substeps": [
+        "$1:state, $2:gender, $3:year, $4:name, $5:number",
+        "FROM bigquery-public-data.usa_names.usa_1910_2013"
+       ]
+      },
+      {
+       "kind": "WRITE",
+       "substeps": [
+        "$1, $2, $3, $4, $5",
+        "TO __stage00_output"
+       ]
+      }
+     ],
+     "slotMs": "10588",
+     "computeMode": "BIGQUERY"
+    }
+   ],
+   "estimatedBytesProcessed": "171432506",
+   "timeline": [
+    {
+     "elapsedMs": "383",
+     "totalSlotMs": "10588",
+     "pendingUnits": "6",
+     "completedUnits": "0",
+     "activeUnits": "6",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "1657",
+     "totalSlotMs": "10588",
+     "pendingUnits": "0",
+     "completedUnits": "6",
+     "activeUnits": "6",
+     "estimatedRunnableUnits": "0"
+    }
+   ],
+   "totalPartitionsProcessed": "0",
+   "totalBytesProcessed": "171432506",
+   "totalBytesBilled": "171966464",
+   "billingTier": 1,
+   "totalSlotMs": "10588",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "bigquery-public-data",
+     "datasetId": "usa_names",
+     "tableId": "usa_1910_2013"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "6",
+    "rowCount": "5552452"
+   },
+   "performanceInsights": {
+    "avgPreviousExecutionMs": "2014"
+   },
+   "transferredBytes": "0",
+   "metadataCacheStatistics": {
+    "tableMetadataCacheUsage": [
+     {
+      "tableReference": {
+       "projectId": "bigquery-public-data",
+       "datasetId": "usa_names",
+       "tableId": "usa_1910_2013"
+      },
+      "unusedReason": "OTHER_REASON",
+      "explanation": "Table does not have CMETA."
+     }
+    ]
+   }
+  },
+  "totalSlotMs": "10588",
+  "finalExecutionDurationMs": "1597"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+transport_b/b03/usa_names-000000000000.parquet  3104613 bytes  2026-09-27T16:20:15.152Z
+transport_b/b03/usa_names-000000000001.parquet  3103169 bytes  2026-09-27T16:20:14.952Z
+transport_b/b03/usa_names-000000000002.parquet  3103404 bytes  2026-09-27T16:20:15.167Z
+transport_b/b03/usa_names-000000000003.parquet  3103760 bytes  2026-09-27T16:20:15.070Z
+transport_b/b03/usa_names-000000000004.parquet  3105179 bytes  2026-09-27T16:20:15.235Z
+transport_b/b03/usa_names-000000000005.parquet  3105704 bytes  2026-09-27T16:20:14.990Z

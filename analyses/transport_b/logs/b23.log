@@ -1,0 +1,252 @@
+# b23: row order with ORDER BY temp (and what the sort does to the file count)
+# sql: analyses/transport_b/sql/b23_row_order_order_by.sql
+# wall (job insert + poll) 5.51s  http 200  job job_ZRVBUADAdHxIurzZi3Z2ok2obqnN
+# statementType EXPORT_DATA  state DONE
+# expected to fail: False
+# objects under gs://coreychimpbot-experiments/transport_b/b23/: 1
+
+-- b23: row order, made deterministic with ORDER BY. Same table, same wildcard, same
+-- columns — the only change is the sort. This is the export shape a reproducible
+-- pipeline needs, and it is the one bigquery_extract (b25) cannot express.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b23/c-*.parquet',
+  format='PARQUET', overwrite=true) AS
+SELECT stn, year, mo, da, temp
+FROM `bigquery-public-data.noaa_gsod.gsod2023`
+WHERE temp IS NOT NULL
+ORDER BY temp
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "ljdVJtvwVid1S2fph3oXOw==",
+ "id": "coreychimpbot:US.job_ZRVBUADAdHxIurzZi3Z2ok2obqnN",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_ZRVBUADAdHxIurzZi3Z2ok2obqnN?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b23: row order, made deterministic with ORDER BY. Same table, same wildcard, same\n-- columns \u2014 the only change is the sort. This is the export shape a reproducible\n-- pipeline needs, and it is the one bigquery_extract (b25) cannot express.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b23/c-*.parquet',\n  format='PARQUET', overwrite=true) AS\nSELECT stn, year, mo, da, temp\nFROM `bigquery-public-data.noaa_gsod.gsod2023`\nWHERE temp IS NOT NULL\nORDER BY temp\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_ZRVBUADAdHxIurzZi3Z2ok2obqnN",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526311694",
+  "startTime": "1790526311821",
+  "endTime": "1790526316243",
+  "totalBytesProcessed": "121162410",
+  "query": {
+   "queryPlan": [
+    {
+     "name": "S00: Input",
+     "id": "0",
+     "startMs": "1790526311908",
+     "endMs": "1790526312051",
+     "waitRatioAvg": 0.0001901863826550019,
+     "waitMsAvg": "1",
+     "waitRatioMax": 0.0003803727653100038,
+     "waitMsMax": "2",
+     "readRatioAvg": 0.002472422974515025,
+     "readMsAvg": "13",
+     "readRatioMax": 0.003233168505135032,
+     "readMsMax": "17",
+     "computeRatioAvg": 0.0300494484594903,
+     "computeMsAvg": "158",
+     "computeRatioMax": 0.034233548877900345,
+     "computeMsMax": "180",
+     "writeRatioAvg": 0.0020920502092050207,
+     "writeMsAvg": "11",
+     "writeRatioMax": 0.004754659566375047,
+     "writeMsMax": "25",
+     "shuffleOutputBytes": "173666121",
+     "shuffleOutputBytesSpilled": "0",
+     "recordsRead": "4038747",
+     "recordsWritten": "4038747",
+     "parallelInputs": "17",
+     "completedParallelInputs": "17",
+     "status": "COMPLETE",
+     "steps": [
+      {
+       "kind": "READ",
+       "substeps": [
+        "$1:stn, $2:year, $3:mo, $4:da, $5:temp",
+        "FROM bigquery-public-data.noaa_gsod.gsod2023",
+        "WHERE not(is_null($5))"
+       ]
+      },
+      {
+       "kind": "WRITE",
+       "substeps": [
+        "$1, $2, $3, $4, $5",
+        "TO __stage00_output"
+       ]
+      }
+     ],
+     "slotMs": "2035",
+     "computeMode": "BIGQUERY"
+    },
+    {
+     "name": "S01: Output",
+     "id": "1",
+     "startMs": "1790526312058",
+     "endMs": "1790526315535",
+     "inputStages": [
+      "0"
+     ],
+     "waitRatioAvg": 0.0003803727653100038,
+     "waitMsAvg": "2",
+     "waitRatioMax": 0.0003803727653100038,
+     "waitMsMax": "2",
+     "readRatioAvg": 0,
+     "readMsAvg": "0",
+     "readRatioMax": 0,
+     "readMsMax": "0",
+     "computeRatioAvg": 1,
+     "computeMsAvg": "5258",
+     "computeRatioMax": 1,
+     "computeMsMax": "5258",
+     "writeRatioAvg": 0.1407379231647014,
+     "writeMsAvg": "740",
+     "writeRatioMax": 0.1407379231647014,
+     "writeMsMax": "740",
+     "shuffleOutputBytes": "0",
+     "shuffleOutputBytesSpilled": "0",
+     "recordsRead": "4038747",
+     "recordsWritten": "4038747",
+     "parallelInputs": "1",
+     "completedParallelInputs": "1",
+     "status": "COMPLETE",
+     "steps": [
+      {
+       "kind": "READ",
+       "substeps": [
+        "$1, $2, $3, $4, $5",
+        "FROM __stage00_output"
+       ]
+      },
+      {
+       "kind": "SORT",
+       "substeps": [
+        "$5 ASC"
+       ]
+      },
+      {
+       "kind": "WRITE",
+       "substeps": [
+        "$10, $11, $12, $13, $14",
+        "TO __stage01_output"
+       ]
+      }
+     ],
+     "slotMs": "7295",
+     "computeMode": "BIGQUERY"
+    }
+   ],
+   "estimatedBytesProcessed": "121162410",
+   "timeline": [
+    {
+     "elapsedMs": "179",
+     "totalSlotMs": "6610",
+     "pendingUnits": "17",
+     "completedUnits": "0",
+     "activeUnits": "17",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "1179",
+     "totalSlotMs": "8569",
+     "pendingUnits": "1",
+     "completedUnits": "17",
+     "activeUnits": "1",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "2179",
+     "totalSlotMs": "9331",
+     "pendingUnits": "1",
+     "completedUnits": "17",
+     "activeUnits": "1",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "3179",
+     "totalSlotMs": "9331",
+     "pendingUnits": "1",
+     "completedUnits": "17",
+     "activeUnits": "1",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "4362",
+     "totalSlotMs": "9331",
+     "pendingUnits": "0",
+     "completedUnits": "18",
+     "activeUnits": "0",
+     "estimatedRunnableUnits": "0"
+    }
+   ],
+   "totalPartitionsProcessed": "0",
+   "totalBytesProcessed": "121162410",
+   "totalBytesBilled": "121634816",
+   "billingTier": 1,
+   "totalSlotMs": "9331",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "bigquery-public-data",
+     "datasetId": "noaa_gsod",
+     "tableId": "gsod2023"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "1",
+    "rowCount": "4038747"
+   },
+   "performanceInsights": {
+    "avgPreviousExecutionMs": "5238"
+   },
+   "queryInfo": {
+    "optimizationDetails": {
+     "optimizations": [
+      {
+       "enhanced_vectorization": "applied"
+      }
+     ]
+    }
+   },
+   "transferredBytes": "0",
+   "metadataCacheStatistics": {
+    "tableMetadataCacheUsage": [
+     {
+      "tableReference": {
+       "projectId": "bigquery-public-data",
+       "datasetId": "noaa_gsod",
+       "tableId": "gsod2023"
+      },
+      "unusedReason": "OTHER_REASON",
+      "explanation": "Table does not have CMETA."
+     }
+    ]
+   }
+  },
+  "totalSlotMs": "9331",
+  "finalExecutionDurationMs": "4321"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+transport_b/b23/c-000000000000.parquet  11694763 bytes  2026-09-27T16:25:15.504Z

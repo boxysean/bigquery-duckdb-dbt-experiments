@@ -1,0 +1,24 @@
+# b08b: the flag DuckDB suggests for b08
+# sql: analyses/transport_b/sql/b08b_http_glob_flag.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 0.33s  exit 1  peak RSS 39792 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b08b.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b08b: the flag DuckDB suggests.
+CREATE SECRET tb_http (TYPE http, BEARER_TOKEN '__TOKEN__');
+SET allow_asterisks_in_http_paths = true;
+SELECT count(*) FROM read_parquet('https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/*.parquet');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+HTTP Error: HTTP GET error on 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/*.parquet' (HTTP 404 Not Found)
+
+LINE 1: SELECT count(*) FROM read_parquet('https://storage.googleapis.com/coreychimpbot...
+                             ^
+

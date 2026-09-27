@@ -1,0 +1,44 @@
+# b11: the exported mart Parquet, as DuckDB sees it
+# sql: analyses/transport_b/sql/b11_mart_typeof.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 1.90s  exit 0  peak RSS 43368 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b11.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b11: what the exported Parquet looks like from DuckDB's side. DESCRIBE is the type
+-- mapping over the file transport; the SELECT is the values. Compare both against the
+-- BigQuery schema the harness recorded for `experiments_dev.mart_daily_revenue`.
+CREATE SECRET tb_http (TYPE http, BEARER_TOKEN '__TOKEN__');
+DESCRIBE SELECT * FROM read_parquet('https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/mart_daily_revenue-000000000000.parquet');
+SELECT * FROM read_parquet('https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/mart_daily_revenue-000000000000.parquet')
+ORDER BY revenue_date LIMIT 3;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+[90m┌─────────────────────────────┐[00m[90m
+[00m[90m│          [00m[1mDescribe[00m[90m           │[00m[90m
+[00m[90m│                             │[00m[90m
+[00m[90m│ [00mrevenue_date[90m        [00m[90mdate[00m[90m    [00m[90m│[00m[90m
+[00m[90m│ [00morder_count[90m         [00m[90mbigint[00m[90m  [00m[90m│[00m[90m
+[00m[90m│ [00morder_item_count[90m    [00m[90mbigint[00m[90m  [00m[90m│[00m[90m
+[00m[90m│ [00mcustomer_count[90m      [00m[90mbigint[00m[90m  [00m[90m│[00m[90m
+[00m[90m│ [00mgross_revenue[90m       [00m[90mdecimal[00m[90m [00m[90m│[00m[90m
+[00m[90m│ [00mtotal_cost[90m          [00m[90mdecimal[00m[90m [00m[90m│[00m[90m
+[00m[90m│ [00mgross_margin[90m        [00m[90mdecimal[00m[90m [00m[90m│[00m[90m
+[00m[90m│ [00maverage_order_value[90m [00m[90mdecimal[00m[90m [00m[90m│[00m[90m
+[00m[90m│ [00mreturned_item_count[90m [00m[90mbigint[00m[90m  [00m[90m│[00m[90m
+[00m[90m└─────────────────────────────┘[00m[90m
+[00m┌──────────────┬─────────────┬──────────────────┬────────────────┬───────────────┬───────────────┬───────────────┬─────────────────────┬─────────────────────┐
+│ revenue_date │ order_count │ order_item_count │ customer_count │ gross_revenue │  total_cost   │ gross_margin  │ average_order_value │ returned_item_count │
+│     date     │    int64    │      int64       │     int64      │ decimal(38,9) │ decimal(38,9) │ decimal(38,9) │    decimal(38,9)    │        int64        │
+├──────────────┼─────────────┼──────────────────┼────────────────┼───────────────┼───────────────┼───────────────┼─────────────────────┼─────────────────────┤
+│ 2019-01-15   │           1 │                1 │              1 │  24.000000000 │  11.304000020 │  12.695999980 │        24.000000000 │                   1 │
+│ 2019-01-21   │           1 │                1 │              1 │  17.500000000 │   7.700000023 │   9.799999977 │        17.500000000 │                   1 │
+│ 2019-01-24   │           1 │                2 │              1 │  89.000000000 │  49.543999941 │  39.456000059 │        89.000000000 │                   0 │
+└──────────────┴─────────────┴──────────────────┴────────────────┴───────────────┴───────────────┴───────────────┴─────────────────────┴─────────────────────┘
+
