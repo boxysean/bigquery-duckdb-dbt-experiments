@@ -92,7 +92,7 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
 * **Resolution.** `decimal_type(p > 38)` renders `bignumeric` on BigQuery and raises a
   compiler error on DuckDB (`Refusing to fall back to DOUBLE silently.`,
   `README.md:194-197`), never a silent `double`.
-* **Classification.** dual-target: a type-system gap, not a setting (it bites again in 7.4).
+* **Classification.** dual-target: a type-system gap, not a setting (it bites again in 7.3).
 
 ### 3.2 The date spine: `unnest`'s alias in `FROM`, and the series' element type
 
@@ -230,27 +230,7 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
 
 ## 7. Transport B: `EXPORT DATA` to GCS (t_69095c72)
 
-### 7.1 No HMAC keys, so the `gs://` read path is unusable
-
-* **Symptom.**
-  ```
-  HTTP Error: HTTP GET error reading 'gs://coreychimpbot-experiments/transport_b/b02' in region '' (HTTP 403 Forbidden)
-  AccessDenied: Access denied.
-  * No credentials are provided.
-  Invalid Input Error: Globs (`*`) for generic HTTP file is are not supported.
-  ```
-  source: `analyses/transport_b/logs/b06.log:17-22`, `b08.log:21`. A `SCOPE`d http secret:
-  `HTTP GET error on 'https://storage.googleapis.com/…' (HTTP 0 Internal Server Error)`
-  (`b07b.log:21`).
-* **Cause.** `gs://` needs a `TYPE gcs` secret with HMAC keys; the box has none (`b06b.log:23`
-  fails with placeholders). A `SCOPE` stops the bearer token being applied. Generic HTTP
-  cannot list objects, so no globs.
-* **Resolution.** Workaround: an **unscoped** `TYPE http` secret with an OAuth bearer token
-  on the GCS XML-API object URL (b07: 1.42 s); multi-file exports as an explicit URL list
-  (b09: 59 objects, 58,937,715 rows in 20.73 s).
-* **Classification.** environment (no HMAC keys), plus DuckDB 1.5.5 (http secret behaviour).
-
-### 7.2 Two refusals in the export path
+### 7.1 Two refusals in the export path
 
 * **Symptom.**
   ```
@@ -263,7 +243,7 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
 * **Resolution.** Nested data as Parquet; JSON as CSV (or cast to STRING).
 * **Classification.** dual-target: BigQuery's export rules, inherited by any file hand-off.
 
-### 7.3 An unordered export's row order is not reproducible
+### 7.2 An unordered export's row order is not reproducible
 
 * **Symptom.** Three identical exports gave the same two chunks, but run B's file 0 is
   byte-for-byte run A's file 1 (`238054 rows · d28275cb555862308a6570acc846d1f5`) and vice
@@ -272,9 +252,9 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
 * **Cause.** One shard per parallel worker, with nothing fixing which worker writes which file.
 * **Resolution.** `ORDER BY` makes the artifact reproducible (1 file, 0 descents, 4,038,747
   rows), at the cost of parallelism (1 file instead of 17).
-* **Classification.** dual-target (BigQuery export semantics, as 7.2).
+* **Classification.** dual-target (BigQuery export semantics, as 7.1).
 
-### 7.4 BIGNUMERIC is dropped silently
+### 7.3 BIGNUMERIC is dropped silently
 
 * **Symptom.** In Parquet it becomes a `double`, `1.234567890123457e+37`: 16 significant
   digits of 38, no error or warning (`analyses/transport_b/README.md:150,153-157`, b18b).
@@ -381,10 +361,9 @@ and dialect portability. Sources: `README.md:687-715` (§"What is NOT verified")
 | 6.1 REST cast bug, dry-run crash | `analyses/transport_a/logs/t17.log:49`, `t18.log:29`; `analyses/transport_a/README.md:287-306` |
 | 6.2 write stream `NOT_FOUND`, 5.6 / 11.3 / 128.7 s | `analyses/transport_a/README.md:234-242`; `analyses/transport_a/logs/t12b.log:12-16,36-37` |
 | 6.3 `JOBS_BY_PROJECT` | `analyses/transport_a/README.md:308-312` |
-| 7.1 `gs://` 403, scoped secret HTTP 0, globs | `analyses/transport_b/logs/b06.log:17-22`, `b06b.log:21-26`, `b07b.log:21`, `b08.log:21`; `analyses/transport_b/README.md:52-67` |
-| 7.2 CSV / JSON refusals | `analyses/transport_b/logs/b14.log:64`, `b13c.log:63`; `analyses/transport_b/README.md:97-99` |
-| 7.3 row order | `analyses/transport_b/logs/b24.log:51-73`; `analyses/transport_b/README.md:102-130` |
-| 7.4 BIGNUMERIC → double / VARCHAR | `analyses/transport_b/README.md:150,153-157`; `analyses/transport_a/README.md:173,193-199` |
+| 7.1 CSV / JSON refusals | `analyses/transport_b/logs/b14.log:64`, `b13c.log:63`; `analyses/transport_b/README.md:97-99` |
+| 7.2 row order | `analyses/transport_b/logs/b24.log:51-73`; `analyses/transport_b/README.md:102-130` |
+| 7.3 BIGNUMERIC → double / VARCHAR | `analyses/transport_b/README.md:150,153-157`; `analyses/transport_a/README.md:173,193-199` |
 | 8.1 39 findings, then excluded | `docs/move_to_duckdb.md:535,576-591`; `scripts/check_portability.py:40,254-256`; commit `60b0c5d`; `python3 scripts/check_portability.py` (2026-09-27, this worktree) |
 | 8.2 `MacroSyntaxInvalid` | orchestrator's record and probe (2026-09-27, **not in a file**); `.cc-move-run3.json` |
 | verdict: guardrail, `make duck`, `make bq`, `datasets.get` | orchestrator's runs in this worktree, 2026-09-27; the guardrail re-run for this document; `make bq` not re-run (it costs money) |
