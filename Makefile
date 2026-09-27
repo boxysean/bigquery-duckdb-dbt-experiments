@@ -8,7 +8,7 @@ SHELL := /bin/bash
 DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup check-env fixtures duck bq build-both parity polyglot portability pre-pr transport-a transport-b move-to-duckdb handmove-example clean
+.PHONY: help setup check-env fixtures duck fixtures-real duck-real value-parity bq build-both parity polyglot portability pre-pr transport-a transport-b move-to-duckdb handmove-example clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -18,6 +18,17 @@ help:
 	@printf '  make check-env    assert every prerequisite, failing loudly on any gap\n'
 	@printf '  make fixtures     (re)load the thelook_ecommerce fixture into dev.duckdb\n'
 	@printf '  make duck         fixtures, then dbt build --target duckdb (dev.duckdb)\n'
+	@printf '  make fixtures-real  load the REAL bigquery-public-data.thelook_ecommerce\n'
+	@printf '                    into dev.duckdb through the community bigquery extension\n'
+	@printf '                    (all 7 tables, timestamps as TIMESTAMPTZ, row counts checked\n'
+	@printf '                    against BigQuery). Needs BQ_KEYFILE; ~40 s; raw log in\n'
+	@printf '                    analyses/value_parity/logs/loader.log\n'
+	@printf '  make duck-real    fixtures-real, then dbt build --target duckdb\n'
+	@printf '  make value-parity the value-equality run: fixtures-real, both builds, then\n'
+	@printf '                    every model compared on the SAME input rows, rows and\n'
+	@printf '                    checksums gating (parity.py --sources real --bq-source\n'
+	@printf '                    materialised --same-data). Writes analyses/value_parity/\n'
+	@printf '                    results.{md,json} and logs/; needs BQ_KEYFILE, costs money\n'
 	@printf '  make bq           dbt build --target bigquery  (needs Google credentials;\n'
 	@printf '                    refuses with exit 2 when the machine has none)\n'
 	@printf '  make build-both   both targets, in that order\n'
@@ -71,6 +82,24 @@ fixtures:
 # The duckdb target is the one that runs on a clean machine.
 duck: check-env fixtures
 	$(DBT) build --target duckdb
+
+# The real dataset instead of the fixture (SPEC-value-parity.md, Transport A). Reads
+# BigQuery tables through the Storage Read API (not query jobs); needs BQ_KEYFILE.
+# `make fixtures` (or `make duck`, `make polyglot`, `make pre-pr`) puts the fixture back.
+fixtures-real:
+	bash scripts/load_duckdb_real_sources.sh
+
+duck-real: check-env fixtures-real
+	$(DBT) build --target duckdb
+
+# Value equality end to end: both legs read the same rows, and parity.py builds both
+# targets itself (so it can copy each run_results.json aside before the next build
+# overwrites it), measures the materialised relations and gates on values. Every line
+# it prints is also in analyses/value_parity/logs/parity.log. Exit 1 when a model's
+# values differ: that is the finding, not a harness failure.
+value-parity: check-env fixtures-real
+	@set -o pipefail; python3 scripts/parity.py --sources real --bq-source materialised \
+	    --same-data --out-dir analyses/value_parity 2>&1 | tee analyses/value_parity/logs/parity.log
 
 # Configured but not runnable without credentials; the script says so plainly.
 bq: check-env

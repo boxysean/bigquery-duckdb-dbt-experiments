@@ -1,0 +1,16 @@
+$ python3 analyses/value_parity/probes/decimal_text.py
+2026-09-27T19:19:36Z
+constants:
+  duckdb   [{'a': '12.30', 'b': '12.00', 'c': '0.50'}]
+  bigquery [{'a': '12.3', 'b': '12', 'c': '0.5'}]
+stg_thelook__order_items.sale_price, first 5 by value:
+  duckdb   [{'t': '0.02'}, {'t': '0.49'}, {'t': '1.50'}, {'t': '1.51'}, {'t': '1.72'}]
+  bigquery [{'t': '0.02'}, {'t': '0.49000001'}, {'t': '1.5'}, {'t': '1.50999999'}, {'t': '1.720000029'}]
+  duckdb rows whose text ends in 0 after the point: [{'n': 89597}]
+  bigquery rows whose value is not a whole number of cents: [{'n': '97135'}]
+  bigquery products.cost rows not a whole number of cents: [{'n': '29120', 'off_cents': '29035'}]
+raw thelook_ecommerce.products.cost (DOUBLE), cents after one vs two roundings:
+  duckdb   [{'n': 29120, 'differ_at_cents': 1, 'example_raw': 6.644999999552965}]
+distinct (1 - cost / retail_price) at 1e-6, raw DOUBLE vs cents:
+  duckdb   [{'raw_ratio_distinct': 328, 'cents_ratio_distinct': 18723}]
+# exit 0

@@ -1,0 +1,60 @@
+$ python3 analyses/value_parity/probes/scale_attribution.py
+2026-09-27T19:17:58Z
+dim_distribution_centers             open_inventory_value       NUMERIC  still differs     checksum duckdb 22283009281 bq@2 17152222840 | distinct duckdb 10 bq@2 10 | nulls duckdb 0 bq@2 0
+dim_products                         gross_margin               NUMERIC  still differs     checksum duckdb 62071373939761 bq@2 62218255479056 | distinct duckdb 15775 bq@2 19236 | nulls duckdb 0 bq@2 0
+dim_products                         gross_revenue              NUMERIC  match at scale 2  checksum duckdb 61792168214608 bq@2 61792168214608 | distinct duckdb 8149 bq@2 8149 | nulls duckdb 0 bq@2 0
+dim_products                         retail_price               NUMERIC  match at scale 2  checksum duckdb 61217180993459 bq@2 61217180993459 | distinct duckdb 4194 bq@2 4194 | nulls duckdb 0 bq@2 0
+dim_products                         unit_cost                  NUMERIC  still differs     checksum duckdb 61429156578190 bq@2 61427308771230 | distinct duckdb 7435 bq@2 7435 | nulls duckdb 0 bq@2 0
+dim_users                            lifetime_gross_margin      NUMERIC  still differs     checksum duckdb 240619084682153 bq@2 240273041943707 | distinct duckdb 20430 bq@2 20487 | nulls duckdb 0 bq@2 0
+dim_users                            lifetime_gross_revenue     NUMERIC  match at scale 2  checksum duckdb 239637566782372 bq@2 239637566782372 | distinct duckdb 22839 bq@2 22839 | nulls duckdb 0 bq@2 0
+fct_inventory_items                  product_retail_price       NUMERIC  match at scale 2  checksum duckdb 1026499536827527 bq@2 1026499536827527 | distinct duckdb 4185 bq@2 4185 | nulls duckdb 0 bq@2 0
+fct_inventory_items                  unit_cost                  NUMERIC  still differs     checksum duckdb 1034642813736075 bq@2 1034618792245595 | distinct duckdb 7430 bq@2 7430 | nulls duckdb 0 bq@2 0
+fct_order_items                      gross_margin               NUMERIC  still differs     checksum duckdb 384419711737598 bq@2 384194589935390 | distinct duckdb 7795 bq@2 7800 | nulls duckdb 0 bq@2 0
+fct_order_items                      product_cost               NUMERIC  still differs     checksum duckdb 383022704152535 bq@2 383013465117735 | distinct duckdb 7430 bq@2 7430 | nulls duckdb 0 bq@2 0
+fct_order_items                      product_retail_price       NUMERIC  match at scale 2  checksum duckdb 380112329639468 bq@2 380112329639468 | distinct duckdb 4185 bq@2 4185 | nulls duckdb 0 bq@2 0
+fct_order_items                      sale_price                 NUMERIC  match at scale 2  checksum duckdb 380112329639468 bq@2 380112329639468 | distinct duckdb 4185 bq@2 4185 | nulls duckdb 0 bq@2 0
+fct_orders                           gross_margin               NUMERIC  still differs     checksum duckdb 266014149981773 bq@2 265952698414703 | distinct duckdb 16475 bq@2 16458 | nulls duckdb 0 bq@2 0
+fct_orders                           gross_revenue              NUMERIC  match at scale 2  checksum duckdb 263699553937060 bq@2 263699553937060 | distinct duckdb 17110 bq@2 17110 | nulls duckdb 0 bq@2 0
+fct_orders                           total_cost                 NUMERIC  still differs     checksum duckdb 264589331507992 bq@2 264824742056145 | distinct duckdb 15447 bq@2 15467 | nulls duckdb 0 bq@2 0
+int_cohorts__user_months             revenue                    NUMERIC  match at scale 2  checksum duckdb 254981614216726 bq@2 254981614216726 | distinct duckdb 17736 bq@2 17736 | nulls duckdb 0 bq@2 0
+int_inventory__by_product_center     open_inventory_value       NUMERIC  still differs     checksum duckdb 62359955421296 bq@2 62269700986065 | distinct duckdb 18103 bq@2 21914 | nulls duckdb 0 bq@2 0
+int_inventory__by_product_center     open_retail_value          NUMERIC  match at scale 2  checksum duckdb 63175775175438 bq@2 63175775175438 | distinct duckdb 9887 bq@2 9887 | nulls duckdb 0 bq@2 0
+int_inventory_items__enriched        product_retail_price       NUMERIC  match at scale 2  checksum duckdb 1026499536827527 bq@2 1026499536827527 | distinct duckdb 4185 bq@2 4185 | nulls duckdb 0 bq@2 0
+int_inventory_items__enriched        unit_cost                  NUMERIC  still differs     checksum duckdb 1034642813736075 bq@2 1034618792245595 | distinct duckdb 7430 bq@2 7430 | nulls duckdb 0 bq@2 0
+int_order_items__enriched            gross_margin               NUMERIC  still differs     checksum duckdb 384419711737598 bq@2 384194589935390 | distinct duckdb 7795 bq@2 7800 | nulls duckdb 0 bq@2 0
+int_order_items__enriched            product_cost               NUMERIC  still differs     checksum duckdb 383022704152535 bq@2 383013465117735 | distinct duckdb 7430 bq@2 7430 | nulls duckdb 0 bq@2 0
+int_order_items__enriched            sale_price                 NUMERIC  match at scale 2  checksum duckdb 380112329639468 bq@2 380112329639468 | distinct duckdb 4185 bq@2 4185 | nulls duckdb 0 bq@2 0
+int_orders__daily                    gross_margin               NUMERIC  still differs     checksum duckdb 5913087311132 bq@2 6036916969691 | distinct duckdb 2751 bq@2 2753 | nulls duckdb 0 bq@2 0
+int_orders__daily                    gross_revenue              NUMERIC  match at scale 2  checksum duckdb 5925743260407 bq@2 5925743260407 | distinct duckdb 2746 bq@2 2746 | nulls duckdb 0 bq@2 0
+int_orders__daily                    total_cost                 NUMERIC  still differs     checksum duckdb 6048634436572 bq@2 5952240190820 | distinct duckdb 2744 bq@2 2755 | nulls duckdb 0 bq@2 0
+int_orders__item_rollup              gross_margin               NUMERIC  still differs     checksum duckdb 266014149981773 bq@2 265952698414703 | distinct duckdb 16475 bq@2 16458 | nulls duckdb 0 bq@2 0
+int_orders__item_rollup              gross_revenue              NUMERIC  match at scale 2  checksum duckdb 263699553937060 bq@2 263699553937060 | distinct duckdb 17110 bq@2 17110 | nulls duckdb 0 bq@2 0
+int_orders__item_rollup              total_cost                 NUMERIC  still differs     checksum duckdb 264589331507992 bq@2 264824742056145 | distinct duckdb 15447 bq@2 15467 | nulls duckdb 0 bq@2 0
+int_products__sales                  gross_margin               NUMERIC  still differs     checksum duckdb 62071373939761 bq@2 62218255479056 | distinct duckdb 15775 bq@2 19236 | nulls duckdb 0 bq@2 0
+int_products__sales                  gross_revenue              NUMERIC  match at scale 2  checksum duckdb 61792168214608 bq@2 61792168214608 | distinct duckdb 8149 bq@2 8149 | nulls duckdb 0 bq@2 0
+int_products__sales                  total_cost                 NUMERIC  still differs     checksum duckdb 62317256526543 bq@2 62346152214871 | distinct duckdb 15278 bq@2 18904 | nulls duckdb 0 bq@2 0
+int_users__lifetime_orders           lifetime_gross_margin      NUMERIC  still differs     checksum duckdb 240619084682153 bq@2 240273041943707 | distinct duckdb 20430 bq@2 20487 | nulls duckdb 0 bq@2 0
+int_users__lifetime_orders           lifetime_gross_revenue     NUMERIC  match at scale 2  checksum duckdb 239637566782372 bq@2 239637566782372 | distinct duckdb 22839 bq@2 22839 | nulls duckdb 0 bq@2 0
+int_users__lifetime_orders           lifetime_total_cost        NUMERIC  still differs     checksum duckdb 239672687442497 bq@2 239829166240005 | distinct duckdb 19461 bq@2 19430 | nulls duckdb 0 bq@2 0
+mart_cohort_retention                revenue                    NUMERIC  match at scale 2  checksum duckdb 8067009559966 bq@2 8067009559966 | distinct duckdb 3655 bq@2 3655 | nulls duckdb 0 bq@2 0
+mart_customer_summary                average_order_value        NUMERIC  still differs     checksum duckdb 169393544312894 bq@2 169473505107067 | distinct duckdb 17469 bq@2 17520 | nulls duckdb 20001 bq@2 20001
+mart_customer_summary                lifetime_gross_margin      NUMERIC  still differs     checksum duckdb 240619084682153 bq@2 240273041943707 | distinct duckdb 20430 bq@2 20487 | nulls duckdb 0 bq@2 0
+mart_customer_summary                lifetime_gross_revenue     NUMERIC  match at scale 2  checksum duckdb 239637566782372 bq@2 239637566782372 | distinct duckdb 22839 bq@2 22839 | nulls duckdb 0 bq@2 0
+mart_daily_revenue                   average_order_value        NUMERIC  still differs     checksum duckdb 5900627408969 bq@2 5917943535719 | distinct duckdb 2252 bq@2 2255 | nulls duckdb 0 bq@2 0
+mart_daily_revenue                   gross_margin               NUMERIC  still differs     checksum duckdb 5913087311132 bq@2 6036916969691 | distinct duckdb 2751 bq@2 2753 | nulls duckdb 0 bq@2 0
+mart_daily_revenue                   gross_revenue              NUMERIC  match at scale 2  checksum duckdb 5925743260407 bq@2 5925743260407 | distinct duckdb 2746 bq@2 2746 | nulls duckdb 0 bq@2 0
+mart_daily_revenue                   total_cost                 NUMERIC  still differs     checksum duckdb 6048634436572 bq@2 5952240190820 | distinct duckdb 2744 bq@2 2755 | nulls duckdb 0 bq@2 0
+mart_product_performance             gross_margin               NUMERIC  still differs     checksum duckdb 62071373939761 bq@2 62218255479056 | distinct duckdb 15775 bq@2 19236 | nulls duckdb 0 bq@2 0
+mart_product_performance             gross_margin_rate          FLOAT    still differs     checksum duckdb 62287631186652 bq@2 61554104818411 | distinct duckdb 18699 bq@2 328 | nulls duckdb 61 bq@2 61
+mart_product_performance             gross_revenue              NUMERIC  match at scale 2  checksum duckdb 61792168214608 bq@2 61792168214608 | distinct duckdb 8149 bq@2 8149 | nulls duckdb 0 bq@2 0
+mart_product_performance             retail_price               NUMERIC  match at scale 2  checksum duckdb 61217180993459 bq@2 61217180993459 | distinct duckdb 4194 bq@2 4194 | nulls duckdb 0 bq@2 0
+mart_product_performance             total_cost                 NUMERIC  still differs     checksum duckdb 62317256526543 bq@2 62346152214871 | distinct duckdb 15278 bq@2 18904 | nulls duckdb 0 bq@2 0
+mart_product_performance             unit_cost                  NUMERIC  still differs     checksum duckdb 61429156578190 bq@2 61427308771230 | distinct duckdb 7435 bq@2 7435 | nulls duckdb 0 bq@2 0
+stg_thelook__inventory_items         cost                       NUMERIC  still differs     checksum duckdb 1034642813736075 bq@2 1034618792245595 | distinct duckdb 7430 bq@2 7430 | nulls duckdb 0 bq@2 0
+stg_thelook__inventory_items         product_retail_price       NUMERIC  match at scale 2  checksum duckdb 1026499536827527 bq@2 1026499536827527 | distinct duckdb 4185 bq@2 4185 | nulls duckdb 0 bq@2 0
+stg_thelook__order_items             sale_price                 NUMERIC  match at scale 2  checksum duckdb 380112329639468 bq@2 380112329639468 | distinct duckdb 4185 bq@2 4185 | nulls duckdb 0 bq@2 0
+stg_thelook__products                cost                       NUMERIC  still differs     checksum duckdb 61429156578190 bq@2 61427308771230 | distinct duckdb 7435 bq@2 7435 | nulls duckdb 0 bq@2 0
+stg_thelook__products                retail_price               NUMERIC  match at scale 2  checksum duckdb 61217180993459 bq@2 61217180993459 | distinct duckdb 4194 bq@2 4194 | nulls duckdb 0 bq@2 0
+
+columns: 23 match once BigQuery is rounded to 2 decimals; 32 still differ
+# exit 0

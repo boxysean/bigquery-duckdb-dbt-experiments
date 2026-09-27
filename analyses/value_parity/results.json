@@ -1,0 +1,1348 @@
+{
+  "generated_at": "2026-09-27T21:32:43+0200",
+  "same_data": true,
+  "models": [
+    {
+      "model": "dim_date",
+      "verdict": "match",
+      "row_count": {
+        "duckdb": 2813,
+        "bigquery": 2813
+      },
+      "columns": 9,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 2.028234332,
+        "bigquery": 6.377550826,
+        "ratio": 3.14
+      }
+    },
+    {
+      "model": "dim_distribution_centers",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 10,
+        "bigquery": 10
+      },
+      "columns": 8,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "open_inventory_value",
+          "duckdb": 22283009281,
+          "bigquery": 23201461081,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 0.389838371,
+        "bigquery": 6.587033706,
+        "ratio": 16.9
+      }
+    },
+    {
+      "model": "dim_products",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 29120,
+        "bigquery": 29120
+      },
+      "columns": 15,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "unit_cost",
+          "duckdb": 61429156578190,
+          "bigquery": 62840061372025,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "unit_cost",
+          "duckdb": 7435,
+          "bigquery": 26375,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "retail_price",
+          "duckdb": 61217180993459,
+          "bigquery": 60862284818697,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "duckdb": 61792168214608,
+          "bigquery": 61654208232274,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "duckdb": 8149,
+          "bigquery": 8915,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "duckdb": 62071373939761,
+          "bigquery": 62914816276488,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "duckdb": 15775,
+          "bigquery": 28592,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 1.000570084,
+        "bigquery": 13.827973414,
+        "ratio": 13.82
+      }
+    },
+    {
+      "model": "dim_users",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 100000,
+        "bigquery": 100000
+      },
+      "columns": 20,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_revenue",
+          "duckdb": 239637566782372,
+          "bigquery": 239160690763884,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_revenue",
+          "duckdb": 22839,
+          "bigquery": 32548,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_margin",
+          "duckdb": 240619084682153,
+          "bigquery": 242116745207772,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_margin",
+          "duckdb": 20430,
+          "bigquery": 63999,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 2.507247243,
+        "bigquery": 9.70135831,
+        "ratio": 3.87
+      }
+    },
+    {
+      "model": "fct_inventory_items",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 489625,
+        "bigquery": 489625
+      },
+      "columns": 12,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "unit_cost",
+          "duckdb": 1034642813736075,
+          "bigquery": 1055431879054382,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "unit_cost",
+          "duckdb": 7430,
+          "bigquery": 26321,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_retail_price",
+          "duckdb": 1026499536827527,
+          "bigquery": 1022114172626907,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 1.863238338,
+        "bigquery": 7.149751179,
+        "ratio": 3.84
+      }
+    },
+    {
+      "model": "fct_order_items",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 181313,
+        "bigquery": 181313
+      },
+      "columns": 21,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "sale_price",
+          "duckdb": 380112329639468,
+          "bigquery": 378446448118162,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_cost",
+          "duckdb": 383022704152535,
+          "bigquery": 390815752803681,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "product_cost",
+          "duckdb": 7430,
+          "bigquery": 26321,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "duckdb": 384419711737598,
+          "bigquery": 393165278640127,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "duckdb": 7795,
+          "bigquery": 26327,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_retail_price",
+          "duckdb": 380112329639468,
+          "bigquery": 378446448118162,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 1.081340573,
+        "bigquery": 5.319911507,
+        "ratio": 4.92
+      }
+    },
+    {
+      "model": "fct_orders",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 124952,
+        "bigquery": 124952
+      },
+      "columns": 15,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "duckdb": 263699553937060,
+          "bigquery": 263058874940641,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "duckdb": 17110,
+          "bigquery": 24368,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "duckdb": 264589331507992,
+          "bigquery": 269118450843195,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "duckdb": 15447,
+          "bigquery": 62651,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "duckdb": 266014149981773,
+          "bigquery": 270194618483712,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "duckdb": 16475,
+          "bigquery": 62653,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 1.079943564,
+        "bigquery": 5.313928183,
+        "ratio": 4.92
+      }
+    },
+    {
+      "model": "int_cohorts__user_months",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 120667,
+        "bigquery": 120667
+      },
+      "columns": 7,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "revenue",
+          "duckdb": 254981614216726,
+          "bigquery": 254367365215256,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "revenue",
+          "duckdb": 17736,
+          "bigquery": 25303,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.368777243,
+        "bigquery": 11.375036805,
+        "ratio": 30.85
+      }
+    },
+    {
+      "model": "int_events__sessions",
+      "verdict": "match",
+      "row_count": {
+        "duckdb": 681313,
+        "bigquery": 681313
+      },
+      "columns": 10,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.412575511,
+        "bigquery": 7.039999658,
+        "ratio": 17.06
+      }
+    },
+    {
+      "model": "int_inventory__by_product_center",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 29059,
+        "bigquery": 29059
+      },
+      "columns": 8,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "open_inventory_value",
+          "duckdb": 62359955421296,
+          "bigquery": 62609288108011,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "open_inventory_value",
+          "duckdb": 18103,
+          "bigquery": 28793,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "open_retail_value",
+          "duckdb": 63175775175438,
+          "bigquery": 62051653089784,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "open_retail_value",
+          "duckdb": 9887,
+          "bigquery": 10668,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.166060011,
+        "bigquery": 2.634261913,
+        "ratio": 15.86
+      }
+    },
+    {
+      "model": "int_inventory_items__enriched",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 489625,
+        "bigquery": 489625
+      },
+      "columns": 14,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "unit_cost",
+          "duckdb": 1034642813736075,
+          "bigquery": 1055431879054382,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "unit_cost",
+          "duckdb": 7430,
+          "bigquery": 26321,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_retail_price",
+          "duckdb": 1026499536827527,
+          "bigquery": 1022114172626907,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.104943639,
+        "bigquery": 4.733759677,
+        "ratio": 45.11
+      }
+    },
+    {
+      "model": "int_order_items__enriched",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 181313,
+        "bigquery": 181313
+      },
+      "columns": 22,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "sale_price",
+          "duckdb": 380112329639468,
+          "bigquery": 378446448118162,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_cost",
+          "duckdb": 383022704152535,
+          "bigquery": 390815752803681,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "product_cost",
+          "duckdb": 7430,
+          "bigquery": 26321,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "duckdb": 384419711737598,
+          "bigquery": 393165278640127,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "duckdb": 7795,
+          "bigquery": 26327,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.378444303,
+        "bigquery": 2.023100223,
+        "ratio": 5.35
+      }
+    },
+    {
+      "model": "int_orders__daily",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 2761,
+        "bigquery": 2761
+      },
+      "columns": 8,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "duckdb": 5925743260407,
+          "bigquery": 5960588981096,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "duckdb": 2746,
+          "bigquery": 2755,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "duckdb": 6048634436572,
+          "bigquery": 5961008521556,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "duckdb": 2744,
+          "bigquery": 2761,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "duckdb": 5913087311132,
+          "bigquery": 5931633803074,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "duckdb": 2751,
+          "bigquery": 2761,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.195579189,
+        "bigquery": 11.21900052,
+        "ratio": 57.36
+      }
+    },
+    {
+      "model": "int_orders__item_rollup",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 124952,
+        "bigquery": 124952
+      },
+      "columns": 11,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "duckdb": 263699553937060,
+          "bigquery": 263058874940641,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "duckdb": 17110,
+          "bigquery": 24368,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "duckdb": 264589331507992,
+          "bigquery": 269118450843195,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "duckdb": 15447,
+          "bigquery": 62651,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "duckdb": 266014149981773,
+          "bigquery": 270194618483712,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "duckdb": 16475,
+          "bigquery": 62653,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.38645635,
+        "bigquery": 5.972642012,
+        "ratio": 15.45
+      }
+    },
+    {
+      "model": "int_products__returns",
+      "verdict": "match",
+      "row_count": {
+        "duckdb": 29120,
+        "bigquery": 29120
+      },
+      "columns": 4,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.406032469,
+        "bigquery": 6.395996563,
+        "ratio": 15.75
+      }
+    },
+    {
+      "model": "int_products__sales",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 29120,
+        "bigquery": 29120
+      },
+      "columns": 8,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "duckdb": 61792168214608,
+          "bigquery": 61654208232274,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "duckdb": 8149,
+          "bigquery": 8915,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "duckdb": 62317256526543,
+          "bigquery": 62606713310424,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "duckdb": 15278,
+          "bigquery": 28593,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "duckdb": 62071373939761,
+          "bigquery": 62914816276488,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "duckdb": 15775,
+          "bigquery": 28592,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.490111981,
+        "bigquery": 7.299041006,
+        "ratio": 14.89
+      }
+    },
+    {
+      "model": "int_users__first_order_cohort",
+      "verdict": "match",
+      "row_count": {
+        "duckdb": 100000,
+        "bigquery": 100000
+      },
+      "columns": 4,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.288237754,
+        "bigquery": 7.35704247,
+        "ratio": 25.52
+      }
+    },
+    {
+      "model": "int_users__lifetime_orders",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 100000,
+        "bigquery": 100000
+      },
+      "columns": 9,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_revenue",
+          "duckdb": 239637566782372,
+          "bigquery": 239160690763884,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_revenue",
+          "duckdb": 22839,
+          "bigquery": 32548,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "lifetime_total_cost",
+          "duckdb": 239672687442497,
+          "bigquery": 241624394261615,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_total_cost",
+          "duckdb": 19461,
+          "bigquery": 63996,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_margin",
+          "duckdb": 240619084682153,
+          "bigquery": 242116745207772,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_margin",
+          "duckdb": 20430,
+          "bigquery": 63999,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "intermediate",
+      "duration_s": {
+        "duckdb": 0.239660457,
+        "bigquery": 12.990731338,
+        "ratio": 54.2
+      }
+    },
+    {
+      "model": "mart_cohort_retention",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 3824,
+        "bigquery": 3824
+      },
+      "columns": 8,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "revenue",
+          "duckdb": 8067009559966,
+          "bigquery": 8212667428790,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "revenue",
+          "duckdb": 3655,
+          "bigquery": 3707,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 1.080599569,
+        "bigquery": 11.175789121,
+        "ratio": 10.34
+      }
+    },
+    {
+      "model": "mart_customer_summary",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 100000,
+        "bigquery": 100000
+      },
+      "columns": 13,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_revenue",
+          "duckdb": 239637566782372,
+          "bigquery": 239160690763884,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_revenue",
+          "duckdb": 22839,
+          "bigquery": 32548,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_margin",
+          "duckdb": 240619084682153,
+          "bigquery": 242116745207772,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_margin",
+          "duckdb": 20430,
+          "bigquery": 63999,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "average_order_value",
+          "duckdb": 169393544312894,
+          "bigquery": 169473505107067,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "average_order_value",
+          "duckdb": 17469,
+          "bigquery": 17520,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 1.021520209,
+        "bigquery": 4.639642369,
+        "ratio": 4.54
+      }
+    },
+    {
+      "model": "mart_daily_revenue",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 2761,
+        "bigquery": 2761
+      },
+      "columns": 9,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "duckdb": 5925743260407,
+          "bigquery": 5960588981096,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "duckdb": 2746,
+          "bigquery": 2755,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "duckdb": 6048634436572,
+          "bigquery": 5961008521556,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "duckdb": 2744,
+          "bigquery": 2761,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "duckdb": 5913087311132,
+          "bigquery": 5931633803074,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "duckdb": 2751,
+          "bigquery": 2761,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "average_order_value",
+          "duckdb": 5900627408969,
+          "bigquery": 5917943535719,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "average_order_value",
+          "duckdb": 2252,
+          "bigquery": 2255,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 2.156067109,
+        "bigquery": 7.414515856,
+        "ratio": 3.44
+      }
+    },
+    {
+      "model": "mart_product_performance",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 29120,
+        "bigquery": 29120
+      },
+      "columns": 16,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "unit_cost",
+          "duckdb": 61429156578190,
+          "bigquery": 62840061372025,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "unit_cost",
+          "duckdb": 7435,
+          "bigquery": 26375,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "retail_price",
+          "duckdb": 61217180993459,
+          "bigquery": 60862284818697,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "duckdb": 61792168214608,
+          "bigquery": 61654208232274,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "duckdb": 8149,
+          "bigquery": 8915,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "duckdb": 62317256526543,
+          "bigquery": 62606713310424,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "duckdb": 15278,
+          "bigquery": 28593,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "duckdb": 62071373939761,
+          "bigquery": 62914816276488,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "duckdb": 15775,
+          "bigquery": 28592,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin_rate",
+          "duckdb": 62287631186652,
+          "bigquery": 61554104818411,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin_rate",
+          "duckdb": 18699,
+          "bigquery": 328,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "marts",
+      "duration_s": {
+        "duckdb": 0.972833916,
+        "bigquery": 13.759893507,
+        "ratio": 14.14
+      }
+    },
+    {
+      "model": "stg_thelook__distribution_centers",
+      "verdict": "match",
+      "row_count": {
+        "duckdb": 10,
+        "bigquery": 10
+      },
+      "columns": 4,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [],
+      "layer": "staging",
+      "duration_s": {
+        "duckdb": 0.133981816,
+        "bigquery": 7.757586096,
+        "ratio": 57.9
+      }
+    },
+    {
+      "model": "stg_thelook__events",
+      "verdict": "match",
+      "row_count": {
+        "duckdb": 2425698,
+        "bigquery": 2425698
+      },
+      "columns": 13,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [],
+      "layer": "staging",
+      "duration_s": {
+        "duckdb": 0.14449788,
+        "bigquery": 7.7771992149999996,
+        "ratio": 53.82
+      }
+    },
+    {
+      "model": "stg_thelook__inventory_items",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 489625,
+        "bigquery": 489625
+      },
+      "columns": 12,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "cost",
+          "duckdb": 1034642813736075,
+          "bigquery": 1055431879054382,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "cost",
+          "duckdb": 7430,
+          "bigquery": 26321,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_retail_price",
+          "duckdb": 1026499536827527,
+          "bigquery": 1022114172626907,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "staging",
+      "duration_s": {
+        "duckdb": 0.272553659,
+        "bigquery": 7.791954305,
+        "ratio": 28.59
+      }
+    },
+    {
+      "model": "stg_thelook__order_items",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 181313,
+        "bigquery": 181313
+      },
+      "columns": 11,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "sale_price",
+          "duckdb": 380112329639468,
+          "bigquery": 378446448118162,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "staging",
+      "duration_s": {
+        "duckdb": 0.17573707,
+        "bigquery": 8.317431493,
+        "ratio": 47.33
+      }
+    },
+    {
+      "model": "stg_thelook__orders",
+      "verdict": "match",
+      "row_count": {
+        "duckdb": 124952,
+        "bigquery": 124952
+      },
+      "columns": 9,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [],
+      "layer": "staging",
+      "duration_s": {
+        "duckdb": 0.232499415,
+        "bigquery": 9.501364676,
+        "ratio": 40.87
+      }
+    },
+    {
+      "model": "stg_thelook__products",
+      "verdict": "differs",
+      "row_count": {
+        "duckdb": 29120,
+        "bigquery": 29120
+      },
+      "columns": 9,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "cost",
+          "duckdb": 61429156578190,
+          "bigquery": 62840061372025,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "cost",
+          "duckdb": 7435,
+          "bigquery": 26375,
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "retail_price",
+          "duckdb": 61217180993459,
+          "bigquery": 60862284818697,
+          "detail": "same input rows, different values"
+        }
+      ],
+      "layer": "staging",
+      "duration_s": {
+        "duckdb": 0.228153389,
+        "bigquery": 9.38837899,
+        "ratio": 41.15
+      }
+    },
+    {
+      "model": "stg_thelook__users",
+      "verdict": "match",
+      "row_count": {
+        "duckdb": 100000,
+        "bigquery": 100000
+      },
+      "columns": 15,
+      "runs": [
+        "duckdb",
+        "bigquery"
+      ],
+      "differences": [],
+      "layer": "staging",
+      "duration_s": {
+        "duckdb": 0.151910925,
+        "bigquery": 9.411544131,
+        "ratio": 61.95
+      }
+    }
+  ],
+  "baseline": {
+    "ran": true,
+    "rebuild_exit": 0,
+    "match": true,
+    "mismatches": {}
+  },
+  "self_check": {
+    "duckdb": {
+      "int_sum": 13458764732,
+      "float_sum": 8920994268,
+      "bool_sum": 9520283272,
+      "date_sum": 8311892244,
+      "ts_sum": 9680745533,
+      "str_sum": 11041734564,
+      "dec_sum": 9599857075,
+      "f_distinct": 4
+    },
+    "bigquery": {
+      "int_sum": 13458764732,
+      "float_sum": 8920994268,
+      "bool_sum": 9520283272,
+      "date_sum": 8311892244,
+      "ts_sum": 9680745533,
+      "str_sum": 11041734564,
+      "dec_sum": 9599857075,
+      "f_distinct": 4
+    },
+    "match": true
+  },
+  "legs": {
+    "duckdb_build": {
+      "exit": 0,
+      "wall_s": 14.71,
+      "tail": "h__Organic__Facebook__Email__Display [196 of 196 in 0.31s]\n    Passed test  unique_fct_orders_order_id [193 of 196 in 0.33s]\n    Passed test  assert_order_item_count_matches_orders [191 of 196 in 0.34s]\n\n==================== Execution Summary =====================\nFinished 'build' with 1 warning for target 'duckdb' [14.3s]\nProcessed: 29 models | 167 tests\nSummary: 196 total | 195 success | 1 warn\n"
+    },
+    "bigquery_build": {
+      "exit": 0,
+      "first_error": "",
+      "wall_s": 131.95
+    }
+  },
+  "sources": "real",
+  "bq_source": "materialised",
+  "bq_relation": "coreychimpbot.experiments_dev",
+  "durations_source": {
+    "duckdb": "target/parity-run_results-duckdb.json",
+    "bigquery": "target/parity-run_results-bigquery.json"
+  }
+}
