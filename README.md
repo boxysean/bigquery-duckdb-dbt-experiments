@@ -47,7 +47,8 @@ scripts/check_portability.py  the guardrail: compile both targets, scan each ren
                         other dialect, fail on a target branch in a model (make portability)
 scripts/polyglot_check.sh  the macro layer end to end (make polyglot)
 scripts/run_bq.sh       the BigQuery leg: refuses clearly when credentials are absent
-scripts/parity.sh       row-count comparison across both targets
+scripts/parity.py       every model, both targets: rows, names, types, per-column checksums
+                        (make parity)
 SPEC.md                 the design contract for the model tree
 NOTES.md                the build record: every decision, deviation and command output
 ```
@@ -157,7 +158,7 @@ are exactly those renders). Measured on this machine:
 | `month_start(expr)` | `cast(date_trunc('month', expr) as timestamp)` | `timestamp_trunc(expr, month)` | delegated to `timestamp_trunc_to(expr, 'month')` | ×4 |
 | `month_number(expr)` | `extract(year …) * 100 + extract(month …)` | identical | EXTRACT is spelt the same; the dispatch is kept for one seam shape | ×4 |
 | `seconds_between(a, b)` | `cast(date_diff('microsecond', a, b) as double) / 1000000.0` | `cast(timestamp_diff(b, a, microsecond) as float64) / 1000000.0` | BigQuery's DATE_DIFF takes DATEs, so it needs TIMESTAMP_DIFF, arguments reversed | ×2 |
-| `safe_divide(n, d)` | `cast(n as double) / nullif(cast(d as double), 0)` | `safe_divide(n, d)` | BigQuery's SAFE_DIVIDE is NULL-on-zero and FLOAT64; the DuckDB branch reproduces both | ×3 |
+| `safe_divide(n, d)` | `cast(n as double) / nullif(cast(d as double), 0)` | `safe_divide(cast(n as float64), cast(d as float64))` | BigQuery's SAFE_DIVIDE is NULL-on-zero but returns its inputs' type, so both branches cast both sides to the float type | ×3 |
 | `regexp_contains(expr, pattern)` | `regexp_matches(expr, pattern)` | `regexp_contains(expr, pattern)` | same RE2 engine, different function name | no — self-check + render |
 | `generate_surrogate_key(cols)` | `md5(concat_ws('\\|\\|', cols))` | `to_hex(md5(concat(cast(… as string), '\\|\\|', …)))` | BigQuery has no CONCAT_WS, its CONCAT takes only STRING, and MD5 returns BYTES | ×3 |
 
@@ -261,9 +262,11 @@ Five things the seam had to work around, all of them measured here:
    **element**, DuckDB binds the same text to the **table** (giving a `STRUCT(unnest
    DATE)`), so DuckDB needs `as date_day__unnest(date_day)` — which BigQuery rejects.
    `unnest` itself stays plain SQL; only the alias is dispatched (`unnest_alias`).
-4. **Division typing.** BigQuery's `SAFE_DIVIDE` returns FLOAT64, and DuckDB would keep
-   `decimal / decimal` as DECIMAL, so `safe_divide` casts both sides to `double`. That
-   is right for rates (and the self-check asserts `typeof` is `DOUBLE`), but it means
+4. **Division typing.** BigQuery's `SAFE_DIVIDE` returns its inputs' type (`NUMERIC`
+   on two `NUMERIC` inputs), and DuckDB keeps `decimal / decimal` as DECIMAL, so
+   `safe_divide` casts both sides to the float type on both targets. That is what makes
+   `mart_product_performance.gross_margin_rate` `DOUBLE`/`FLOAT64` rather than
+   `NUMERIC`. It is right for rates (and the self-check asserts `typeof` is `DOUBLE`), but it means
    the two money metrics that want *decimal* rounding —
    `mart_daily_revenue.average_order_value` and `mart_customer_summary.average_order_value`
    — keep `round(x / nullif(y, 0), 2)` cast to `money_type()` instead. That is a
@@ -409,7 +412,9 @@ make duck         # check-env, load the fixture, then dbt build --target duckdb
 make fixtures     # (re)load the DuckDB fixture only
 make bq           # dbt build --target bigquery (exits 2 without credentials)
 make build-both   # duck, then bq
-make parity       # row counts per mart model, both targets (see "What is NOT verified")
+make parity       # every model on both targets: rows, column names, canonical column
+                  # types, per-column checksums; writes parity-report.md/.json and exits
+                  # non-zero on a real mismatch (see "What is NOT verified")
 make polyglot     # the macro layer end to end: 44 self-check cases on DuckDB, the renders
                   # for both targets, the decimal ceiling, then the guardrail and its --demo
 make portability  # just the guardrail: compile both targets, scan each render for the other
@@ -590,24 +595,47 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
   DuckDB's extension cache makes `dbt build`/`dbt show` fail with
   `HTTP Error: Failed to download extension "bigquery" ... (HTTP 404)`, and
   installing it back with `INSTALL bigquery FROM community` makes it pass again.
-* `scripts/parity.sh` was exercised end to end on a throwaway one-row mart in
-  card 1 (exit 2, BigQuery leg unavailable). That is not evidence of parity.
+* `scripts/parity.py` (card 4) was run end to end on 2026-09-27 against a real
+  BigQuery service account and measured **all 29 models on both targets**, not just
+  row counts: column names, canonical column types, and a per-column
+  order-independent checksum plus a null count and a distinct count. `make parity`
+  writes `parity-report.md` and `parity-report.json`. Two things it verifies about
+  *itself* before it measures anything: the digest self-check (both engines hash a
+  fixture of constants to the same numbers) and the DuckDB-vs-DuckDB baseline
+  (`dev.duckdb` is rebuilt from scratch and every measurement has to reproduce).
+  Both pass. That run exited 1 on one real mismatch it found —
+  `mart_product_performance.gross_margin_rate` was `DOUBLE` on DuckDB and `NUMERIC`
+  on BigQuery. Card 7 fixed it (the BigQuery branch of `safe_divide` now casts both
+  sides), so the run no longer fails on a type mismatch. Value parity is still not
+  established — see "What is NOT verified".
 
 ## What is NOT verified
 
-* **Nothing has ever run on BigQuery.** There are no credentials. `dbt compile`
-  and `dbt parse --target bigquery` render Jinja into SQL text. They do not send it
-  to BigQuery, so they do not show that the SQL is valid BigQuery, that the types
-  line up, or that a single row comes back. Every `bigquery__` macro branch is
-  unexecuted. The project, dataset and location in the profile are unconfirmed, and
-  so is enforcement of `maximum_bytes_billed`.
-* **The macro layer's BigQuery side is rendered, not run.** `polyglot_render
-  --target bigquery` and the guardrail both consume rendered text. So for all 26
-  dialect macros the DuckDB branch is *executed* and the BigQuery branch is only
-  *inspected*; a rendering that looks right but is rejected by BigQuery would pass
-  everything here. In particular, `dim_date` is the first model to exercise
+* **The BigQuery target has been *measured read-only*, and has still never been
+  *materialised*.** There was no Google credential on this machine when the earlier
+  cards were written; there is one now (a service-account key file, used through the
+  same `BQ_KEYFILE` variable the profile reads), and card 4 exercised it. What that
+  proves: the compiled SQL for all 29 models really does execute on BigQuery and
+  returns the real `bigquery-public-data.thelook_ecommerce` rows, so every
+  `bigquery__` macro branch in the model tree is now *executed*, not merely
+  inspected, and the column names and canonical types line up. What it does not
+  prove: `dbt build --target bigquery` still fails, with
+  `Access Denied: Project coreychimpbot: User does not have bigquery.datasets.create
+  permission in project coreychimpbot`. The target dataset `coreychimpbot.experiments_dev`
+  does not exist, the project has no other dataset the account could write to, and
+  the account may not create one, so no model has ever been *materialised* in
+  BigQuery and `make bq` still exits non-zero. Enforcement of `maximum_bytes_billed`
+  is also still unconfirmed (the harness sets it per query and no query hit it).
+* **The macro layer's BigQuery side has now been *run*, but only inside the model
+  tree.** `polyglot_render --target bigquery` and the guardrail consume rendered
+  text, so as *tools* they still only inspect: a rendering that looks right but is
+  rejected by BigQuery could pass them. Card 4 narrowed that gap a lot — the whole
+  model tree now executes on BigQuery read-only, so every `bigquery__` branch the
+  models actually call has been accepted by the engine — but a macro used only in
+  an analysis, and not in any model, still would not be. The specific models named
+  before are now exercised: `dim_date` is the first to call
   `generate_date_series`, `day_of_week_iso`, `format_date_str`, `date_diff_days` and
-  `unnest_alias`, and none of those is validated on BigQuery.
+  `unnest_alias`, and it runs on BigQuery.
 * **The guardrail is a blacklist, not a proof.** It fails on the 15 BigQuery-only and
   13 DuckDB-only tokens listed above. A BigQuery-only construct that is not on the
   list (or a dialect difference expressed in a way the token list does not spell)
@@ -618,9 +646,15 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
 * **`polyglot_selfcheck` only runs on DuckDB.** On `--target bigquery` it prints
   `selfcheck skipped: bigquery cannot be executed here (no credentials; render-only)`
   and exits 0 rather than pretending; `make polyglot` runs the DuckDB half only.
-* **Nothing has been measured on the real dataset.** Every row count, revenue figure
-  and test result above comes from the **generated fixture**: invented rows with the
-  real schema. Unverified assumptions about the real data (details in NOTES.md):
+* **The real dataset's row counts are now measured, its *contents* are not.**
+  Card 4's harness read every model's real rows through BigQuery and reports
+  counts and checksums for them (`parity-report.json`). The real tables are:
+  orders 124,952 · order_items 181,313 · users 100,000 · products 29,120 ·
+  inventory_items 489,625 · events 2,425,698 · distribution_centers 10. Every
+  *test result* and every revenue figure quoted in this README, though, still
+  comes from the **generated fixture**: invented rows with the real schema. The
+  tests have never been run against the real data, so these assumptions remain
+  unverified (details in NOTES.md):
   * the real row counts and value distributions;
   * that real `events.user_id` is never null. SPEC requires `not_null` on it, but
     anonymous sessions probably have none, so this test may fail on BigQuery;
@@ -632,20 +666,40 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
     cast rounds anything finer;
   * that every real order has at least one item and that `num_of_item` matches, as
     the singular test asserts.
-* **Parity is not established, and `make parity` cannot establish it as the
-  project stands.** It compares row counts per mart across targets, but the DuckDB
-  leg reads the fixture and the BigQuery leg would read the real dataset, so the
-  counts are expected to differ. `make parity` was run and exits 2: it
-  prints the eleven marts' DuckDB row counts (1415, 10, 200, 400, 10000, 8000,
-  3000, 864, 400, 1040, 200 — it discovers the models itself, so `dim_date` is
-  included automatically), prints `n/a` for every BigQuery count, and ends with
-  `the bigquery leg could not be measured: no Google credentials on this machine`.
-  The BigQuery leg never executes a query: the adapter fails to authenticate first.
-  Meaningful parity needs both legs reading the same data. One way is to point the
-  DuckDB leg at the real tables through the `bigquery` extension, which needs
-  credentials.
-* **Surrogate keys are not shown to match across targets.** Both branches hash the
-  same `'||'`-joined integer text by construction, but the BigQuery side has never run.
+* **Parity is not established, but it is now *measured* rather than assumed.**
+  `make parity` compares all 29 models on both targets and separates the two kinds of
+  difference that exist today:
+
+  * **A real defect it found, since fixed.** Card 4 found
+    `mart_product_performance.gross_margin_rate` was `DOUBLE` on DuckDB and `NUMERIC`
+    on BigQuery. `bigquery__safe_divide` rendered BigQuery's `SAFE_DIVIDE` on the
+    column's own type, and `SAFE_DIVIDE` returns the input type, so on two `NUMERIC`
+    inputs it returned `NUMERIC` while the DuckDB branch cast to `DOUBLE`. That was
+    the gating mismatch that made the run exit 1. Card 7 fixed it with a one-line
+    change: `bigquery__safe_divide` now casts both sides to `float_type()` before
+    calling `SAFE_DIVIDE`, so there is no gating type mismatch left.
+    `int_products__returns.return_rate` and `mart_cohort_retention.retention_rate`
+    call the same macro and were never affected: their inputs are integers, so
+    `SAFE_DIVIDE` yields `FLOAT64` either way.
+  * **Different source data.** 28 of the 29 models differ on row counts and
+    checksums, because the DuckDB leg reads the fixture and the BigQuery leg reads
+    the real dataset — 3,000 fixture orders against 124,952 real ones, 20,000
+    fixture events against 2,425,698 real ones, and so on. Those checksums are
+    reported, not gated, until both legs read one dataset; `--same-data` promotes
+    them to gating for that day.
+
+  One model matches on *everything*, values included:
+  `stg_thelook__distribution_centers`. The fixture copies the real ten distribution
+  centres verbatim, and the checksums agree — the proof that this comparison is
+  comparing data and not just always answering "differs".
+  Meaningful value parity needs both legs reading the same data (cards 5/6). One way
+  is to point the DuckDB leg at the real tables through the `bigquery` extension,
+  which needs credentials.
+* **Surrogate keys have now run on both sides but still do not *match*.** Both
+  branches hash the same `'||'`-joined integer text by construction, and the
+  BigQuery side executed for the first time in card 4 (read-only, whole model
+  tree). The parity harness compares the key columns like any other column; they
+  differ exactly where the underlying rows differ, and nowhere else.
 * **The singular tests' failing path has not been exercised.** All three return zero
   rows on the fixture. No fixture with an injected violation has been run through
   them.

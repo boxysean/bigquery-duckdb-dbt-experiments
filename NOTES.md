@@ -928,8 +928,11 @@ were wrong in exactly this way and were corrected during implementation:
    date `generate_series` needs an explicit interval and returns `TIMESTAMP[]`, so the DuckDB
    branch casts back to `date[]`.
 3. **The FROM alias above** — a relation-level difference, not an expression-level one.
-4. **Division typing.** `safe_divide` must be `DOUBLE`/`FLOAT64` (that is BigQuery's SAFE_DIVIDE),
-   so the two money metrics that want decimal rounding keep `round(x / nullif(y, 0), 2)` cast to
+4. **Division typing.** `safe_divide` must be `DOUBLE`/`FLOAT64`. BigQuery's SAFE_DIVIDE returns
+   its inputs' type (`NUMERIC` on two `NUMERIC` inputs) and DuckDB keeps `decimal / decimal` as
+   DECIMAL, so both branches cast both sides to the float type — that is what makes
+   `mart_product_performance.gross_margin_rate` `DOUBLE`/`FLOAT64` rather than `NUMERIC`. So the
+   two money metrics that want decimal rounding keep `round(x / nullif(y, 0), 2)` cast to
    `money_type()`. Deliberate, documented in the macro's docstring.
 5. **The source database name** (`bigquery-public-data` vs `dev`) belongs to a relation, not an
    expression, so it stays in `models/staging/_thelook__sources.yml` — the single allowlisted
@@ -987,3 +990,151 @@ targets, but had not verified them. Bruno therefore verified the guardrail here,
 **independent adversarial leak** the script's own `--demo` does not use, and wrote the README,
 `SPEC.md` and this NOTES section by hand. Costs: run 1 `$2.06` (63 turns), run 2 `$0.88` (29 turns),
 run 3 `$1.07` (39 turns, aborted) = **$4.01**.
+
+---
+
+# Card 4 — the parity harness (`scripts/parity.py`)
+
+## What it is
+
+`make parity` runs `scripts/parity.py`. For every model it compares two independently built
+legs on: row count, column names, canonical column types, and one order-independent checksum per
+column, plus a per-column null count and distinct count. It writes `parity-report.md` and
+`parity-report.json` (both gitignored — they are run outputs, attached to the card instead) and
+exits 0 / 1 / 2 as documented at the top of the script.
+
+`scripts/parity.sh` (the card-1 row-count stub) is deleted; the Makefile's `parity` target now runs
+the Python harness.
+
+## The two legs, and why one of them is read-only
+
+* **DuckDB** — the materialised `dev.duckdb` (schema `main`), read with the `duckdb` CLI. Measured
+  only after `make duck` has built it.
+* **BigQuery** — the harness first *attempts* the real `dbt build --target bigquery`. On this
+  machine that fails, always the same way:
+
+      [error] [DbDriverFailed (dbt1308)]: Database Error in model stg_thelook__events
+        [BigQuery] googleapi: Error 404: Not found: Dataset coreychimpbot:experiments_dev
+        was not found in location US
+
+  The dataset does not exist (checked read-only, HTTP 404 on `datasets.get`) and this account is
+  denied `bigquery.datasets.create` — a direct `datasets.create` call returns
+  `403 Access Denied: Project coreychimpbot: User does not have bigquery.datasets.create permission
+  in project coreychimpbot`. There is no other dataset in the project to write into. So the
+  materialised BigQuery leg cannot run here, and `make bq` still exits non-zero.
+
+  That is a *write* permission. Reading is fine: `jobs.create` is granted and the account can query
+  `bigquery-public-data`. So the harness **compiles the DAG with every layer ephemeral** (a throwaway
+  project directory whose `models/`, `macros/` and `tests/` are symlinks into the repo, with
+  `+materialized: ephemeral` on all three layers), which makes `dbt compile --target bigquery`
+  emit each model as one self-contained `SELECT` with its whole DAG inlined as
+  `__dbt__cte__…` CTEs. Those run as plain queries: no dataset, no `CREATE TABLE`, no write
+  permission. Every one of the 29 models executes on the real BigQuery engine and returns real rows.
+
+  What that does and does not prove is written up in the README > "What is NOT verified": the model
+  tree's BigQuery side is now *executed*, but never *materialised*.
+
+## The checksum, and why it is not either engine's native hash
+
+`hash()` (DuckDB) and `FARM_FINGERPRINT()` (BigQuery) are different algorithms, so their values
+could never be compared across engines. Instead both engines render the value to a canonical text
+and hash it the same way:
+
+```sql
+-- DuckDB
+CAST(('0x' || substr(md5(<canonical text>), 1, 8)) AS BIGINT)
+-- BigQuery
+CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(<canonical text>)), 1, 8)) AS INT64)
+```
+
+and `SUM` those per row (SUM, not XOR: a duplicated row must change the answer; 8 hex digits = 32
+bits, so 2^31 rows cannot overflow a signed 64-bit sum).
+
+**The portability of that construction is measured, not assumed.** `--self-check` runs both
+engines' spelling over a fixture of constants (int, float, bool, date, timestamp, string, decimal)
+before any model is measured, and refuses to measure anything if they disagree. Measured
+2026-09-27, identical on both engines:
+
+    int_sum 6659028165  float_sum 4313495136  bool_sum 4760141636  date_sum 4221762807
+    ts_sum  4568127435  str_sum   4835053162  dec_sum  4732242430  f_distinct 2
+
+## The traps, each as a decision
+
+| trap | decision |
+|---|---|
+| BIGNUMERIC arrives as VARCHAR | canonical types read `bignumeric` vs `string`; raw types recorded; nothing widened |
+| NUMERIC(38,9) rounds at 38 digits | types compared by *kind*, not precision (DuckDB `DECIMAL(18,2)` vs BigQuery `NUMERIC`); both raw strings always in the JSON |
+| floating point | integer micro-units: `CAST(ROUND(x * 1000000) AS BIGINT)`, one rule both engines; no tolerance |
+| TIMESTAMP vs TIMESTAMPTZ | compared as **instants**: `epoch_us` vs `UNIX_MICROS`, microseconds since the epoch UTC |
+| arrays / structs / JSON | structural: arrays sorted and `|`-joined, structs rendered field by field recursively; never raw JSON |
+| NULLS ordering / row order | nothing depends on row order: every metric is an aggregate, the one sort is inside an array's own values, identical on both engines |
+| NULLs | SUM skips NULLs, so every column also carries an explicit null count and a distinct count |
+
+No model in the tree currently has an array, struct or JSON column, so those branches of the
+renderer are implemented but unexercised here.
+
+## What the run found
+
+`make parity`, 2026-09-27, exit **1**:
+
+* **Digest self-check: PASS.** **DuckDB-vs-DuckDB baseline: MATCH** (`dev.duckdb` rebuilt from
+  scratch and re-measured; every model reproduced exactly).
+* **All 29 models measured on both legs.** No model went unmeasured.
+* **One gating mismatch — a real defect, not a source-data difference.**
+  `mart_product_performance.gross_margin_rate` was `DOUBLE` on DuckDB and `NUMERIC` on BigQuery.
+  Cause: `bigquery__safe_divide` renders BigQuery's `SAFE_DIVIDE(<a>, <b>)` on the inputs' own
+  types, and `SAFE_DIVIDE` returns the input type — on two `NUMERIC` inputs that is `NUMERIC`,
+  while the `default__safe_divide` branch casts both sides to float. The macro's docstring says it
+  is float-typed on purpose, so the BigQuery branch is not doing what it says. The other two
+  callers (`int_products__returns.return_rate`, `mart_cohort_retention.retention_rate`) are safe:
+  their inputs are integers, so `SAFE_DIVIDE` yields `FLOAT64` and the canonical types agree.
+  Not fixed in card 4 — it is the macro layer's, and fixing it there would have hidden the finding.
+  **Fixed in card 7** with the one-line change: `bigquery__safe_divide` now casts both sides to
+  `float_type()` before `SAFE_DIVIDE`, so this gating mismatch is gone.
+* **28 of the 29 models differ on rows/values**, because the two legs read different data: 3,000
+  fixture orders vs 124,952 real, 20,000 fixture events vs 2,425,698 real, and so on. Those
+  checksums are reported, not gated, until both legs read one dataset; `--same-data` promotes
+  them to gating for that (cards 5/6).
+* **One model matches on everything, values included**: `stg_thelook__distribution_centers` — the
+  fixture copies the real ten centres verbatim. That is the positive control: it shows the
+  checksums compare data rather than always answering "differs".
+
+## Commands run (real output)
+
+    $ make parity                      # 2026-09-27, BQ_KEYFILE=<sa key>, exit 1
+    [1/5] make duck  (fixtures + dbt build --target duckdb)
+          29 models discovered
+    [2/5] digest self-check: PASS
+    [3/5] dbt build --target bigquery (attempt)
+          dataset coreychimpbot.experiments_dev: HTTP 404 Not found
+          exit 1
+    [3/5] compiling the DAG read-only for BigQuery (all layers ephemeral)
+    [4/5] measuring every model on both legs
+    [5/5] DuckDB baseline: rebuild and prove the measurements reproduce
+          baseline: MATCH
+    parity: MISMATCH. gating: ['mart_product_performance']; value/row: [27 others]
+
+    $ python3 scripts/parity.py --skip-build --no-baseline    # no BQ_KEYFILE set, exit 2
+    [2/5] BigQuery leg unavailable: no service-account key (set BQ_KEYFILE) or no openssl
+    parity: BigQuery leg could not be measured. Parity is NOT established.
+
+    $ make portability   # unchanged, still green: 30 compiled files, 0/15, 0/13, 0 findings
+    $ make polyglot      # unchanged, still green: all steps ok
+
+## What is NOT verified for card 4
+
+1. **The materialised BigQuery build has still never run.** Read-only execution proves the SQL is
+   accepted and returns rows; it does not prove `CREATE TABLE` DDL, partitioning/clustering,
+   `maximum_bytes_billed` enforcement (no query came close to the 1 GB ceiling), or anything about
+   the dataset's real existence. `make bq` remains broken on this machine for a permission reason
+   outside the project.
+2. **The array/struct/JSON rendering is unexercised** — no model has such a column. Its correctness
+   rests on the self-check, which does not cover them.
+3. **Cross-engine *value* parity is still not established**, and cannot be until both legs read one
+   dataset — that is cards 5/6. What is established is schema parity (with one named exception) and
+   the machinery, verified end to end, that will measure value parity the day the data is shared.
+4. **The BigQuery leg needs `openssl`** (stdlib + CLI; no google-* python packages are installed on
+   this box). Without it, or without `BQ_KEYFILE`, the leg is reported unavailable and the run
+   exits 2 rather than pretending.
+5. **The harness writes nothing** to BigQuery. It cannot create the dataset it would need, so it
+   never tried to.

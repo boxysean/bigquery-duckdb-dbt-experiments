@@ -41,11 +41,19 @@ bq_duckdb_experiments:
         - bigquery
 
     # ---------------------------------------------------------------- bigquery
-    # Configured, documented, and NOT verified: this repository holds no Google
-    # credentials. `scripts/run_bq.sh` refuses to pretend otherwise.
+    # Configured and documented. This repository holds no Google credentials;
+    # `scripts/run_bq.sh` refuses to pretend otherwise when none are present.
+    #
+    # Auth is selectable from the environment so no secret or machine-specific
+    # path is ever committed:
+    #   * default            -> method: oauth (Application Default Credentials;
+    #                           `gcloud auth application-default login`)
+    #   * BQ_KEYFILE=<path>  -> method: service-account with that key file
+    #     (optionally BQ_AUTH_METHOD=service-account to force it)
     bigquery:
       type: bigquery
-      method: oauth
+      method: "{{ env_var('BQ_AUTH_METHOD', 'oauth') }}"
+      keyfile: "{{ env_var('BQ_KEYFILE', '') }}"
       # `database` is the GCP project, `schema` is the dataset (dbt v2 naming).
       database: coreychimpbot
       schema: "experiments_{{ env_var('DBT_ENV', 'dev') }}"
