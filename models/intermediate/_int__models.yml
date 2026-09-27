@@ -401,11 +401,13 @@ models:
           - not_null
       - name: user_id
         description: >
-          The session's user (max non-null events.user_id in the session). The
-          spec requires not_null on foreign keys; see NOTES.md on anonymous sessions
-          in the real data.
-        data_tests:
-          - not_null
+          The session's user (max non-null events.user_id in the session). Null
+          for a fully anonymous session: measured on 2026-09-27, 500,000 of the
+          real dataset's 681,313 sessions have no user on any of their events, so
+          this model does not test the column `not_null` (a SPEC section 4
+          deviation, see NOTES.md > "Measured against the real dataset"). Every
+          non-null value resolves to a user by construction, because it is one of
+          stg_thelook__events.user_id, which carries a `relationships` test.
       - name: first_event_at
         description: Earliest event in the session; naive UTC timestamp.
       - name: last_event_at
@@ -417,11 +419,14 @@ models:
       - name: max_sequence_number
         description: Highest sequence_number in the session.
       - name: traffic_source
-        description: Traffic source of the session's first event.
+        description: >
+          Traffic source of the session's first event, so this carries the events
+          vocabulary (Email, Adwords, Facebook, YouTube, Organic), not the users
+          one. See the column of the same name on stg_thelook__events.
         data_tests:
           - accepted_values:
               arguments:
-                values: ['Search', 'Organic', 'Facebook', 'Email', 'Display']
+                values: ['Email', 'Adwords', 'Facebook', 'YouTube', 'Organic']
       - name: browser
         description: Browser of the session's first event.
       - name: has_purchase

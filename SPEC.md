@@ -195,7 +195,20 @@ activity month). Prefer natural keys everywhere else; do not add surrogate keys 
   * `assert_order_item_count_matches_orders.sql` — `orders.num_of_item` = count of its items
   * `assert_timestamps_are_before_after.sql` — created ≤ shipped ≤ delivered ≤ returned
     wherever the columns are non-null
+  * `assert_order_item_created_at_is_plausible.sql` (added 2026-09-27) — the half of the
+    above that the real dataset violates, kept as `severity: warn`
   Each is a `select` that returns **zero rows** when the invariant holds.
+
+**Measured deviations (2026-09-27).** Three of the requirements above do not survive contact
+with the real `bigquery-public-data.thelook_ecommerce`, so they are deviated from on purpose
+and the evidence is in NOTES.md > "Measured against the real dataset": `not_null` is not
+tested on `stg_thelook__events.user_id` or `int_events__sessions.user_id` (46.4% of real
+events are anonymous traffic and now carry a `relationships` test instead); the
+`accepted_values` list on `events.traffic_source` is the measured events vocabulary (Email,
+Adwords, Facebook, YouTube, Organic), which is not the `users` one this section lists; and
+the lifecycle ordering test is narrowed to the pairs the source honors, with the
+`order_items.created_at` pairs beside it as a warning. Every other test in this section runs
+strict and green against the real data.
 
 ## 5. The 28 models
 

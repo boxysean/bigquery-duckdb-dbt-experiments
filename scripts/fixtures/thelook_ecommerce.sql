@@ -348,7 +348,11 @@ SELECT
     state::VARCHAR                                                                AS state,
     postal_code::VARCHAR                                                          AS postal_code,
     pick(['Chrome', 'Firefox', 'Safari', 'IE', 'Other'], session_no, 'browser')::VARCHAR AS browser,
-    pick(['Search', 'Organic', 'Facebook', 'Email', 'Display'], session_no, 'traffic_source')::VARCHAR AS traffic_source,
+    -- the real events vocabulary, measured 2026-09-27 (it is NOT the users one:
+    -- users.traffic_source is Search/Organic/Facebook/Email/Display). Keeping the
+    -- fixture on the measured events set is what lets the accepted_values test on
+    -- stg_thelook__events.traffic_source be the same strict test on both legs.
+    pick(['Email', 'Adwords', 'Facebook', 'YouTube', 'Organic'], session_no, 'traffic_source')::VARCHAR AS traffic_source,
     (CASE event_type
         WHEN 'home'       THEN '/'
         WHEN 'department' THEN '/department/' || lower(department)

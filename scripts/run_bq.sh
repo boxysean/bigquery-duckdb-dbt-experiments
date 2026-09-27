@@ -12,12 +12,13 @@
 #
 # Credentials: the profile reads BQ_KEYFILE (a service-account key file, with
 # method: service-account) or falls back to gcloud application-default
-# credentials. Even with credentials this can still fail on the BigQuery side:
-# the target dataset coreychimpbot.experiments_dev does not exist and the account
-# used here is denied bigquery.datasets.create, so every model fails with
-# "Dataset ... was not found" (card t_52340fa8). scripts/parity.py measures the
-# same models read-only, without writing a dataset, which is how parity is
-# measured today.
+# credentials. With those, on a machine whose account can write the target
+# dataset, this is the whole BigQuery leg and exits 0 (measured 2026-09-27,
+# card t_d87cf14b: 29 models built, 195 of 196 tests passing plus one intended
+# warning). Earlier cards (t_52340fa8, t_d0cac5da) ran before the service
+# account's grants landed, when every model failed with "Dataset ... was not
+# found"; that is history, not the current state. Without a writable dataset,
+# scripts/parity.py can still measure the same models read-only.
 #
 set -uo pipefail
 
@@ -47,7 +48,8 @@ else
 [bq] The profile (profiles.yml > bigquery) points at GCP project
 [bq] 'coreychimpbot', dataset 'experiments_<DBT_ENV>' (default experiments_dev),
 [bq] location US, with maximum_bytes_billed as a hard cost ceiling. That
-[bq] configuration has never been exercised against the real API.
+[bq] configuration has been exercised against the real API since 2026-09-27;
+[bq] this machine just has no credentials for it.
 [bq]
 [bq] To make this leg real, pick one:
 [bq]   gcloud auth application-default login \

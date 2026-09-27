@@ -348,12 +348,16 @@ models:
         data_tests:
           - not_null
       - name: is_weekend
-        description: True when the date is a Saturday or Sunday (day_of_week_iso >= 6).
+        description: >
+          True when the date is a Saturday or Sunday (day_of_week_iso >= 6).
+          Deliberately no `accepted_values` here: the column is a model-generated
+          boolean, so `not_null` is the whole invariant, and dbt renders
+          `accepted_values` literals as quoted strings ('True', 'False'), which is
+          a BigQuery `No matching signature for operator IN for argument types
+          BOOL and {STRING}` error. The other boolean columns in this project are
+          tested the same way, `not_null` only.
         data_tests:
           - not_null
-          - accepted_values:
-              arguments:
-                values: [true, false]
       - name: days_since_first_order
         description: Whole days from the first order date to date_day (0 on the first date).
         data_tests:
