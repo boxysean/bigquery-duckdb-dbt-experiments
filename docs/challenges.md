@@ -143,39 +143,9 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
   `(mod(extract(dayofweek from …) + 5, 7) + 1)`.
 * **Classification.** dual-target.
 
-### 3.5 Claude Code's own limits cut a run mid-flight
-
-* **Symptom.**
-  ```
-  429 ... You've hit your weekly limit · resets 10am (Europe/Vienna)
-  ```
-  source: `NOTES.md:1088-1090`. `--fallback-model haiku` returned the same 429 and no other
-  coding CLI was installed. The three runs cost $2.06 / $0.88 / $1.07 ($4.01).
-* **Cause.** The subscription's weekly limit ran out during the third print-mode run.
-* **Resolution.** The guardrail it had written but not verified was verified by hand,
-  including an adversarial leak `--demo` does not use (`NOTES.md:1090-1095`).
-* **Classification.** environment.
-
 ## 4. The parity harness (t_52340fa8; defect follow-up t_c5b39ecf)
 
-### 4.1 The BigQuery leg could not be materialised at first
-
-* **Symptom.**
-  ```
-  [BigQuery] googleapi: Error 404: Not found: Dataset coreychimpbot:experiments_dev
-  was not found in location US
-  403 Access Denied: Project coreychimpbot: User does not have bigquery.datasets.create permission
-  in project coreychimpbot
-  ```
-  source: `NOTES.md:1119-1126` (line breaks as there).
-* **Cause.** The dataset did not exist; the account could read and run jobs, not create one.
-* **Resolution.** Workaround first: `scripts/parity.py` compiles every layer ephemeral, so
-  each model runs as one self-contained `SELECT` needing no write (`NOTES.md:1129-1135`).
-  Later **resolved**: the dataset exists (6.1), `analyses/transport_a/logs/t12c.log:34`
-  counts 29 tables in it, and the orchestrator's `make bq` built all 29 (see the verdict).
-* **Classification.** environment.
-
-### 4.2 `SAFE_DIVIDE` returns its inputs' type
+### 4.1 `SAFE_DIVIDE` returns its inputs' type
 
 * **Symptom.** `mart_product_performance.gross_margin_rate` was `DOUBLE` on DuckDB and
   `NUMERIC` on BigQuery, the gating mismatch that made `make parity` exit 1
@@ -443,7 +413,7 @@ dialect and schema, and measured above. It is not measurable for values, because
 targets read different data by design (the fixture vs `bigquery-public-data`): **28 of 29
 models differ on rows and checksums**, and only `stg_thelook__distribution_centers` (1 of
 29), whose fixture copies the ten real centres verbatim, matches on everything. What is
-established is schema/type parity (0 gating mismatches after the `safe_divide` fix, 4.2)
+established is schema/type parity (0 gating mismatches after the `safe_divide` fix, 4.1)
 and dialect portability. Sources: `README.md:687-715` (§"What is NOT verified"),
 `NOTES.md:1179-1203` (Card 4); what value parity needs is in [`gaps.md`](gaps.md).
 
@@ -459,9 +429,7 @@ and dialect portability. Sources: `README.md:687-715` (§"What is NOT verified")
 | 3.2 unnest alias, `TIMESTAMP[]` | `duckdb -c` reproductions above (2026-09-27); `macros/polyglot/arrays.sql:10-29,50-54,72-74`; `models/marts/dim_date.sql:18`; `README.md:267-275`; `NOTES.md:1009-1014` |
 | 3.3 month-end drift | `duckdb -c` reproduction above (2026-09-27); `macros/polyglot/arrays.sql:57-60` |
 | 3.4 normalisation traps | `NOTES.md:1016-1023`; `macros/polyglot/dates.sql:31,70,88,92-94`; `README.md:290-297` |
-| 3.5 the 429 and the costs | `NOTES.md:1085-1095` |
-| 4.1 dataset 404 / 403, read-only workaround | `NOTES.md:1112-1135`; `scripts/run_bq.sh:13-21`; `analyses/transport_a/logs/t12c.log:34` |
-| 4.2 `safe_divide` type | `NOTES.md:1186-1196,1218`; `README.md:691-701`; `macros/polyglot/math.sql:1-25`; commit `cbe259c` |
+| 4.1 `safe_divide` type | `NOTES.md:1186-1196,1218`; `README.md:691-701`; `macros/polyglot/math.sql:1-25`; commit `cbe259c` |
 | 5.1 three failures, 122 skipped, fourth hidden | `NOTES.md:825-889` |
 | 5.2 boolean `accepted_values` | `NOTES.md:840,879-885`; `models/marts/_marts__models.yml:350-356` |
 | 6.1 bucket location, `buckets.get` 403, no `datasets.create` | t_2e263433 card thread (board, **not in the repo**); in-tree: `analyses/transport_b/README.md:33,295-297`; dataset exists: orchestrator's `datasets.get` (2026-09-27) |
