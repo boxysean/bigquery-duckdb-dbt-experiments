@@ -1,0 +1,385 @@
+{
+  "generated_at": "2026-09-27T15:19:12+00:00",
+  "duckdb_cli": "/home/hermes/.local/bin/duckdb",
+  "duckdb_version": "v1.5.5 (Variegata) d8cdaa33fd",
+  "billing_project": "coreychimpbot",
+  "data_project": "bigquery-public-data",
+  "host_cpus": 3,
+  "scenarios": [
+    {
+      "key": "t01",
+      "sql_file": "t01_install_plain_core.sql",
+      "sql_path": "analyses/transport_a/sql/t01_install_plain_core.sql",
+      "wall_s": 0.26,
+      "peak_rss_kb": 27904,
+      "exit_code": 1,
+      "status": "error",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t01.log",
+      "title": "INSTALL bigquery (core repository)",
+      "errors_expected": true
+    },
+    {
+      "key": "t02",
+      "sql_file": "t02_install_from_community.sql",
+      "sql_path": "analyses/transport_a/sql/t02_install_from_community.sql",
+      "wall_s": 3.31,
+      "peak_rss_kb": 215648,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t02.log",
+      "title": "INSTALL bigquery FROM community",
+      "errors_expected": false
+    },
+    {
+      "key": "t03",
+      "sql_file": "t03_secret_scope_wrong.sql",
+      "sql_path": "analyses/transport_a/sql/t03_secret_scope_wrong.sql",
+      "wall_s": 3.58,
+      "peak_rss_kb": 59976,
+      "exit_code": 1,
+      "status": "error",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [
+        "Invalid Input Error: BigQuery Authentication Failed"
+      ],
+      "log": "analyses/transport_a/logs/t03.log",
+      "title": "secret SCOPE vs project (the trap)",
+      "errors_expected": true
+    },
+    {
+      "key": "t04",
+      "sql_file": "t04_secret_scope_right.sql",
+      "sql_path": "analyses/transport_a/sql/t04_secret_scope_right.sql",
+      "wall_s": 3.91,
+      "peak_rss_kb": 63136,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t04.log",
+      "title": "secret SCOPE follows the data",
+      "errors_expected": false
+    },
+    {
+      "key": "t05",
+      "sql_file": "t05_pushdown_filter.sql",
+      "sql_path": "analyses/transport_a/sql/t05_pushdown_filter.sql",
+      "wall_s": 1.77,
+      "peak_rss_kb": 58804,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [
+        "state, year"
+      ],
+      "row_restrictions": [
+        "`state` = \"CA\" AND `year` >= 2000"
+      ],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t05.log",
+      "title": "WHERE predicate pushdown",
+      "errors_expected": false
+    },
+    {
+      "key": "t06",
+      "sql_file": "t06_pushdown_projection.sql",
+      "sql_path": "analyses/transport_a/sql/t06_pushdown_projection.sql",
+      "wall_s": 10.41,
+      "peak_rss_kb": 69764,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [
+        "state",
+        "year, number",
+        "year, state, number",
+        "gender"
+      ],
+      "row_restrictions": [
+        "`year` = 2000",
+        "`year` = 2000"
+      ],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t06.log",
+      "title": "column pruning",
+      "errors_expected": false
+    },
+    {
+      "key": "t07",
+      "sql_file": "t07_cost_guard.sql",
+      "sql_path": "analyses/transport_a/sql/t07_cost_guard.sql",
+      "wall_s": 10.74,
+      "peak_rss_kb": 91720,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [
+        "state"
+      ],
+      "row_restrictions": [],
+      "remote_queries": [
+        "SELECT /* t07 20260927T151622Z */ state, SUM(number) AS n FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE year = 2000 GROUP BY state"
+      ],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t07.log",
+      "title": "dry_run vs billed bytes",
+      "errors_expected": false
+    },
+    {
+      "key": "t07b",
+      "sql_file": "t07b_dry_run_vs_billed.sql",
+      "sql_path": "analyses/transport_a/sql/t07b_dry_run_vs_billed.sql",
+      "wall_s": 9.24,
+      "peak_rss_kb": 91244,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [
+        "n"
+      ],
+      "row_restrictions": [],
+      "remote_queries": [
+        "SELECT /* t07b 20260927T151622Z */ COUNT(*) AS n FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE year = 2000"
+      ],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t07b.log",
+      "title": "one shape: predicted vs billed bytes",
+      "errors_expected": false
+    },
+    {
+      "key": "t08",
+      "sql_file": "t08_aggregate_pushdown_off.sql",
+      "sql_path": "analyses/transport_a/sql/t08_aggregate_pushdown_off.sql",
+      "wall_s": 1.78,
+      "peak_rss_kb": 62116,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [
+        "year, state, number"
+      ],
+      "row_restrictions": [
+        "`year` = 2000"
+      ],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t08.log",
+      "title": "aggregate pushdown OFF (default)",
+      "errors_expected": false
+    },
+    {
+      "key": "t09",
+      "sql_file": "t09_aggregate_pushdown_on.sql",
+      "sql_path": "analyses/transport_a/sql/t09_aggregate_pushdown_on.sql",
+      "wall_s": 2.12,
+      "peak_rss_kb": 54312,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [
+        "SELECT `state` AS __duckdb_bq_group_0, SUM(`number`) AS __duckdb_bq_aggr_0 FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE `year` = 2000 GROUP BY `state`",
+        "SELECT SUM(`number`) AS __duckdb_bq_aggr_0 FROM `bigquery-public-data.usa_names.usa_1910_2013`"
+      ],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t09.log",
+      "title": "aggregate pushdown ON",
+      "errors_expected": false
+    },
+    {
+      "key": "t10",
+      "sql_file": "t10_attach_dataset_readonly.sql",
+      "sql_path": "analyses/transport_a/sql/t10_attach_dataset_readonly.sql",
+      "wall_s": 11.54,
+      "peak_rss_kb": 68192,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t10.log",
+      "title": "ATTACH one dataset, READ_ONLY",
+      "errors_expected": false
+    },
+    {
+      "key": "t11",
+      "sql_file": "t11_attach_project_readonly.sql",
+      "sql_path": "analyses/transport_a/sql/t11_attach_project_readonly.sql",
+      "wall_s": 32.7,
+      "peak_rss_kb": 199180,
+      "exit_code": 1,
+      "status": "error",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [
+        "Permission Error: BigQuery Permission Denied",
+        "Binder Error: Query execution failed: Error in non-idempotent operation: Linked dataset bigquery-public-data:crypto_kusama is unlinked.",
+        "Binder Error: Query execution failed: Error in non-idempotent operation: Linked dataset bigquery-public-data:crypto_kusama is unlinked."
+      ],
+      "log": "analyses/transport_a/logs/t11.log",
+      "title": "ATTACH a whole project, READ_ONLY",
+      "errors_expected": true
+    },
+    {
+      "key": "t12",
+      "sql_file": "t12_attach_writable.sql",
+      "sql_path": "analyses/transport_a/sql/t12_attach_writable.sql",
+      "wall_s": 5.57,
+      "peak_rss_kb": 55088,
+      "exit_code": 1,
+      "status": "error",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [
+        "Invalid Input Error: Cannot execute statement of type \"CREATE\" on database \"bq_ro\" which is attached in read-only mode!"
+      ],
+      "log": "analyses/transport_a/logs/t12.log",
+      "title": "READ_ONLY guard vs writable catalog",
+      "errors_expected": true
+    },
+    {
+      "key": "t12b",
+      "sql_file": "t12b_attach_writable_cleanup.sql",
+      "sql_path": "analyses/transport_a/sql/t12b_attach_writable_cleanup.sql",
+      "wall_s": 16.43,
+      "peak_rss_kb": 60744,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t12b.log",
+      "title": "writable catalog: insert, read back, drop",
+      "errors_expected": false
+    },
+    {
+      "key": "t12c",
+      "sql_file": "t12c_writable_leftover_check.sql",
+      "sql_path": "analyses/transport_a/sql/t12c_writable_leftover_check.sql",
+      "wall_s": 6.97,
+      "peak_rss_kb": 58952,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t12c.log",
+      "title": "verify no probe table remains",
+      "errors_expected": false
+    },
+    {
+      "key": "t13",
+      "sql_file": "t13_parallelism.sql",
+      "sql_path": "analyses/transport_a/sql/t13_parallelism.sql",
+      "wall_s": 20.19,
+      "peak_rss_kb": 70756,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t13.log",
+      "title": "read parallelism",
+      "errors_expected": false
+    },
+    {
+      "key": "t14",
+      "sql_file": "t14_materialize_full_table.sql",
+      "sql_path": "analyses/transport_a/sql/t14_materialize_full_table.sql",
+      "wall_s": 12.2,
+      "peak_rss_kb": 132764,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t14.log",
+      "title": "materialize a whole table (Storage Read API)",
+      "errors_expected": false
+    },
+    {
+      "key": "t15",
+      "sql_file": "t15_types_storage_api.sql",
+      "sql_path": "analyses/transport_a/sql/t15_types_storage_api.sql",
+      "wall_s": 8.26,
+      "peak_rss_kb": 62520,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t15.log",
+      "title": "type fidelity, Storage path",
+      "errors_expected": false
+    },
+    {
+      "key": "t16",
+      "sql_file": "t16_types_rest_api.sql",
+      "sql_path": "analyses/transport_a/sql/t16_types_rest_api.sql",
+      "wall_s": 4.66,
+      "peak_rss_kb": 52500,
+      "exit_code": 0,
+      "status": "ok",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [],
+      "log": "analyses/transport_a/logs/t16.log",
+      "title": "type fidelity, REST path",
+      "errors_expected": false
+    },
+    {
+      "key": "t17",
+      "sql_file": "t17_rest_projection_cast_bug.sql",
+      "sql_path": "analyses/transport_a/sql/t17_rest_projection_cast_bug.sql",
+      "wall_s": 4.06,
+      "peak_rss_kb": 61100,
+      "exit_code": 1,
+      "status": "error",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [
+        "Invalid Input Error: Failed to cast value: Unimplemented type for cast (GEOMETRY('OGC:CRS84') -> BIGINT[])"
+      ],
+      "log": "analyses/transport_a/logs/t17.log",
+      "title": "REST decoder failure mode",
+      "errors_expected": true
+    },
+    {
+      "key": "t18",
+      "sql_file": "t18_dry_run_projection_error.sql",
+      "sql_path": "analyses/transport_a/sql/t18_dry_run_projection_error.sql",
+      "wall_s": 0.84,
+      "peak_rss_kb": 51112,
+      "exit_code": 1,
+      "status": "error",
+      "selected_fields": [],
+      "row_restrictions": [],
+      "remote_queries": [],
+      "error_lines": [
+        "INTERNAL Error: Attempted to access index 2 within vector of size 2"
+      ],
+      "log": "analyses/transport_a/logs/t18.log",
+      "title": "dry-run result projection INTERNAL error",
+      "errors_expected": true
+    }
+  ]
+}
