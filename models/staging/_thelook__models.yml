@@ -251,9 +251,21 @@ models:
           - unique
           - not_null
       - name: user_id
-        description: The user (stg_thelook__users.user_id).
+        description: >
+          The signed-in user (stg_thelook__users.user_id), or null when the event
+          came from anonymous traffic. Measured against the real
+          bigquery-public-data.thelook_ecommerce on 2026-09-27: 1,124,610 of
+          2,425,698 events (46.4%) carry no user, so the column is nullable in the
+          source and this model deliberately does not test it `not_null` (a
+          SPEC section 4 deviation, see NOTES.md > "Measured against the real
+          dataset"). Every non-null value still resolves: 0 orphans against
+          stg_thelook__users, which is what the `relationships` test below
+          asserts.
         data_tests:
-          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_thelook__users')
+                field: user_id
       - name: sequence_number
         description: Position of the event within its session, starting at 1.
       - name: session_id
@@ -275,11 +287,19 @@ models:
       - name: browser
         description: Browser, e.g. Chrome, Firefox, Safari.
       - name: traffic_source
-        description: Channel the session came from.
+        description: >
+          The marketing channel the visit arrived through, as recorded on the
+          event. Note that `events.traffic_source` and `users.traffic_source` are
+          different vocabularies in the real dataset: measured on 2026-09-27, the
+          events table carries exactly Email, Adwords, Facebook, YouTube and
+          Organic over 2,425,698 rows, while the users table (and so
+          `dim_users`, `fct_orders`) carries Search, Organic, Facebook, Email and
+          Display. The list tested here is the measured events set, not the
+          users set.
         data_tests:
           - accepted_values:
               arguments:
-                values: ['Search', 'Organic', 'Facebook', 'Email', 'Display']
+                values: ['Email', 'Adwords', 'Facebook', 'YouTube', 'Organic']
       - name: uri
         description: Page path requested.
       - name: event_type

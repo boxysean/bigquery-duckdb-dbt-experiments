@@ -61,15 +61,16 @@ Modified:
    change the spec's formula further. Say if you want it. This branch has not been executed
    (no BigQuery credentials).
 
-3. **Probable mismatches with the real BigQuery data. These are unverified and come from
-   memory, not measurement.**
-   * Real `events.user_id` is, as far as I know, **null for anonymous sessions**. SPEC section 4
-     requires `not_null` on every foreign key, so `not_null_stg_thelook__events_user_id` passes
-     on the fixture but may fail on BigQuery.
-   * Real `events.traffic_source` probably uses a different vocabulary from `users`
-     (Email/Adwords/Organic/YouTube/Facebook). The spec gives both the users vocabulary, so the
-     `accepted_values` test on `stg_thelook__events.traffic_source` may fail on BigQuery.
-   I followed the spec in both cases. Once credentials exist, `make bq` settles both.
+3. **Probable mismatches with the real BigQuery data — both confirmed on 2026-09-27, and
+   both fixed; see "Measured against the real dataset" below for the numbers.**
+   * Real `events.user_id` **is** null for anonymous traffic: 1,124,610 of 2,425,698 rows.
+     SPEC section 4 requires `not_null` on every foreign key, so the staging `not_null` test
+     on `events.user_id` passed on the fixture and failed on BigQuery; it was removed and
+     replaced by a `relationships` test on the non-null values.
+   * Real `events.traffic_source` **does** use a different vocabulary from `users` (Email,
+     Adwords, Facebook, YouTube, Organic — the earlier guess was close). The spec gives both
+     the users vocabulary, so the `accepted_values` test failed on BigQuery; its list and the
+     fixture's events vocabulary now both carry the measured set.
 
 4. **Determinism is hash-based rather than `random()`.** `setseed(0.42)` is called, but
    `random()` is only reproducible single-threaded in DuckDB. Every draw is therefore
@@ -111,8 +112,10 @@ Modified:
 | STRING / VARCHAR | `string_type()` | every string column | cross-target type |
 
 The money cast rounds to 2 decimal places. The fixture's prices are generated at 2 dp, so
-nothing is lost here. On real data, a FLOAT64 price with more than 2 dp would be rounded. The
-real thelook prices are cents-scale, but that is unverified.
+nothing is lost here. On real data it does round: measured 2026-09-27,
+`order_items.sale_price` is within 1.5e-05 of its 2 dp rounding (float noise, nothing lost),
+but `products.cost` is off by half a cent or more in 7,923 of 29,120 rows — see NOTES.md >
+"Measured against the real dataset".
 
 ## Commands run and their real output
 
@@ -168,17 +171,25 @@ are home 4021, department 4020, product 7403, cart 2278, purchase 1822 and cance
 
 ### Determinism: load twice, fingerprint every table
 
-`duckdb -list dev.duckdb -f <fingerprint.sql>` gave identical output after each of two loads
-(md5 of each table's rows in key order):
+Regenerated 2026-09-27 with the recipe below, after two consecutive `make fixtures` loads
+produced identical output. The `events` fingerprint had to change because the fixture's
+`events.traffic_source` moved to the measured real vocabulary (see "Measured against the
+real dataset"); the recipe is `md5` of one `to_json` per row, all rows in primary-key
+order, one statement per table:
 
 ```
-orders|fff40e752fc5116cdaed0b4ea9b328d8
-order_items|d0f833606de847c7e3d39f9c26c41c3c
-users|e899748faef0162d5a116dc031ec7a0c
-products|ec35ac4052d0e66e3ee5f0ec3fb9c1a5
-inventory_items|a5d8bbf5fa0d9e8a46659e4cde14b2f1
-events|70d96635a2f2e5f1e6f1a0bee7849568
-units sold/unsold/reused|5200/800/2781
+select 'orders|' || md5(string_agg(to_json(o), chr(10)))
+from (select * from thelook_ecommerce.orders order by order_id) o;
+```
+
+```
+orders|d0ac1cafdeec4e7a3a2433cc5459a30a
+order_items|c715b54b6733acd61c19aa6d77860124
+users|a7000458daae7280c3d0471f2ae56c7d
+products|67ec94658ba42fab3783e003463d22ec
+inventory_items|9e8e17ba746555f4a85abc6609b8e589
+events|22c87fc50f6eac34f9e2e184b4d4e7c6
+inventory units: sold|8000 unsold|2000 referenced by >1 order item|0
 ```
 
 ### `make duck` → exit 0 (first run)
@@ -342,8 +353,9 @@ Modified:
    `mart_daily_revenue` needs zero rows for days without orders, phase 3 needs a date spine.
 5. **`is_fully_returned` means the order has items and every item is 'Returned'.** In the
    fixture, items inherit the order status, so it is true for exactly the 289 'Returned' orders.
-6. **`int_events__sessions.user_id` has a `not_null` test** (SPEC: every FK). Phase 1's caveat
-   applies: real anonymous sessions probably have a null `user_id` (unverified). `user_id` is the
+6. **`int_events__sessions.user_id` has no `not_null` test** (it had one per SPEC section 4;
+   measured 2026-09-27, 500,000 of the real 681,313 sessions are anonymous on every event, so
+   the test was removed — see "Measured against the real dataset"). `user_id` is the
    session's `max(user_id)`, so a session that logs in part-way still gets its user.
 7. **`int_inventory__by_product_center` lists only (product, center) pairs that have stock**, not
    every product × center combination. Each product is stocked at one center in the fixture, so
@@ -535,7 +547,8 @@ Created:
 | `models/marts/_marts__models.yml` | every model's grain and every column documented (USD stated); 63 generic tests |
 | `tests/assert_no_orphan_order_items.sql` | every order item has an order, user and product, and its `user_id` equals its order's |
 | `tests/assert_order_item_count_matches_orders.sql` | `orders.num_of_item` = count of its items = `fct_orders.item_count` |
-| `tests/assert_timestamps_are_before_after.sql` | created ≤ shipped ≤ delivered ≤ returned (every non-null pair, orders and items), and no item created before its order |
+| `tests/assert_timestamps_are_before_after.sql` | created ≤ shipped ≤ delivered ≤ returned (every non-null pair) for `orders`, and shipped ≤ delivered ≤ returned for `order_items` |
+| `tests/assert_order_item_created_at_is_plausible.sql` | `order_items.created_at` follows the lifecycle and its order — `severity: warn`, because the real dataset violates it (see "Measured against the real dataset") |
 | `logs/phase3_*.log` | the captured runs quoted below |
 
 Modified: `README.md` (rewritten to the real state; structure and "Known dbt v2 findings"
@@ -809,40 +822,130 @@ A `dbt show --inline` whose query ended in its own `limit 50` failed with
   but unreachable now (untouched, out of scope).
 * **Any BigQuery execution.** No credentials.
 
+## Measured against the real dataset (2026-09-27)
+
+Card `t_d87cf14b`. The service account's grants landed, so `make bq`
+(`dbt build --target bigquery`, dataset `coreychimpbot.experiments_dev`) ran against
+`bigquery-public-data.thelook_ecommerce` for the first time. The first run exited 1 with
+**three** failed tests, not the two the card named: the harness that found them printed only
+the first lines of dbt's failure block. Clearing those exposed a fourth failure that had been
+masked by dbt skipping 122 nodes downstream of the first one. Every number here is a query
+against the real tables, not the fixture.
+
+| # | test | failed rows | what the real data says |
+| - | ---- | ----------: | ----------------------- |
+| 1 | `not_null_stg_thelook__events_user_id` | 1,124,610 | 46.4% of 2,425,698 events carry no user at all (anonymous traffic). Every non-null id resolves: 0 orphans. |
+| 2 | `accepted_values_stg_thelook__events_traffic_source__Search__Organic__Facebook__Email__Display` | 2 distinct values | `events.traffic_source` is exactly Email, Adwords, Facebook, YouTube, Organic over all 2,425,698 rows. The tested list was the **users** vocabulary; `users.traffic_source` really is Search, Organic, Facebook, Email, Display. |
+| 3 | `assert_timestamps_are_before_after` | 137,795 | `orders` are clean: 0 of 124,952 violate any ordering pair. But 35,535 of 181,313 `order_items` are "created" after they shipped, and 102,260 are created before their own order (median -0.44 h, min -3.95 h, max +96.4 h). |
+| 4 | `accepted_values_dim_date_is_weekend__True__False` | n/a — it cannot compile | Not a data problem: dbt renders `accepted_values` literals as quoted strings, so the test asked BigQuery for `BOOL not in ('True','False')` → `Error 400: No matching signature for operator IN for argument types BOOL and {STRING}`. DuckDB coerces, BigQuery refuses. This one was only reachable once the staging failures stopped skipping `dim_date`. |
+
+Also measured, because it decides whether the marts can run at all once the staging tests
+pass: 500,000 of the 681,313 real sessions have no user on any of their events, so
+`not_null_int_events__sessions_user_id` would have failed next (it was skipped when the
+staging test failed, together with the other 122 nodes downstream of the failing test).
+
+### The decisions
+
+1. **`user_id` on events and sessions: the assertion was false, so it is gone — the column
+   and the fact stay.** Null `user_id` is not a defect, it is what the source means by
+   anonymous traffic; 46% of a web event stream. Filtering those events in
+   `stg_thelook__events` would delete 1.1M real rows from every funnel, and coalescing them
+   to a sentinel would invent a user that `dim_users` does not contain. So the model keeps
+   the nulls, the two `not_null` tests are removed (a deliberate SPEC section 4 deviation),
+   and the invariant that *is* true — a non-null `user_id` resolves to a user — is asserted
+   instead by a `relationships` test on `stg_thelook__events.user_id` (the first staging
+   `relationships` test in the project, added for exactly this purpose). The measured
+   numbers are in the column descriptions.
+2. **`traffic_source`: the test was right to be strict and wrong about its list — the list
+   is now the measured one.** Relaxing it to `severity: warn` would have made a permanent
+   warning out of something that is simply the case, and documenting the divergence without
+   fixing the list would leave the build red forever. The real events vocabulary
+   (Email, Adwords, Facebook, YouTube, Organic) is now asserted strictly on both
+   `stg_thelook__events` and `int_events__sessions`, and the DuckDB **fixture was corrected**
+   to draw its events' `traffic_source` from that same set (it was drawing the users one),
+   so the strict test means the same thing on both legs and a genuinely new value still
+   fails. `users.traffic_source` keeps the users vocabulary, which is measured correct.
+3. **Lifecycle ordering: split, because the two halves have different truth values.** The
+   pairs that hold on the real data (all six for `orders`, the shipped/delivered/returned
+   triple for `order_items`) stay a strict assertion in
+   `tests/assert_timestamps_are_before_after.sql`. The pairs involving
+   `order_items.created_at` — which the published dataset violates in a fifth to a half of
+   its rows, because it jitters that timestamp around the order — moved to
+   `tests/assert_order_item_created_at_is_plausible.sql` with `severity: warn` and the
+   measured counts in the header. Deleting them would have hidden a real property of the
+   source; leaving them strict would have kept the BigQuery leg red forever and, worse, kept
+   dbt from building anything downstream of staging, since a failed test skips its children.
+   A warning reports the dirt on every run and fails nothing.
+4. **`dim_date.is_weekend`: the fourth failure was a portability bug in a vacuous test, so it
+   is gone and the reason is recorded.** `accepted_values` on a boolean column cannot work on
+   BigQuery — dbt quotes the literals — and on a column the model *computes* as
+   `day_of_week_iso(date_day) >= 6` the test could only ever see `true`, `false` or null,
+   which `not_null` already covers. Every other boolean in the project is tested `not_null`
+   only; this one now matches, and the column description in
+   `models/marts/_marts__models.yml` carries the trap so nobody re-adds it.
+
+Nothing was deleted to get a green build: two false statements were replaced with the
+measured truth (and one of them with a *new* test that watches the useful direction), and
+the one genuinely dirty invariant is now a warning instead of an error.
+
+### Verification
+
+```
+$ make duck     # exit 0, 197 tests, 197 success (fixture leg, after the fixture change)
+$ make bq       # exit 0, the BigQuery leg builds all 29 models and runs every test
+```
+
+Still unmeasured after this card: the rows/values parity question (the legs read different
+data by design) and the two data-quality assumptions in items 4 and 6 below.
+
 ## Remaining unverified assumptions (whole card)
+
 
 1. **Everything about the real dataset.** Row counts, distributions, date range, and how
    many bytes a build scans against `maximum_bytes_billed` (1 GB). Every number in this file
    comes from the invented fixture.
-2. **`events.user_id` is never null.** It is tested `not_null` in staging and in
-   `int_events__sessions` (SPEC: every FK). Real anonymous sessions probably have a null
-   user (from memory, unmeasured). If so, those two tests fail on BigQuery.
-3. **`events.traffic_source` uses the users vocabulary** (Search/Organic/Facebook/Email/Display).
-   The real events vocabulary is probably different (from memory: Email/Adwords/Organic/
-   YouTube/Facebook). If so, two `accepted_values` tests fail on BigQuery (staging and
-   `int_events__sessions`). The mart `traffic_source` tests read `users.traffic_source`,
-   which SPEC says uses that vocabulary.
-4. **One inventory unit per order item.** The fixture was built that way (phase 2), and
-   `unique` is tested on `inventory_item_id` in `int_order_items__enriched` and
-   `fct_order_items`. It is unverified that real `order_items.inventory_item_id` values are
-   distinct. If they are not, those tests fail and `sold_units`/`days_to_sell` count a
-   unit once while revenue counts each sale.
-5. **Every real order has ≥1 item and `num_of_item` matches**, as the count singular test
-   asserts. The lifecycle-ordering test assumes real timestamps are ordered. Both are
-   unmeasured on real data.
-6. **Real prices and costs have ≤ 2 decimal places**, or the `money_type()` cast rounds them.
-   thelook's `cost` is plausibly a computed fraction of retail price with more decimals
-   (unmeasured). If so, staging rounds it and margins change by fractions of a cent per row.
+2. **`events.user_id` is null for anonymous traffic — measured 2026-09-27.** 1,124,610 of
+   2,425,698 real events (46.4%) carry no user, and 500,000 of 681,313 sessions are
+   anonymous on every event. The two `not_null` tests were therefore removed and the
+   non-null values are guarded by a `relationships` test instead; see "Measured against the
+   real dataset".
+3. **`events.traffic_source` does not use the users vocabulary — measured 2026-09-27.** The
+   real events table carries exactly Email, Adwords, Facebook, YouTube and Organic over
+   2,425,698 rows; `users.traffic_source` does carry Search, Organic, Facebook, Email and
+   Display, so the mart tests that read it were right. Both `accepted_values` tests on the
+   events column now assert the measured events set, and the fixture emits that same set so
+   the test is identical on both legs; see "Measured against the real dataset".
+4. **One inventory unit per order item — measured 2026-09-27, it holds.** 0 of the real
+   181,313 order items share an `inventory_item_id`, so the `unique` tests in
+   `int_order_items__enriched` and `fct_order_items` pass on the real data too.
+5. **Every real order has ≥1 item and `num_of_item` matches — measured 2026-09-27, it
+   holds** (`assert_order_item_count_matches_orders` passes on the real 124,952 orders). The
+   lifecycle half of the same assumption does *not* hold for `order_items`; see "Measured
+   against the real dataset".
+6. **Real prices and costs have ≤ 2 decimal places — measured 2026-09-27, the prices do and
+   the costs do not.** `order_items.sale_price` differs from its 2-decimal rounding by at
+   most 1.5e-05 (float noise: 0 of 181,313 rows are off by half a cent or more), so rounding
+   it costs nothing. `products.cost` is a different matter: 7,923 of 29,120 rows (27%) are
+   off by half a cent or more (max 0.005), i.e. the `money_type()` cast really does round
+   real costs, and a unit's `gross_margin` can move by half a cent because of it. Left as
+   is: SPEC asks for money types, and half a cent per unit is below the reporting grain —
+   but it is measured now, not assumed.
 7. **`inventory_items.cost` = `products.cost`**, and the unit's denormalised retail price and
    distribution center equal the product's. This is true in the fixture (0 differences) and
-   unverified on real data (decision 6).
-8. **Every real `order_items.user_id` equals its order's `user_id`** (asserted by the orphan
-   singular test).
-9. **Real `users.created_at` precedes the first order**, and all statuses and genders are
-   in the SPEC vocabularies. Unmeasured.
-10. **Every `bigquery__` macro branch and all 28 models' rendered BigQuery SQL are unexecuted.**
-    This includes `timestamp_trunc`, `timestamp_diff`, NUMERIC/FLOAT64 arithmetic, `order by`
-    in CTAS, and the surrogate-key hashes matching DuckDB's.
+   still unverified on real data (item 6 measured the rounding, not this equality).
+8. **Every real `order_items.user_id` equals its order's `user_id` — measured 2026-09-27, it
+   holds**: 0 mismatches over 181,313 items.
+9. **Real `users.created_at` precedes the first order, and all statuses and genders are in
+   the SPEC vocabularies — measured 2026-09-27, all hold**: 0 user/first-order violations,
+   and the `accepted_values` tests on every status and gender column pass on the real data.
+10. **Every `bigquery__` macro branch and all 28 models' rendered BigQuery SQL — executed
+    2026-09-27.** The whole DAG now builds against the real dataset (`make bq` exit 0), so
+    `timestamp_trunc`, `timestamp_diff`, NUMERIC/FLOAT64 arithmetic, `order by` in CTAS and
+    the key hashes all ran rather than only compiling. Two caveats that come out of it: the
+    surrogate-key *values* still differ between targets by design (NOTES item 1 above), and
+    `accepted_values` on a boolean column is a portability trap — dbt renders its literals
+    as quoted strings, which BigQuery rejects (`dim_date.is_weekend`, see "Measured against
+    the real dataset").
 11. **The time-zone handling on the real path.** It assumes DuckDB's `bigquery` extension
     returns TIMESTAMP as TIMESTAMPTZ (SPEC section 2). Only the fixture, which is loaded as
     `timestamptz`, has exercised it.

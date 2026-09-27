@@ -325,7 +325,7 @@ a violating row, it exits 1.
 | target     | engine                | data lives in        | credentials                        | state here |
 |------------|-----------------------|----------------------|------------------------------------|------------|
 | `duckdb`   | DuckDB 1.5.5 via ADBC | `dev.duckdb` (local) | none                               | **runs green on the fixture** |
-| `bigquery` | BigQuery (GCP)        | GCP project; reads `bigquery-public-data` | Google ADC or a service-account key | **compiles; never connected** |
+| `bigquery` | BigQuery (GCP)        | GCP project; reads `bigquery-public-data` | Google ADC or a service-account key | **builds green against the real dataset** (29 models, 2026-09-27), with one intentional warning |
 
 ### `duckdb`
 
@@ -646,26 +646,31 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
 * **`polyglot_selfcheck` only runs on DuckDB.** On `--target bigquery` it prints
   `selfcheck skipped: bigquery cannot be executed here (no credentials; render-only)`
   and exits 0 rather than pretending; `make polyglot` runs the DuckDB half only.
-* **The real dataset's row counts are now measured, its *contents* are not.**
-  Card 4's harness read every model's real rows through BigQuery and reports
+* **The real dataset's row counts are measured, and as of 2026-09-27 so are its
+  tests.** Card 4's harness read every model's real rows through BigQuery and reports
   counts and checksums for them (`parity-report.json`). The real tables are:
   orders 124,952 · order_items 181,313 · users 100,000 · products 29,120 ·
   inventory_items 489,625 · events 2,425,698 · distribution_centers 10. Every
-  *test result* and every revenue figure quoted in this README, though, still
-  comes from the **generated fixture**: invented rows with the real schema. The
-  tests have never been run against the real data, so these assumptions remain
-  unverified (details in NOTES.md):
-  * the real row counts and value distributions;
-  * that real `events.user_id` is never null. SPEC requires `not_null` on it, but
-    anonymous sessions probably have none, so this test may fail on BigQuery;
-  * that real `events.traffic_source` uses the users vocabulary (Search, Organic,
-    Facebook, Email, Display). It may not, and the `accepted_values` test would fail;
-  * that each real order item consumes its own inventory unit, which the fixture
-    assumes (`fct_order_items.inventory_item_id` has a `unique` test);
-  * that real prices have at most 2 decimal places. The `decimal(18,2)`/`numeric`
-    cast rounds anything finer;
-  * that every real order has at least one item and that `num_of_item` matches, as
-    the singular test asserts.
+  *revenue figure* quoted in this README still comes from the **generated fixture**
+  (invented rows with the real schema), but the test suite has now run against the
+  real data: `make bq` builds all 29 models and passes 195 of 196 tests with one
+  intentional warning (see NOTES.md > "Measured against the real dataset"). What is
+  still assumed about the real data:
+  * the real value distributions (the fixture's are invented);
+  * that real prices have at most 2 decimal places. `sale_price` does (differences
+    from its 2-decimal rounding are float noise, max 1.5e-05), but `products.cost`
+    does not in 27% of rows, so the `decimal(18,2)`/`numeric` cast rounds real costs
+    by up to half a cent;
+  * that `inventory_items.cost` = `products.cost`, and that a unit's denormalised
+    price and center equal the product's.
+  Assumptions the measurement **settled** (each is in NOTES.md with its numbers):
+  `events.user_id` *is* null for anonymous traffic (46.4% of rows) and the two
+  `not_null` tests are gone; real `events.traffic_source` uses its own vocabulary
+  (Email, Adwords, Facebook, YouTube, Organic), so the `accepted_values` lists and the
+  fixture carry that set now; each real order item does consume its own inventory
+  unit; every real order does have at least one item and `num_of_item` matches;
+  `order_items.user_id` does equal its order's user_id; and `orders` timestamps are
+  ordered while `order_items.created_at` is not.
 * **Parity is not established, but it is now *measured* rather than assumed.**
   `make parity` compares all 29 models on both targets and separates the two kinds of
   difference that exist today:
@@ -700,9 +705,11 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
   BigQuery side executed for the first time in card 4 (read-only, whole model
   tree). The parity harness compares the key columns like any other column; they
   differ exactly where the underlying rows differ, and nowhere else.
-* **The singular tests' failing path has not been exercised.** All three return zero
-  rows on the fixture. No fixture with an injected violation has been run through
-  them.
+* **The singular tests' failing path has not been exercised on the fixture.** The three
+  strict ones return zero rows on the fixture (nothing has run them against an injected
+  violation); the fourth, `assert_order_item_created_at_is_plausible`, does return rows on
+  the real data by design — it is `severity: warn` and reports the 137,795 dirty
+  `order_items` timestamps on every BigQuery run.
 * **The fallback path (a separate project for whatever cannot be transpiled) does
   not exist here.** It is card 7's job; this project is deliberately one tree.
 
