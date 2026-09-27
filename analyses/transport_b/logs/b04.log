@@ -1,0 +1,251 @@
+# b04: EXPORT DATA an 8.0 GB table: what the 1 GB-per-file limit does
+# sql: analyses/transport_b/sql/b04_export_split.sql
+# wall (job insert + poll) 8.66s  http 200  job job_3nUW9myVPobXV9yz74pIuKAKClxH
+# statementType EXPORT_DATA  state DONE
+# expected to fail: False
+# objects under gs://coreychimpbot-experiments/transport_b/b04/: 59
+
+-- b04: the wildcard/split demonstration. 58,937,715 rows / 8.0 GB of BigQuery
+-- logical storage. BigQuery caps one exported file at 1 GB, so this cannot come back
+-- as a single object; the job's exportDataStatistics.fileCount and the object sizes in
+-- the bucket are the evidence for what actually happened.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b04/citibike-*.parquet',
+  format='PARQUET',
+  overwrite=true) AS
+SELECT * FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "Y8UwMcUkJfcS096gLLVwdQ==",
+ "id": "coreychimpbot:US.job_3nUW9myVPobXV9yz74pIuKAKClxH",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_3nUW9myVPobXV9yz74pIuKAKClxH?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b04: the wildcard/split demonstration. 58,937,715 rows / 8.0 GB of BigQuery\n-- logical storage. BigQuery caps one exported file at 1 GB, so this cannot come back\n-- as a single object; the job's exportDataStatistics.fileCount and the object sizes in\n-- the bucket are the evidence for what actually happened.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b04/citibike-*.parquet',\n  format='PARQUET',\n  overwrite=true) AS\nSELECT * FROM `bigquery-public-data.new_york_citibike.citibike_trips`\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_3nUW9myVPobXV9yz74pIuKAKClxH",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526020226",
+  "startTime": "1790526020367",
+  "endTime": "1790526026068",
+  "totalBytesProcessed": "8025119188",
+  "query": {
+   "queryPlan": [
+    {
+     "name": "S00: Output",
+     "id": "0",
+     "startMs": "1790526020488",
+     "endMs": "1790526026008",
+     "waitRatioAvg": 0.0001918649270913277,
+     "waitMsAvg": "1",
+     "waitRatioMax": 0.0003837298541826554,
+     "waitMsMax": "2",
+     "readRatioAvg": 0.006523407521105142,
+     "readMsAvg": "34",
+     "readRatioMax": 0.01170376055257099,
+     "readMsMax": "61",
+     "computeRatioAvg": 0.7239063699155794,
+     "computeMsAvg": "3773",
+     "computeRatioMax": 1,
+     "computeMsMax": "5212",
+     "writeRatioAvg": 0.2993092862624712,
+     "writeMsAvg": "1560",
+     "writeRatioMax": 0.533384497313891,
+     "writeMsMax": "2780",
+     "shuffleOutputBytes": "0",
+     "shuffleOutputBytesSpilled": "0",
+     "recordsRead": "58937715",
+     "recordsWritten": "58937715",
+     "parallelInputs": "59",
+     "completedParallelInputs": "59",
+     "status": "COMPLETE",
+     "steps": [
+      {
+       "kind": "READ",
+       "substeps": [
+        "$1:tripduration, $2:starttime, $3:stoptime, $4:start_station_id, $5:start_station_name, $6:start_station_latitude, $7:start_station_longitude, $8:end_station_id, $9:end_station_name, $10:end_station_latitude, $11:end_station_longitude, $12:bikeid, $13:usertype, $14:birth_year, $15:gender, $16:customer_plan",
+        "FROM bigquery-public-data.new_york_citibike.citibike_trips"
+       ]
+      },
+      {
+       "kind": "WRITE",
+       "substeps": [
+        "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16",
+        "TO __stage00_output"
+       ]
+      }
+     ],
+     "slotMs": "284206",
+     "computeMode": "BIGQUERY"
+    }
+   ],
+   "estimatedBytesProcessed": "8025119188",
+   "timeline": [
+    {
+     "elapsedMs": "633",
+     "totalSlotMs": "224048",
+     "pendingUnits": "59",
+     "completedUnits": "0",
+     "activeUnits": "60",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "1633",
+     "totalSlotMs": "269040",
+     "pendingUnits": "59",
+     "completedUnits": "0",
+     "activeUnits": "63",
+     "estimatedRunnableUnits": "1"
+    },
+    {
+     "elapsedMs": "2633",
+     "totalSlotMs": "282588",
+     "pendingUnits": "57",
+     "completedUnits": "2",
+     "activeUnits": "65",
+     "estimatedRunnableUnits": "1"
+    },
+    {
+     "elapsedMs": "3633",
+     "totalSlotMs": "284206",
+     "pendingUnits": "30",
+     "completedUnits": "29",
+     "activeUnits": "34",
+     "estimatedRunnableUnits": "1"
+    },
+    {
+     "elapsedMs": "4633",
+     "totalSlotMs": "284206",
+     "pendingUnits": "11",
+     "completedUnits": "48",
+     "activeUnits": "22",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "5642",
+     "totalSlotMs": "284206",
+     "pendingUnits": "0",
+     "completedUnits": "59",
+     "activeUnits": "2",
+     "estimatedRunnableUnits": "2"
+    }
+   ],
+   "totalPartitionsProcessed": "0",
+   "totalBytesProcessed": "8025119188",
+   "totalBytesBilled": "8025800704",
+   "billingTier": 1,
+   "totalSlotMs": "284206",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "bigquery-public-data",
+     "datasetId": "new_york_citibike",
+     "tableId": "citibike_trips"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "59",
+    "rowCount": "58937715"
+   },
+   "performanceInsights": {
+    "avgPreviousExecutionMs": "6036"
+   },
+   "transferredBytes": "0",
+   "metadataCacheStatistics": {
+    "tableMetadataCacheUsage": [
+     {
+      "tableReference": {
+       "projectId": "bigquery-public-data",
+       "datasetId": "new_york_citibike",
+       "tableId": "citibike_trips"
+      },
+      "unusedReason": "OTHER_REASON",
+      "explanation": "Table does not have CMETA."
+     }
+    ]
+   }
+  },
+  "totalSlotMs": "284206",
+  "finalExecutionDurationMs": "5562"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+transport_b/b04/citibike-000000000000.parquet  22151770 bytes  2026-09-27T16:20:23.648Z
+transport_b/b04/citibike-000000000001.parquet  27044577 bytes  2026-09-27T16:20:23.307Z
+transport_b/b04/citibike-000000000002.parquet  22176930 bytes  2026-09-27T16:20:23.686Z
+transport_b/b04/citibike-000000000003.parquet  27075073 bytes  2026-09-27T16:20:24.168Z
+transport_b/b04/citibike-000000000004.parquet  22165263 bytes  2026-09-27T16:20:23.578Z
+transport_b/b04/citibike-000000000005.parquet  22164538 bytes  2026-09-27T16:20:23.006Z
+transport_b/b04/citibike-000000000006.parquet  22158995 bytes  2026-09-27T16:20:23.222Z
+transport_b/b04/citibike-000000000007.parquet  22172925 bytes  2026-09-27T16:20:23.312Z
+transport_b/b04/citibike-000000000008.parquet  22175556 bytes  2026-09-27T16:20:22.179Z
+transport_b/b04/citibike-000000000009.parquet  22197759 bytes  2026-09-27T16:20:23.254Z
+transport_b/b04/citibike-000000000010.parquet  22173766 bytes  2026-09-27T16:20:24.385Z
+transport_b/b04/citibike-000000000011.parquet  22188893 bytes  2026-09-27T16:20:23.816Z
+transport_b/b04/citibike-000000000012.parquet  22150585 bytes  2026-09-27T16:20:23.805Z
+transport_b/b04/citibike-000000000013.parquet  27052407 bytes  2026-09-27T16:20:23.861Z
+transport_b/b04/citibike-000000000014.parquet  27081396 bytes  2026-09-27T16:20:23.697Z
+transport_b/b04/citibike-000000000015.parquet  22153510 bytes  2026-09-27T16:20:24.314Z
+transport_b/b04/citibike-000000000016.parquet  22172615 bytes  2026-09-27T16:20:23.420Z
+transport_b/b04/citibike-000000000017.parquet  22139656 bytes  2026-09-27T16:20:23.517Z
+transport_b/b04/citibike-000000000018.parquet  27054441 bytes  2026-09-27T16:20:24.758Z
+transport_b/b04/citibike-000000000019.parquet  22158175 bytes  2026-09-27T16:20:23.509Z
+transport_b/b04/citibike-000000000020.parquet  22182763 bytes  2026-09-27T16:20:23.640Z
+transport_b/b04/citibike-000000000021.parquet  22153724 bytes  2026-09-27T16:20:24.463Z
+transport_b/b04/citibike-000000000022.parquet  22151600 bytes  2026-09-27T16:20:24.041Z
+transport_b/b04/citibike-000000000023.parquet  22149144 bytes  2026-09-27T16:20:23.350Z
+transport_b/b04/citibike-000000000024.parquet  22126686 bytes  2026-09-27T16:20:25.086Z
+transport_b/b04/citibike-000000000025.parquet  22133941 bytes  2026-09-27T16:20:24.131Z
+transport_b/b04/citibike-000000000026.parquet  22119143 bytes  2026-09-27T16:20:23.721Z
+transport_b/b04/citibike-000000000027.parquet  22148348 bytes  2026-09-27T16:20:23.115Z
+transport_b/b04/citibike-000000000028.parquet  22174037 bytes  2026-09-27T16:20:25.179Z
+transport_b/b04/citibike-000000000029.parquet  22172980 bytes  2026-09-27T16:20:23.185Z
+transport_b/b04/citibike-000000000030.parquet  22177671 bytes  2026-09-27T16:20:24.743Z
+transport_b/b04/citibike-000000000031.parquet  27063222 bytes  2026-09-27T16:20:25.895Z
+transport_b/b04/citibike-000000000032.parquet  22177037 bytes  2026-09-27T16:20:23.920Z
+transport_b/b04/citibike-000000000033.parquet  22157249 bytes  2026-09-27T16:20:24.292Z
+transport_b/b04/citibike-000000000034.parquet  22167418 bytes  2026-09-27T16:20:23.604Z
+transport_b/b04/citibike-000000000035.parquet  22182215 bytes  2026-09-27T16:20:23.934Z
+transport_b/b04/citibike-000000000036.parquet  22175256 bytes  2026-09-27T16:20:25.967Z
+transport_b/b04/citibike-000000000037.parquet  22164083 bytes  2026-09-27T16:20:24.949Z
+transport_b/b04/citibike-000000000038.parquet  27065061 bytes  2026-09-27T16:20:24.709Z
+transport_b/b04/citibike-000000000039.parquet  22148685 bytes  2026-09-27T16:20:23.680Z
+transport_b/b04/citibike-000000000040.parquet  22162289 bytes  2026-09-27T16:20:23.670Z
+transport_b/b04/citibike-000000000041.parquet  22187847 bytes  2026-09-27T16:20:23.740Z
+transport_b/b04/citibike-000000000042.parquet  27059471 bytes  2026-09-27T16:20:24.501Z
+transport_b/b04/citibike-000000000043.parquet  22150169 bytes  2026-09-27T16:20:24.004Z
+transport_b/b04/citibike-000000000044.parquet  27112967 bytes  2026-09-27T16:20:25.201Z
+transport_b/b04/citibike-000000000045.parquet  22193694 bytes  2026-09-27T16:20:24.586Z
+transport_b/b04/citibike-000000000046.parquet  22145385 bytes  2026-09-27T16:20:24.186Z
+transport_b/b04/citibike-000000000047.parquet  22147238 bytes  2026-09-27T16:20:25.384Z
+transport_b/b04/citibike-000000000048.parquet  22180079 bytes  2026-09-27T16:20:22.702Z
+transport_b/b04/citibike-000000000049.parquet  22178408 bytes  2026-09-27T16:20:23.205Z
+transport_b/b04/citibike-000000000050.parquet  27062576 bytes  2026-09-27T16:20:24.694Z
+transport_b/b04/citibike-000000000051.parquet  22135018 bytes  2026-09-27T16:20:25.581Z
+transport_b/b04/citibike-000000000052.parquet  22136403 bytes  2026-09-27T16:20:25.117Z
+transport_b/b04/citibike-000000000053.parquet  22146651 bytes  2026-09-27T16:20:23.014Z
+transport_b/b04/citibike-000000000054.parquet  22171590 bytes  2026-09-27T16:20:24.850Z
+transport_b/b04/citibike-000000000055.parquet  27085780 bytes  2026-09-27T16:20:23.318Z
+transport_b/b04/citibike-000000000056.parquet  22131044 bytes  2026-09-27T16:20:25.407Z
+transport_b/b04/citibike-000000000057.parquet  22189893 bytes  2026-09-27T16:20:26.038Z
+transport_b/b04/citibike-000000000058.parquet  22182121 bytes  2026-09-27T16:20:24.775Z

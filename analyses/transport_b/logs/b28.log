@@ -1,0 +1,139 @@
+# b28: the extension's own reverse path: bigquery_load from a DuckDB table
+# sql: analyses/transport_b/sql/b28_extension_load.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 3.55s  exit 0  peak RSS 67456 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b28.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b28: the reverse direction the extension's own way: no GCS staging by hand, no upload
+-- script — `bigquery_load` writes the DuckDB table as Parquet and loads it. The
+-- destination is verified in b29 against the same dump b26 wrote.
+INSTALL bigquery FROM community;
+LOAD bigquery;
+CREATE SECRET tb_bq (TYPE bigquery, SCOPE 'bq://coreychimpbot', SERVICE_ACCOUNT_PATH '__SA_PATH__');
+-- reverse_src is built exactly as b26 builds it — the harness substitutes that file's
+-- rendered SQL here, so this scenario does not depend on b26 having run in this process.
+-- b26: the reverse direction, step 1 — DuckDB writes Parquet. A deterministic 1,000-row
+-- table carrying the types a warehouse actually has to move: DECIMAL(38,9) at full width,
+-- DOUBLE, VARCHAR with non-ASCII text, BOOLEAN, DATE, TIMESTAMP, TIMESTAMPTZ, BLOB, a
+-- list, a struct, and a list of structs. Every 100th row is NULL in the nullable columns.
+--
+-- One DuckDB trap is visible in how `n` is built: DECIMAL / DECIMAL returns DOUBLE in
+-- DuckDB, so a decimal column produced by division silently becomes a FLOAT64 (and then a
+-- BigQuery FLOAT64) — the first version of this scenario did exactly that. Building the
+-- value from its integer and fractional text keeps it a real DECIMAL(38,9).
+CREATE TABLE reverse_src AS
+SELECT
+  i AS id,
+  CASE WHEN i % 100 = 0 THEN NULL
+       ELSE CAST((12345678901234567890123456789 + i)::VARCHAR || '.123456789' AS DECIMAL(38,9))
+  END AS n,
+  CASE WHEN i % 100 = 0 THEN NULL ELSE CAST(i AS DOUBLE) * 1.5 END AS d,
+  CASE WHEN i % 100 = 0 THEN NULL ELSE 'row-' || i::VARCHAR || '-héllo → wörld' END AS s,
+  (i % 2 = 0) AS b,
+  DATE '2024-01-02' + CAST(i % 30 AS INTEGER) AS dt,
+  TIMESTAMP '2024-01-02 03:04:05.678901' + CAST(i % 60 AS INTEGER) * INTERVAL '1 second' AS ts,
+  TIMESTAMPTZ '2024-01-02 03:04:05.678901+00' + CAST(i % 60 AS INTEGER) * INTERVAL '1 second' AS tstz,
+  CASE WHEN i % 100 = 0 THEN NULL ELSE CAST('abc-' || i::VARCHAR AS BLOB) END AS bin,
+  CASE WHEN i % 100 = 0 THEN NULL ELSE [i, i + 1, i + 2] END AS arr_i,
+  CASE WHEN i % 100 = 0 THEN NULL ELSE struct_pack(a := i, b := 'x-' || i::VARCHAR) END AS st,
+  CASE WHEN i % 100 = 0 THEN NULL ELSE
+      [struct_pack(x := i, y := 'y-' || i::VARCHAR), struct_pack(x := i + 1, y := 'z-' || i::VARCHAR)]
+  END AS arr_st
+FROM range(0, 1000) AS t(i);
+
+DESCRIBE reverse_src;
+
+COPY reverse_src TO '/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/reverse_src.parquet' (FORMAT PARQUET);
+
+-- what actually landed in the file: the Parquet physical type and logical type per column
+SELECT name, type, converted_type, logical_type, duckdb_type
+FROM parquet_schema('/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/reverse_src.parquet')
+WHERE name IN ('id', 'n', 'd', 'ts', 'tstz', 'arr_i', 'st', 'arr_st');
+
+-- the same rows as text, for the verification step (b29). Decimals, timestamps and the
+-- nested values are cast explicitly so the comparison is over values, not formatting.
+COPY (
+  SELECT id,
+         CAST(n AS VARCHAR) AS n,
+         CAST(d AS VARCHAR) AS d,
+         s,
+         CAST(b AS VARCHAR) AS b,
+         CAST(dt AS VARCHAR) AS dt,
+         CAST(ts AS VARCHAR) AS ts,
+         CAST(tstz AS VARCHAR) AS tstz,
+         hex(bin) AS bin,
+         CAST(arr_i AS VARCHAR) AS arr_i,
+         to_json(st) AS st,
+         to_json(arr_st) AS arr_st
+  FROM reverse_src ORDER BY id
+) TO '/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/reverse_src_dump.csv' (FORMAT CSV, HEADER, NULL '\N');
+
+SELECT count(*) AS rows_written, min(id) AS min_id, max(id) AS max_id,
+       sum(CASE WHEN n IS NULL THEN 1 ELSE 0 END) AS null_n
+FROM reverse_src;
+
+
+SELECT function_name, parameters
+FROM duckdb_functions() WHERE function_name = 'bigquery_load';
+
+SELECT success, job_id, project_id, location, destination_table, output_rows, status
+FROM bigquery_load('coreychimpbot', 'experiments_dev.transport_b_reverse_ext',
+  source_table := 'reverse_src',
+  write_disposition := 'WRITE_TRUNCATE');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+[90m┌──────────────────────────────────────┐[00m[90m
+[00m[90m│             [00m[1mreverse_src[00m[90m              │[00m[90m
+[00m[90m│                                      │[00m[90m
+[00m[90m│ [00mid[90m     [00m[90mbigint[00m[90m                        [00m[90m│[00m[90m
+[00m[90m│ [00mn[90m      [00m[90mdecimal[00m[90m                       [00m[90m│[00m[90m
+[00m[90m│ [00md[90m      [00m[90mdouble[00m[90m                        [00m[90m│[00m[90m
+[00m[90m│ [00ms[90m      [00m[90mvarchar[00m[90m                       [00m[90m│[00m[90m
+[00m[90m│ [00mb[90m      [00m[90mboolean[00m[90m                       [00m[90m│[00m[90m
+[00m[90m│ [00mdt[90m     [00m[90mdate[00m[90m                          [00m[90m│[00m[90m
+[00m[90m│ [00mts[90m     [00m[90mtimestamp[00m[90m                     [00m[90m│[00m[90m
+[00m[90m│ [00mtstz[90m   [00m[90mtimestamp with time zone[00m[90m      [00m[90m│[00m[90m
+[00m[90m│ [00mbin[90m    [00m[90mblob[00m[90m                          [00m[90m│[00m[90m
+[00m[90m│ [00marr_i[90m  [00m[90mbigint[][00m[90m                      [00m[90m│[00m[90m
+[00m[90m│ [00mst[90m     [00m[90mstruct(a bigint, b varchar)[00m[90m   [00m[90m│[00m[90m
+[00m[90m│ [00marr_st[90m [00m[90mstruct(x bigint, y varchar)[][00m[90m [00m[90m│[00m[90m
+[00m[90m└──────────────────────────────────────┘[00m[90m
+[00m┌─────────┬──────────────────────┬──────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────┬──────────────────────────┐
+│  name   │         type         │  converted_type  │                                            logical_type                                             │       duckdb_type        │
+│ varchar │       varchar        │     varchar      │                                               varchar                                               │         varchar          │
+├─────────┼──────────────────────┼──────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────┤
+│ id      │ INT64                │ INT_64           │ NULL                                                                                                │ BIGINT                   │
+│ n       │ FIXED_LEN_BYTE_ARRAY │ DECIMAL          │ DecimalType(scale=9, precision=38)                                                                  │ DECIMAL(38,9)            │
+│ d       │ DOUBLE               │ NULL             │ NULL                                                                                                │ DOUBLE                   │
+│ ts      │ INT64                │ TIMESTAMP_MICROS │ TimestampType(isAdjustedToUTC=0, unit=TimeUnit(MILLIS=<null>, MICROS=MicroSeconds(), NANOS=<null>)) │ TIMESTAMP                │
+│ tstz    │ INT64                │ TIMESTAMP_MICROS │ TimestampType(isAdjustedToUTC=1, unit=TimeUnit(MILLIS=<null>, MICROS=MicroSeconds(), NANOS=<null>)) │ TIMESTAMP WITH TIME ZONE │
+│ arr_i   │ NULL                 │ LIST             │ NULL                                                                                                │ NULL                     │
+│ st      │ NULL                 │ NULL             │ NULL                                                                                                │ NULL                     │
+│ arr_st  │ NULL                 │ LIST             │ NULL                                                                                                │ NULL                     │
+└─────────┴──────────────────────┴──────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────┴──────────────────────────┘
+┌──────────────┬────────┬────────┬────────┐
+│ rows_written │ min_id │ max_id │ null_n │
+│    int64     │ int64  │ int64  │ int128 │
+├──────────────┼────────┼────────┼────────┤
+│         1000 │      0 │    999 │     10 │
+└──────────────┴────────┴────────┴────────┘
+┌───────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ function_name │                                                                                                                                                                                                                                                                                                                                                                             parameters                                                                                                                                                                                                                                                                                                                                                                             │
+│    varchar    │                                                                                                                                                                                                                                                                                                                                                                             varchar[]                                                                                                                                                                                                                                                                                                                                                                              │
+├───────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ bigquery_load │ [project_or_catalog, destination_table, reference_file_schema_uri, json_extension, time_zone, labels, csv_field_delimiter, create_disposition, csv_null_marker, source_format, autodetect, csv_allow_jagged_rows, billing_project, parquet_enum_as_string, max_bad_records, table, date_format, ignore_unknown_values, write_disposition, source_uris, hive_partitioning_source_uri_prefix, file, avro_use_logical_types, location, timeout_ms, source_table, hive_partitioning_mode, source_file, datetime_format, csv_allow_quoted_newlines, schema_update_options, csv_null_markers, csv_skip_leading_rows, csv_preserve_ascii_control_characters, csv_quote, csv_encoding, parquet_enable_list_inference, time_format, decimal_target_types, timestamp_format] │
+└───────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌─────────┬──────────────────────────────┬───────────────┬──────────┬───────────────────────────────────────────────────────┬─────────────┬──────────────────┐
+│ success │            job_id            │  project_id   │ location │                   destination_table                   │ output_rows │      status      │
+│ boolean │           varchar            │    varchar    │ varchar  │                        varchar                        │   uint64    │       json       │
+├─────────┼──────────────────────────────┼───────────────┼──────────┼───────────────────────────────────────────────────────┼─────────────┼──────────────────┤
+│ true    │ job_duckdb_load_zcpsnkawfnqa │ coreychimpbot │ US       │ coreychimpbot.experiments_dev.transport_b_reverse_ext │        1000 │ {"state":"DONE"} │
+└─────────┴──────────────────────────────┴───────────────┴──────────┴───────────────────────────────────────────────────────┴─────────────┴──────────────────┘
+

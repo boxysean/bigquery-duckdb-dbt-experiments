@@ -1,0 +1,27 @@
+# b06: read_parquet over gs:// without HMAC keys (no secret)
+# sql: analyses/transport_b/sql/b06_gs_no_hmac.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 0.40s  exit 1  peak RSS 39024 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b06.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b06: reading the exported objects straight from GCS in DuckDB.
+-- Two attempts, both expected to fail on this box for the same reason: DuckDB speaks
+-- the GCS XML API with HMAC keys, and no HMAC key exists for the service account.
+--   1) no secret at all
+--   2) a TYPE gcs secret with placeholder keys
+-- (b07 shows the route that does work here.)
+SELECT count(*) FROM read_parquet('gs://coreychimpbot-experiments/transport_b/b02/*.parquet');
+
+# ---- output ----
+HTTP Error: HTTP GET error reading 'gs://coreychimpbot-experiments/transport_b/b02' in region '' (HTTP 403 Forbidden)
+
+AccessDenied: Access denied.
+
+Authentication Failure - this is usually caused by invalid or missing credentials.
+* No credentials are provided.
+* See https://duckdb.org/docs/stable/extensions/httpfs/s3api.html
+
+LINE 1: SELECT count(*) FROM read_parquet('gs://coreychimpbot-experiments/transport_b...
+                             ^
+

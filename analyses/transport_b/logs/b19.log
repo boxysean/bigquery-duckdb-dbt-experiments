@@ -1,0 +1,64 @@
+# b19: two EXPORT DATA statements in one request (one script, two child jobs)
+# sql: analyses/transport_b/sql/b19_two_export_statements.sql
+# wall 5.40s  http 200  job job_Xv-P6EIkPpNcNMR4ikjgYdXlCfNG
+# job state DONE  statementType SCRIPT
+# expected to fail: False
+
+-- b19: "You cannot export data from multiple tables in a single extract job."
+-- What that does and does not mean, measured: two EXPORT DATA statements in a single
+-- request are accepted as an implicit script and run as two child jobs (one extract job
+-- each, each with its own 10 MiB billing floor). What no single statement can do is
+-- produce two tables' worth of separated output — see b21 for that.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b19/a-*.parquet',
+  format='PARQUET', overwrite=true) AS
+SELECT * FROM `coreychimpbot.experiments_dev.mart_daily_revenue`;
+
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b19/b-*.parquet',
+  format='PARQUET', overwrite=true) AS
+SELECT * FROM `coreychimpbot.experiments_dev.mart_cohort_retention`
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "IvWIzmo/bk09rZEX1P1kew==",
+ "id": "coreychimpbot:US.job_Xv-P6EIkPpNcNMR4ikjgYdXlCfNG",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_Xv-P6EIkPpNcNMR4ikjgYdXlCfNG?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b19: \"You cannot export data from multiple tables in a single extract job.\"\n-- What that does and does not mean, measured: two EXPORT DATA statements in a single\n-- request are accepted as an implicit script and run as two child jobs (one extract job\n-- each, each with its own 10 MiB billing floor). What no single statement can do is\n-- produce two tables' worth of separated output \u2014 see b21 for that.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b19/a-*.parquet',\n  format='PARQUET', overwrite=true) AS\nSELECT * FROM `coreychimpbot.experiments_dev.mart_daily_revenue`;\n\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b19/b-*.parquet',\n  format='PARQUET', overwrite=true) AS\nSELECT * FROM `coreychimpbot.experiments_dev.mart_cohort_retention`\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_Xv-P6EIkPpNcNMR4ikjgYdXlCfNG",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526282174",
+  "startTime": "1790526282206",
+  "endTime": "1790526285274",
+  "totalBytesProcessed": "661896",
+  "query": {
+   "totalBytesProcessed": "661896",
+   "totalBytesBilled": "20971520",
+   "totalSlotMs": "1736",
+   "statementType": "SCRIPT"
+  },
+  "totalSlotMs": "1736",
+  "numChildJobs": "2"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}

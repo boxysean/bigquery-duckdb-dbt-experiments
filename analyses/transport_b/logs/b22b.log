@@ -1,0 +1,185 @@
+# b22b: row order, export B (identical SQL, second run)
+# sql: analyses/transport_b/sql/b22b_row_order_b.sql
+# wall (job insert + poll) 5.50s  http 200  job job_pexnbTuCbiHlz6kAKnbAZEtUP7Ey
+# statementType EXPORT_DATA  state DONE
+# expected to fail: False
+# objects under gs://coreychimpbot-experiments/transport_b/b22/b-: 17
+
+-- b22b: row order, export B. Identical SQL, run again: if the order were a property of
+-- the data, A and B would be byte-identical.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b22/b-*.parquet',
+  format='PARQUET', overwrite=true) AS
+SELECT stn, year, mo, da, temp
+FROM `bigquery-public-data.noaa_gsod.gsod2023`
+WHERE temp IS NOT NULL
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "vEljjuKKZgHeujAeftr6dQ==",
+ "id": "coreychimpbot:US.job_pexnbTuCbiHlz6kAKnbAZEtUP7Ey",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_pexnbTuCbiHlz6kAKnbAZEtUP7Ey?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b22b: row order, export B. Identical SQL, run again: if the order were a property of\n-- the data, A and B would be byte-identical.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b22/b-*.parquet',\n  format='PARQUET', overwrite=true) AS\nSELECT stn, year, mo, da, temp\nFROM `bigquery-public-data.noaa_gsod.gsod2023`\nWHERE temp IS NOT NULL\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_pexnbTuCbiHlz6kAKnbAZEtUP7Ey",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526299989",
+  "startTime": "1790526300132",
+  "endTime": "1790526303626",
+  "totalBytesProcessed": "121162410",
+  "query": {
+   "queryPlan": [
+    {
+     "name": "S00: Output",
+     "id": "0",
+     "startMs": "1790526300248",
+     "endMs": "1790526303569",
+     "waitRatioAvg": 0.000643293663557414,
+     "waitMsAvg": "2",
+     "waitRatioMax": 0.0016082341588935349,
+     "waitMsMax": "5",
+     "readRatioAvg": 0.005146349308459312,
+     "readMsAvg": "16",
+     "readRatioMax": 0.015117401093599228,
+     "readMsMax": "47",
+     "computeRatioAvg": 0.06625924734641364,
+     "computeMsAvg": "206",
+     "computeRatioMax": 0.09263428755226762,
+     "computeMsMax": "288",
+     "writeRatioAvg": 0.6715985847539402,
+     "writeMsAvg": "2088",
+     "writeRatioMax": 1,
+     "writeMsMax": "3109",
+     "shuffleOutputBytes": "0",
+     "shuffleOutputBytesSpilled": "0",
+     "recordsRead": "4038747",
+     "recordsWritten": "4038747",
+     "parallelInputs": "17",
+     "completedParallelInputs": "17",
+     "status": "COMPLETE",
+     "steps": [
+      {
+       "kind": "READ",
+       "substeps": [
+        "$1:stn, $2:year, $3:mo, $4:da, $5:temp",
+        "FROM bigquery-public-data.noaa_gsod.gsod2023",
+        "WHERE not(is_null($5))"
+       ]
+      },
+      {
+       "kind": "WRITE",
+       "substeps": [
+        "$1, $2, $3, $4, $5",
+        "TO __stage00_output"
+       ]
+      }
+     ],
+     "slotMs": "45871",
+     "computeMode": "BIGQUERY"
+    }
+   ],
+   "estimatedBytesProcessed": "121162410",
+   "timeline": [
+    {
+     "elapsedMs": "868",
+     "totalSlotMs": "45871",
+     "pendingUnits": "12",
+     "completedUnits": "5",
+     "activeUnits": "12",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "1868",
+     "totalSlotMs": "45871",
+     "pendingUnits": "12",
+     "completedUnits": "5",
+     "activeUnits": "12",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "3439",
+     "totalSlotMs": "45871",
+     "pendingUnits": "0",
+     "completedUnits": "17",
+     "activeUnits": "10",
+     "estimatedRunnableUnits": "0"
+    }
+   ],
+   "totalPartitionsProcessed": "0",
+   "totalBytesProcessed": "121162410",
+   "totalBytesBilled": "121634816",
+   "billingTier": 1,
+   "totalSlotMs": "45871",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "bigquery-public-data",
+     "datasetId": "noaa_gsod",
+     "tableId": "gsod2023"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "17",
+    "rowCount": "4038747"
+   },
+   "performanceInsights": {
+    "avgPreviousExecutionMs": "2501"
+   },
+   "transferredBytes": "0",
+   "metadataCacheStatistics": {
+    "tableMetadataCacheUsage": [
+     {
+      "tableReference": {
+       "projectId": "bigquery-public-data",
+       "datasetId": "noaa_gsod",
+       "tableId": "gsod2023"
+      },
+      "unusedReason": "OTHER_REASON",
+      "explanation": "Table does not have CMETA."
+     }
+    ]
+   }
+  },
+  "totalSlotMs": "45871",
+  "finalExecutionDurationMs": "3363"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+transport_b/b22/b-000000000000.parquet  882626 bytes  2026-09-27T16:25:02.892Z
+transport_b/b22/b-000000000001.parquet  880530 bytes  2026-09-27T16:25:03.305Z
+transport_b/b22/b-000000000002.parquet  883276 bytes  2026-09-27T16:25:00.894Z
+transport_b/b22/b-000000000003.parquet  880170 bytes  2026-09-27T16:25:03.040Z
+transport_b/b22/b-000000000004.parquet  879690 bytes  2026-09-27T16:25:03.189Z
+transport_b/b22/b-000000000005.parquet  878624 bytes  2026-09-27T16:25:00.769Z
+transport_b/b22/b-000000000006.parquet  881442 bytes  2026-09-27T16:25:02.061Z
+transport_b/b22/b-000000000007.parquet  880215 bytes  2026-09-27T16:25:03.500Z
+transport_b/b22/b-000000000008.parquet  878871 bytes  2026-09-27T16:25:03.233Z
+transport_b/b22/b-000000000009.parquet  879218 bytes  2026-09-27T16:25:00.782Z
+transport_b/b22/b-000000000010.parquet  880325 bytes  2026-09-27T16:25:00.893Z
+transport_b/b22/b-000000000011.parquet  881981 bytes  2026-09-27T16:25:03.389Z
+transport_b/b22/b-000000000012.parquet  881277 bytes  2026-09-27T16:25:03.537Z
+transport_b/b22/b-000000000013.parquet  879804 bytes  2026-09-27T16:25:03.018Z
+transport_b/b22/b-000000000014.parquet  880539 bytes  2026-09-27T16:25:00.783Z
+transport_b/b22/b-000000000015.parquet  880088 bytes  2026-09-27T16:25:03.120Z
+transport_b/b22/b-000000000016.parquet  883580 bytes  2026-09-27T16:25:03.427Z

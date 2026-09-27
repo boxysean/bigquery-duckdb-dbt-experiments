@@ -1,0 +1,113 @@
+# b05: the same shape as b04, dry run: predicted bytes before spending any
+# sql: analyses/transport_b/sql/b05_export_dry_run.sql
+# dry run: True  wall 0.59s  http 200
+# expected to fail: False
+
+-- b05: the cost guard, before spending anything. The export shape itself, dry run:
+-- EXPORT DATA reads every column of the source table, so `SELECT *` is the right
+-- analogue and its predicted bytes are what the export job will bill.
+-- A /* 20260927T162008Z */ comment makes the SQL text unique so BigQuery's result cache
+-- cannot answer it (card 5 measured that a cached shape still reports the would-process
+-- bytes, with cache_hit = true).
+SELECT /* b05 20260927T162008Z */ * FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+
+# ---- result ----
+{
+ "kind": "bigquery#queryResponse",
+ "schema": {
+  "fields": [
+   {
+    "name": "tripduration",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "starttime",
+    "type": "DATETIME",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "stoptime",
+    "type": "DATETIME",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "start_station_id",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "start_station_name",
+    "type": "STRING",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "start_station_latitude",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "start_station_longitude",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "end_station_id",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "end_station_name",
+    "type": "STRING",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "end_station_latitude",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "end_station_longitude",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "bikeid",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "usertype",
+    "type": "STRING",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "birth_year",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "gender",
+    "type": "STRING",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "customer_plan",
+    "type": "STRING",
+    "mode": "NULLABLE"
+   }
+  ]
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "location": "US"
+ },
+ "totalBytesProcessed": "8025119188",
+ "jobComplete": true,
+ "cacheHit": false,
+ "totalBytesBilled": "0",
+ "location": "US",
+ "creationTime": "1790526029051",
+ "endTime": "1790526029268",
+ "statementType": "SELECT"
+}

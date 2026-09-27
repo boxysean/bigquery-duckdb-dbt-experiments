@@ -1,0 +1,200 @@
+# b21: the wrong workaround: UNION ALL merges the tables into one file set
+# sql: analyses/transport_b/sql/b21_union_all_one_job.sql
+# wall (job insert + poll) 3.17s  http 200  job job_G7Muolq1YFvyxQWqXGRcGhD7q2MD
+# statementType EXPORT_DATA  state DONE
+# expected to fail: False
+# objects under gs://coreychimpbot-experiments/transport_b/b21/: 2
+
+-- b21: the wrong way to get two tables into one file set — UNION ALL. It is legal, it is
+-- one query, and the output tells you nothing about which rows came from which table.
+-- Compare with b20, where two EXPORT DATA statements produce two prefixes.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b21/merged-*.parquet',
+  format='PARQUET', overwrite=true) AS
+SELECT 'mart_daily_revenue' AS source, CAST(revenue_date AS STRING) AS k, CAST(order_count AS STRING) AS v
+FROM `coreychimpbot.experiments_dev.mart_daily_revenue`
+UNION ALL
+SELECT 'mart_cohort_retention', CAST(cohort_month AS STRING), CAST(customers AS STRING)
+FROM `coreychimpbot.experiments_dev.mart_cohort_retention`
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "FDfAJ3dlH72vGEsxE2/ejQ==",
+ "id": "coreychimpbot:US.job_G7Muolq1YFvyxQWqXGRcGhD7q2MD",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_G7Muolq1YFvyxQWqXGRcGhD7q2MD?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b21: the wrong way to get two tables into one file set \u2014 UNION ALL. It is legal, it is\n-- one query, and the output tells you nothing about which rows came from which table.\n-- Compare with b20, where two EXPORT DATA statements produce two prefixes.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b21/merged-*.parquet',\n  format='PARQUET', overwrite=true) AS\nSELECT 'mart_daily_revenue' AS source, CAST(revenue_date AS STRING) AS k, CAST(order_count AS STRING) AS v\nFROM `coreychimpbot.experiments_dev.mart_daily_revenue`\nUNION ALL\nSELECT 'mart_cohort_retention', CAST(cohort_month AS STRING), CAST(customers AS STRING)\nFROM `coreychimpbot.experiments_dev.mart_cohort_retention`\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_G7Muolq1YFvyxQWqXGRcGhD7q2MD",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526290828",
+  "startTime": "1790526290944",
+  "endTime": "1790526291947",
+  "totalBytesProcessed": "105360",
+  "query": {
+   "queryPlan": [
+    {
+     "name": "S00: Output",
+     "id": "0",
+     "startMs": "1790526291175",
+     "endMs": "1790526291880",
+     "waitRatioAvg": 0.0014684287812041115,
+     "waitMsAvg": "1",
+     "waitRatioMax": 0.0014684287812041115,
+     "waitMsMax": "1",
+     "readRatioAvg": 0.014684287812041116,
+     "readMsAvg": "10",
+     "readRatioMax": 0.014684287812041116,
+     "readMsMax": "10",
+     "computeRatioAvg": 0.032305433186490456,
+     "computeMsAvg": "22",
+     "computeRatioMax": 0.033773861967694566,
+     "computeMsMax": "23",
+     "writeRatioAvg": 0.9265785609397944,
+     "writeMsAvg": "631",
+     "writeRatioMax": 1,
+     "writeMsMax": "681",
+     "shuffleOutputBytes": "0",
+     "shuffleOutputBytesSpilled": "0",
+     "recordsRead": "6585",
+     "recordsWritten": "6585",
+     "parallelInputs": "2",
+     "completedParallelInputs": "2",
+     "status": "COMPLETE",
+     "steps": [
+      {
+       "kind": "READ",
+       "substeps": [
+        "$1:revenue_date, $2:order_count",
+        "FROM coreychimpbot.experiments_dev.mart_daily_revenue"
+       ]
+      },
+      {
+       "kind": "READ",
+       "substeps": [
+        "$10:cohort_month, $11:customers",
+        "FROM coreychimpbot.experiments_dev.mart_cohort_retention"
+       ]
+      },
+      {
+       "kind": "COMPUTE",
+       "substeps": [
+        "$30 := 'mart_daily_revenue'",
+        "$31 := CAST($1 AS STRING)",
+        "$32 := CAST($2 AS STRING)"
+       ]
+      },
+      {
+       "kind": "COMPUTE",
+       "substeps": [
+        "$40 := 'mart_cohort_retention'",
+        "$41 := CAST($10 AS STRING)",
+        "$42 := CAST($11 AS STRING)"
+       ]
+      },
+      {
+       "kind": "WRITE",
+       "substeps": [
+        "$20, $21, $22",
+        "TO __stage00_output"
+       ]
+      }
+     ],
+     "slotMs": "930",
+     "computeMode": "BIGQUERY"
+    }
+   ],
+   "estimatedBytesProcessed": "105360",
+   "timeline": [
+    {
+     "elapsedMs": "56",
+     "totalSlotMs": "930",
+     "pendingUnits": "0",
+     "completedUnits": "0",
+     "activeUnits": "0",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "937",
+     "totalSlotMs": "930",
+     "pendingUnits": "0",
+     "completedUnits": "2",
+     "estimatedRunnableUnits": "0"
+    }
+   ],
+   "totalPartitionsProcessed": "0",
+   "totalBytesProcessed": "105360",
+   "totalBytesBilled": "20971520",
+   "billingTier": 1,
+   "totalSlotMs": "930",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "coreychimpbot",
+     "datasetId": "experiments_dev",
+     "tableId": "mart_cohort_retention"
+    },
+    {
+     "projectId": "coreychimpbot",
+     "datasetId": "experiments_dev",
+     "tableId": "mart_daily_revenue"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "2",
+    "rowCount": "6585"
+   },
+   "performanceInsights": {
+    "avgPreviousExecutionMs": "713"
+   },
+   "transferredBytes": "0",
+   "metadataCacheStatistics": {
+    "tableMetadataCacheUsage": [
+     {
+      "tableReference": {
+       "projectId": "coreychimpbot",
+       "datasetId": "experiments_dev",
+       "tableId": "mart_cohort_retention"
+      },
+      "unusedReason": "OTHER_REASON",
+      "explanation": "Table does not have CMETA."
+     },
+     {
+      "tableReference": {
+       "projectId": "coreychimpbot",
+       "datasetId": "experiments_dev",
+       "tableId": "mart_daily_revenue"
+      },
+      "unusedReason": "OTHER_REASON",
+      "explanation": "Table does not have CMETA."
+     }
+    ]
+   }
+  },
+  "totalSlotMs": "930",
+  "finalExecutionDurationMs": "753"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+transport_b/b21/merged-000000000000.parquet  47902 bytes  2026-09-27T16:24:51.750Z
+transport_b/b21/merged-000000000001.parquet  8760 bytes  2026-09-27T16:24:51.848Z

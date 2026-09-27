@@ -1,0 +1,23 @@
+# b07d: control: same URL, a bogus bearer token
+# sql: analyses/transport_b/sql/b07d_http_bogus_token.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 1.56s  exit 1  peak RSS 40304 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b07d.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b07d: control with a bogus bearer token.
+CREATE SECRET tb_http_bogus (TYPE http, BEARER_TOKEN 'not-a-real-token');
+SELECT count(*) FROM read_parquet('https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/mart_daily_revenue-000000000000.parquet');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+HTTP Error: HTTP GET error on 'https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/mart_daily_revenue-000000000000.parquet' (HTTP 0 Internal Server Error)
+
+LINE 1: SELECT count(*) FROM read_parquet('https://storage.googleapis.com/coreychimpbot...
+                             ^
+

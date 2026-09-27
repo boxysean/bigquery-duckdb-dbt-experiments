@@ -1,0 +1,49 @@
+# b18: read the nested/repeated Parquet export
+# sql: analyses/transport_b/sql/b18_types_parquet_read.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 1.10s  exit 0  peak RSS 41344 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b18.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b18: the nested/repeated export read back. This is the half of the type story that CSV
+-- cannot carry at all: arrays, structs, arrays of structs and nested structs.
+CREATE SECRET tb_http (TYPE http, BEARER_TOKEN '__TOKEN__');
+DESCRIBE SELECT * FROM read_parquet(['https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b13/types-000000000000.parquet']);
+SELECT * FROM read_parquet(['https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b13/types-000000000000.parquet']) ORDER BY id;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+[90m┌────────────────────────────────────────────────┐[00m[90m
+[00m[90m│                    [00m[1mDescribe[00m[90m                    │[00m[90m
+[00m[90m│                                                │[00m[90m
+[00m[90m│ [00mid[90m      [00m[90mbigint[00m[90m                                 [00m[90m│[00m[90m
+[00m[90m│ [00mi64[90m     [00m[90mbigint[00m[90m                                 [00m[90m│[00m[90m
+[00m[90m│ [00mf64[90m     [00m[90mdouble[00m[90m                                 [00m[90m│[00m[90m
+[00m[90m│ [00mn[90m       [00m[90mdecimal[00m[90m                                [00m[90m│[00m[90m
+[00m[90m│ [00mn_small[90m [00m[90mdecimal[00m[90m                                [00m[90m│[00m[90m
+[00m[90m│ [00ms[90m       [00m[90mvarchar[00m[90m                                [00m[90m│[00m[90m
+[00m[90m│ [00mbyt[90m     [00m[90mblob[00m[90m                                   [00m[90m│[00m[90m
+[00m[90m│ [00mb[90m       [00m[90mboolean[00m[90m                                [00m[90m│[00m[90m
+[00m[90m│ [00md[90m       [00m[90mdate[00m[90m                                   [00m[90m│[00m[90m
+[00m[90m│ [00mdt[90m      [00m[90mtimestamp[00m[90m                              [00m[90m│[00m[90m
+[00m[90m│ [00mt[90m       [00m[90mtime with time zone[00m[90m                    [00m[90m│[00m[90m
+[00m[90m│ [00mts[90m      [00m[90mtimestamp[00m[90m                              [00m[90m│[00m[90m
+[00m[90m│ [00marr_i[90m   [00m[90mbigint[][00m[90m                               [00m[90m│[00m[90m
+[00m[90m│ [00marr_s[90m   [00m[90mvarchar[][00m[90m                              [00m[90m│[00m[90m
+[00m[90m│ [00mst[90m      [00m[90mstruct(a bigint, b varchar)[00m[90m            [00m[90m│[00m[90m
+[00m[90m│ [00marr_st[90m  [00m[90mstruct(x bigint, y varchar)[][00m[90m          [00m[90m│[00m[90m
+[00m[90m│ [00mnested[90m  [00m[90mstruct(inner_list struct(z varchar)[])[00m[90m [00m[90m│[00m[90m
+[00m[90m└────────────────────────────────────────────────┘[00m[90m
+[00m┌───────┬──────────────────┬────────┬─────────────────────────────────────────┬───────────────┬───────────────┬──────────────┬─────────┬────────────┬────────────────────────────┬─────────────────────┬────────────────────────────┬───────────┬───────────┬─────────────────────────────┬──────────────────────────────────────┬────────────────────────────────────────┐
+│  id   │       i64        │  f64   │                    n                    │    n_small    │       s       │     byt      │    b    │     d      │             dt             │          t          │             ts             │   arr_i   │   arr_s   │             st              │                arr_st                │                 nested                 │
+│ int64 │      int64       │ double │              decimal(38,9)              │ decimal(38,9) │    varchar    │     blob     │ boolean │    date    │         timestamp          │ time with time zone │         timestamp          │  int64[]  │ varchar[] │ struct(a bigint, b varchar) │    struct(x bigint, y varchar)[]     │ struct(inner_list struct(z varchar)[]) │
+├───────┼──────────────────┼────────┼─────────────────────────────────────────┼───────────────┼───────────────┼──────────────┼─────────┼────────────┼────────────────────────────┼─────────────────────┼────────────────────────────┼───────────┼───────────┼─────────────────────────────┼──────────────────────────────────────┼────────────────────────────────────────┤
+│     1 │ 9007199254740993 │    1.5 │ 12345678901234567890123456789.123456789 │  -0.000000001 │ héllo → wörld │ \x01\x02\xFF │ true    │ 2024-01-02 │ 2024-01-02 03:04:05.678901 │ 03:04:05.678901+00  │ 2024-01-02 03:04:05.678901 │ [1, 2, 3] │ [a, b]    │ {'a': 1, 'b': x}            │ [{'x': 1, 'y': y}, {'x': 2, 'y': z}] │ {'inner_list': [{'z': q}, {'z': r}]}   │
+│     2 │             NULL │   NULL │                                    NULL │          NULL │ NULL          │ NULL         │ NULL    │ NULL       │ NULL                       │ NULL                │ NULL                       │ []        │ []        │ NULL                        │ []                                   │ NULL                                   │
+└───────┴──────────────────┴────────┴─────────────────────────────────────────┴───────────────┴───────────────┴──────────────┴─────────┴────────────┴────────────────────────────┴─────────────────────┴────────────────────────────┴───────────┴───────────┴─────────────────────────────┴──────────────────────────────────────┴────────────────────────────────────────┘
+

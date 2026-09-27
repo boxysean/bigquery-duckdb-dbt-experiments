@@ -1,0 +1,157 @@
+# b16: the same flat rows as Parquet, for the comparison
+# sql: analyses/transport_b/sql/b16_export_flat_parquet.sql
+# wall (job insert + poll) 3.28s  http 200  job job_C8QA4xSEfCUrhDSijIU5GdJJAYdQ
+# statementType EXPORT_DATA  state DONE
+# expected to fail: False
+# objects under gs://coreychimpbot-experiments/transport_b/b16/: 1
+
+-- b16: the same rows as b15, as Parquet: the control for b17's comparison.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b16/flat-*.parquet',
+  format='PARQUET',
+  overwrite=true) AS
+SELECT * FROM `coreychimpbot.experiments_dev.transport_b_types_flat`
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "DBNKriTJJUXNkuq3j09lFw==",
+ "id": "coreychimpbot:US.job_C8QA4xSEfCUrhDSijIU5GdJJAYdQ",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_C8QA4xSEfCUrhDSijIU5GdJJAYdQ?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b16: the same rows as b15, as Parquet: the control for b17's comparison.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b16/flat-*.parquet',\n  format='PARQUET',\n  overwrite=true) AS\nSELECT * FROM `coreychimpbot.experiments_dev.transport_b_types_flat`\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_C8QA4xSEfCUrhDSijIU5GdJJAYdQ",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526274775",
+  "startTime": "1790526274898",
+  "endTime": "1790526275557",
+  "totalBytesProcessed": "153",
+  "query": {
+   "queryPlan": [
+    {
+     "name": "S00: Output",
+     "id": "0",
+     "startMs": "1790526275013",
+     "endMs": "1790526275450",
+     "waitRatioAvg": 0.002364066193853428,
+     "waitMsAvg": "1",
+     "waitRatioMax": 0.002364066193853428,
+     "waitMsMax": "1",
+     "readRatioAvg": 0.0070921985815602835,
+     "readMsAvg": "3",
+     "readRatioMax": 0.0070921985815602835,
+     "readMsMax": "3",
+     "computeRatioAvg": 0.03546099290780142,
+     "computeMsAvg": "15",
+     "computeRatioMax": 0.03546099290780142,
+     "computeMsMax": "15",
+     "writeRatioAvg": 1,
+     "writeMsAvg": "423",
+     "writeRatioMax": 1,
+     "writeMsMax": "423",
+     "shuffleOutputBytes": "0",
+     "shuffleOutputBytesSpilled": "0",
+     "recordsRead": "2",
+     "recordsWritten": "2",
+     "parallelInputs": "1",
+     "completedParallelInputs": "1",
+     "status": "COMPLETE",
+     "steps": [
+      {
+       "kind": "READ",
+       "substeps": [
+        "$1:id, $2:i64, $3:f64, $4:n, $5:n_small, $6:bn, $7:s, $8:byt, $9:b, $10:d, $11:dt, $12:t, $13:ts",
+        "FROM coreychimpbot.experiments_dev.transport_b_types_flat"
+       ]
+      },
+      {
+       "kind": "WRITE",
+       "substeps": [
+        "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13",
+        "TO __stage00_output"
+       ]
+      }
+     ],
+     "slotMs": "422",
+     "computeMode": "BIGQUERY"
+    }
+   ],
+   "estimatedBytesProcessed": "153",
+   "timeline": [
+    {
+     "elapsedMs": "102",
+     "totalSlotMs": "422",
+     "pendingUnits": "0",
+     "completedUnits": "0",
+     "activeUnits": "0",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "603",
+     "totalSlotMs": "422",
+     "pendingUnits": "0",
+     "completedUnits": "1",
+     "estimatedRunnableUnits": "0"
+    }
+   ],
+   "totalPartitionsProcessed": "0",
+   "totalBytesProcessed": "153",
+   "totalBytesBilled": "10485760",
+   "billingTier": 1,
+   "totalSlotMs": "422",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "coreychimpbot",
+     "datasetId": "experiments_dev",
+     "tableId": "transport_b_types_flat"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "1",
+    "rowCount": "2"
+   },
+   "performanceInsights": {
+    "avgPreviousExecutionMs": "563"
+   },
+   "transferredBytes": "0",
+   "metadataCacheStatistics": {
+    "tableMetadataCacheUsage": [
+     {
+      "tableReference": {
+       "projectId": "coreychimpbot",
+       "datasetId": "experiments_dev",
+       "tableId": "transport_b_types_flat"
+      },
+      "unusedReason": "OTHER_REASON",
+      "explanation": "Table does not have CMETA."
+     }
+    ]
+   }
+  },
+  "totalSlotMs": "422",
+  "finalExecutionDurationMs": "528"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+transport_b/b16/flat-000000000000.parquet  4255 bytes  2026-09-27T16:24:35.422Z

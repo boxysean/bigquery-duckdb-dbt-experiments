@@ -1,0 +1,165 @@
+# b13: EXPORT DATA the nested/repeated type table as Parquet
+# sql: analyses/transport_b/sql/b13_export_types_parquet.sql
+# wall (job insert + poll) 3.28s  http 200  job job_GQXrEbOTyFbdOf2y7kXuKBHPNpEi
+# statementType EXPORT_DATA  state DONE
+# expected to fail: False
+# objects under gs://coreychimpbot-experiments/transport_b/b13/: 1
+
+-- b13: every type family, nested and repeated included, as Parquet.
+EXPORT DATA OPTIONS(
+  uri='gs://coreychimpbot-experiments/transport_b/b13/types-*.parquet',
+  format='PARQUET',
+  overwrite=true) AS
+SELECT * FROM `coreychimpbot.experiments_dev.transport_b_types`
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "W61g9MPR9b1MJMVXqO4F4g==",
+ "id": "coreychimpbot:US.job_GQXrEbOTyFbdOf2y7kXuKBHPNpEi",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_GQXrEbOTyFbdOf2y7kXuKBHPNpEi?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b13: every type family, nested and repeated included, as Parquet.\nEXPORT DATA OPTIONS(\n  uri='gs://coreychimpbot-experiments/transport_b/b13/types-*.parquet',\n  format='PARQUET',\n  overwrite=true) AS\nSELECT * FROM `coreychimpbot.experiments_dev.transport_b_types`\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_GQXrEbOTyFbdOf2y7kXuKBHPNpEi",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526256291",
+  "startTime": "1790526256454",
+  "endTime": "1790526257141",
+  "totalBytesProcessed": "190",
+  "query": {
+   "queryPlan": [
+    {
+     "name": "S00: Output",
+     "id": "0",
+     "startMs": "1790526256563",
+     "endMs": "1790526256992",
+     "waitRatioAvg": 0.002403846153846154,
+     "waitMsAvg": "1",
+     "waitRatioMax": 0.002403846153846154,
+     "waitMsMax": "1",
+     "readRatioAvg": 0.01201923076923077,
+     "readMsAvg": "5",
+     "readRatioMax": 0.01201923076923077,
+     "readMsMax": "5",
+     "computeRatioAvg": 0.038461538461538464,
+     "computeMsAvg": "16",
+     "computeRatioMax": 0.038461538461538464,
+     "computeMsMax": "16",
+     "writeRatioAvg": 1,
+     "writeMsAvg": "416",
+     "writeRatioMax": 1,
+     "writeMsMax": "416",
+     "shuffleOutputBytes": "0",
+     "shuffleOutputBytesSpilled": "0",
+     "recordsRead": "2",
+     "recordsWritten": "2",
+     "parallelInputs": "1",
+     "completedParallelInputs": "1",
+     "status": "COMPLETE",
+     "steps": [
+      {
+       "kind": "READ",
+       "substeps": [
+        "$1:id, $2:i64, $3:f64, $4:n, $5:n_small, $6:s, $7:byt, $8:b, $9:d, $10:dt, $11:t, $12:ts, $13:arr_i, $14:arr_s, $15:nested.$is_not_null, $16:arr_st.$is_not_null",
+        "FROM coreychimpbot.experiments_dev.transport_b_types"
+       ]
+      },
+      {
+       "kind": "COMPUTE",
+       "substeps": [
+        "$30 := MAKE_STRUCT(MAKE_STRUCT($23, $22), $15)",
+        "$31 := MAKE_STRUCT($18, $17, $16)",
+        "$32 := MAKE_STRUCT($21, $20, $19)"
+       ]
+      },
+      {
+       "kind": "WRITE",
+       "substeps": [
+        "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $30, $31",
+        "TO __stage00_output"
+       ]
+      }
+     ],
+     "slotMs": "496",
+     "computeMode": "BIGQUERY"
+    }
+   ],
+   "estimatedBytesProcessed": "190",
+   "timeline": [
+    {
+     "elapsedMs": "546",
+     "totalSlotMs": "496",
+     "pendingUnits": "1",
+     "completedUnits": "0",
+     "activeUnits": "1",
+     "estimatedRunnableUnits": "0"
+    },
+    {
+     "elapsedMs": "545",
+     "totalSlotMs": "496",
+     "pendingUnits": "0",
+     "completedUnits": "1",
+     "estimatedRunnableUnits": "0"
+    }
+   ],
+   "totalPartitionsProcessed": "0",
+   "totalBytesProcessed": "190",
+   "totalBytesBilled": "10485760",
+   "billingTier": 1,
+   "totalSlotMs": "496",
+   "cacheHit": false,
+   "referencedTables": [
+    {
+     "projectId": "coreychimpbot",
+     "datasetId": "experiments_dev",
+     "tableId": "transport_b_types"
+    }
+   ],
+   "statementType": "EXPORT_DATA",
+   "exportDataStatistics": {
+    "fileCount": "1",
+    "rowCount": "2"
+   },
+   "performanceInsights": {
+    "avgPreviousExecutionMs": "517"
+   },
+   "transferredBytes": "0",
+   "metadataCacheStatistics": {
+    "tableMetadataCacheUsage": [
+     {
+      "tableReference": {
+       "projectId": "coreychimpbot",
+       "datasetId": "experiments_dev",
+       "tableId": "transport_b_types"
+      },
+      "unusedReason": "OTHER_REASON",
+      "explanation": "Table does not have CMETA."
+     }
+    ]
+   }
+  },
+  "totalSlotMs": "496",
+  "finalExecutionDurationMs": "484"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+transport_b/b13/types-000000000000.parquet  5883 bytes  2026-09-27T16:24:16.963Z

@@ -1,0 +1,29 @@
+# b10: the same export pulled down with the GCS JSON API, then read locally
+# sql: analyses/transport_b/sql/b10_read_local.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 0.41s  exit 0  peak RSS 40320 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b10.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b10: the same data, after the harness pulled every object down with the GCS JSON API.
+-- Same question, different pipe: is a bearer-token HTTPS read good enough, or is a local
+-- copy worth the extra step? The wall times are in the scenario logs.
+SELECT count(*) AS rows_read FROM read_parquet('/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b10/*.parquet');
+SELECT sum(tripduration) AS total_tripduration,
+       count(DISTINCT start_station_id) AS stations
+FROM read_parquet('/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b10/*.parquet');
+
+# ---- output ----
+┌───────────┐
+│ rows_read │
+│   int64   │
+├───────────┤
+│  58937715 │
+└───────────┘
+┌────────────────────┬──────────┐
+│ total_tripduration │ stations │
+│       int128       │  int64   │
+├────────────────────┼──────────┤
+│        51116665216 │      881 │
+└────────────────────┴──────────┘
+

@@ -1,0 +1,75 @@
+# b24: row order evidence: three identical exports and one ORDER BY, compared
+# sql: analyses/transport_b/sql/b24_row_order_evidence.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 2.38s  exit 0  peak RSS 705064 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b24: the evidence for b22/b22b/b22c/b23. One thread and preserve_insertion_order=true so
+-- DuckDB hands the file's physical row order back unchanged; then, per file, the sequence
+-- of temp (fingerprinted) and how often it goes backwards.
+--   A, B, D: three runs of the same SQL with no ORDER BY (b22, b22b, b22c)
+--   C:       the same SELECT with ORDER BY temp (b23), which writes one file
+-- If the file set were a property of the data, every unordered run would agree on the shard
+-- boundaries; if it were sorted, the descents would be 0 in all of them.
+SET threads = 1;
+SET preserve_insertion_order = true;
+CREATE TABLE a1 AS SELECT row_number() OVER () AS rn, stn, temp FROM read_parquet('/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/A1.parquet');
+CREATE TABLE a2 AS SELECT row_number() OVER () AS rn, stn, temp FROM read_parquet('/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/A2.parquet');
+CREATE TABLE b1 AS SELECT row_number() OVER () AS rn, stn, temp FROM read_parquet('/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/B1.parquet');
+CREATE TABLE b2 AS SELECT row_number() OVER () AS rn, stn, temp FROM read_parquet('/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/B2.parquet');
+CREATE TABLE d1 AS SELECT row_number() OVER () AS rn, stn, temp FROM read_parquet('/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/D1.parquet');
+CREATE TABLE d2 AS SELECT row_number() OVER () AS rn, stn, temp FROM read_parquet('/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/D2.parquet');
+CREATE TABLE c1 AS SELECT row_number() OVER () AS rn, stn, temp FROM read_parquet('/home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b24/C1.parquet');
+
+SELECT 'A (no ORDER BY), file 0' AS src, count(*) AS rows,
+       md5(string_agg(temp::VARCHAR, ',' ORDER BY rn)) AS temp_seq_md5 FROM a1
+UNION ALL SELECT 'A, file 1', count(*), md5(string_agg(temp::VARCHAR, ',' ORDER BY rn)) FROM a2
+UNION ALL SELECT 'B (same SQL, second run), file 0', count(*), md5(string_agg(temp::VARCHAR, ',' ORDER BY rn)) FROM b1
+UNION ALL SELECT 'B, file 1', count(*), md5(string_agg(temp::VARCHAR, ',' ORDER BY rn)) FROM b2
+UNION ALL SELECT 'D (same SQL, third run), file 0', count(*), md5(string_agg(temp::VARCHAR, ',' ORDER BY rn)) FROM d1
+UNION ALL SELECT 'D, file 1', count(*), md5(string_agg(temp::VARCHAR, ',' ORDER BY rn)) FROM d2
+UNION ALL SELECT 'C (ORDER BY temp), file 0', count(*), md5(string_agg(temp::VARCHAR, ',' ORDER BY rn)) FROM c1;
+
+SELECT 'A file 0: temp decreases' AS check, count(*) AS n
+FROM (SELECT temp, lag(temp) OVER (ORDER BY rn) AS prev FROM a1) WHERE temp < prev
+UNION ALL SELECT 'B file 0: temp decreases', count(*)
+FROM (SELECT temp, lag(temp) OVER (ORDER BY rn) AS prev FROM b1) WHERE temp < prev
+UNION ALL SELECT 'D file 0: temp decreases', count(*)
+FROM (SELECT temp, lag(temp) OVER (ORDER BY rn) AS prev FROM d1) WHERE temp < prev
+UNION ALL SELECT 'C file 0: temp decreases', count(*)
+FROM (SELECT temp, lag(temp) OVER (ORDER BY rn) AS prev FROM c1) WHERE temp < prev;
+
+SELECT 'A file 0: first/last temp' AS check, min(temp) AS lo, max(temp) AS hi FROM a1
+UNION ALL SELECT 'C file 0: first/last temp', min(temp), max(temp) FROM c1;
+
+# ---- output ----
+┌──────────────────────────────────┬─────────┬──────────────────────────────────┐
+│               src                │  rows   │           temp_seq_md5           │
+│             varchar              │  int64  │             varchar              │
+├──────────────────────────────────┼─────────┼──────────────────────────────────┤
+│ A (no ORDER BY), file 0          │  237833 │ 4cb29205efb85eb6ca87e047838a378f │
+│ A, file 1                        │  238054 │ d28275cb555862308a6570acc846d1f5 │
+│ B (same SQL, second run), file 0 │  238054 │ d28275cb555862308a6570acc846d1f5 │
+│ B, file 1                        │  237833 │ 4cb29205efb85eb6ca87e047838a378f │
+│ D (same SQL, third run), file 0  │  237833 │ 4cb29205efb85eb6ca87e047838a378f │
+│ D, file 1                        │  238054 │ d28275cb555862308a6570acc846d1f5 │
+│ C (ORDER BY temp), file 0        │ 4038747 │ f0bc98d9502d2c2a149d17bf22eb39fd │
+└──────────────────────────────────┴─────────┴──────────────────────────────────┘
+┌──────────────────────────┬────────┐
+│          check           │   n    │
+│         varchar          │ int64  │
+├──────────────────────────┼────────┤
+│ A file 0: temp decreases │ 118548 │
+│ B file 0: temp decreases │ 118400 │
+│ D file 0: temp decreases │ 118548 │
+│ C file 0: temp decreases │      0 │
+└──────────────────────────┴────────┘
+┌───────────────────────────┬────────┬────────┐
+│           check           │   lo   │   hi   │
+│          varchar          │ double │ double │
+├───────────────────────────┼────────┼────────┤
+│ A file 0: first/last temp │  -99.3 │  110.0 │
+│ C file 0: first/last temp │ -114.3 │  110.0 │
+└───────────────────────────┴────────┴────────┘
+

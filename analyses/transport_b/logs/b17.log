@@ -1,0 +1,81 @@
+# b17: the same rows as CSV (b15) and as Parquet (b16), read side by side
+# sql: analyses/transport_b/sql/b17_csv_vs_parquet.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 1.16s  exit 0  peak RSS 46212 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b17.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b17: the same rows, exported twice — once as CSV (b15) and once as Parquet (b16).
+-- The DESCRIBE pair is the type fidelity question; the SELECT pair is the value question
+-- (does NUMERIC survive CSV, and what happens to BIGNUMERIC at full width).
+-- JSON is not in this table: Parquet refuses it (b13c) and CSV carries it as text (b17b).
+CREATE SECRET tb_http (TYPE http, BEARER_TOKEN '__TOKEN__');
+CREATE TABLE tb_from_csv AS SELECT * FROM read_csv('https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b15/flat-000000000000.csv', header = true);
+CREATE TABLE tb_from_parquet AS SELECT * FROM read_parquet('https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b16/flat-000000000000.parquet');
+SELECT 'csv' AS src, column_name, column_type FROM (DESCRIBE SELECT * FROM tb_from_csv)
+UNION ALL
+SELECT 'parquet' AS src, column_name, column_type FROM (DESCRIBE SELECT * FROM tb_from_parquet)
+ORDER BY column_name, src;
+SELECT 'csv' AS src, id,
+       CAST(n AS VARCHAR) AS n_text, CAST(n_small AS VARCHAR) AS n_small_text,
+       CAST(bn AS VARCHAR) AS bn_text, CAST(dt AS VARCHAR) AS dt_text
+FROM tb_from_csv ORDER BY id;
+SELECT 'parquet' AS src, id,
+       CAST(n AS VARCHAR) AS n_text, CAST(n_small AS VARCHAR) AS n_small_text,
+       CAST(bn AS VARCHAR) AS bn_text, CAST(dt AS VARCHAR) AS dt_text
+FROM tb_from_parquet ORDER BY id;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌─────────┬─────────────┬─────────────────────┐
+│   src   │ column_name │     column_type     │
+│ varchar │   varchar   │       varchar       │
+├─────────┼─────────────┼─────────────────────┤
+│ csv     │ b           │ BOOLEAN             │
+│ parquet │ b           │ BOOLEAN             │
+│ csv     │ bn          │ DOUBLE              │
+│ parquet │ bn          │ DOUBLE              │
+│ csv     │ byt         │ VARCHAR             │
+│ parquet │ byt         │ BLOB                │
+│ csv     │ d           │ DATE                │
+│ parquet │ d           │ DATE                │
+│ csv     │ dt          │ TIMESTAMP           │
+│ parquet │ dt          │ TIMESTAMP           │
+│ csv     │ f64         │ DOUBLE              │
+│ parquet │ f64         │ DOUBLE              │
+│ csv     │ i64         │ BIGINT              │
+│ parquet │ i64         │ BIGINT              │
+│ csv     │ id          │ BIGINT              │
+│ parquet │ id          │ BIGINT              │
+│ csv     │ n           │ DOUBLE              │
+│ parquet │ n           │ DECIMAL(38,9)       │
+│ csv     │ n_small     │ DOUBLE              │
+│ parquet │ n_small     │ DECIMAL(38,9)       │
+│ csv     │ s           │ VARCHAR             │
+│ parquet │ s           │ VARCHAR             │
+│ csv     │ t           │ TIME                │
+│ parquet │ t           │ TIME WITH TIME ZONE │
+│ csv     │ ts          │ TIMESTAMP           │
+│ parquet │ ts          │ TIMESTAMP           │
+└─────────┴─────────────┴─────────────────────┘
+  26 rows                           3 columns
+┌─────────┬───────┬────────────────────────┬──────────────┬────────────────────────┬────────────────────────────┐
+│   src   │  id   │         n_text         │ n_small_text │        bn_text         │          dt_text           │
+│ varchar │ int64 │        varchar         │   varchar    │        varchar         │          varchar           │
+├─────────┼───────┼────────────────────────┼──────────────┼────────────────────────┼────────────────────────────┤
+│ csv     │     1 │ 1.2345678901234568e+28 │ -1e-09       │ 1.2345678901234568e+37 │ 2024-01-02 03:04:05.678901 │
+│ csv     │     2 │ NULL                   │ NULL         │ NULL                   │ NULL                       │
+└─────────┴───────┴────────────────────────┴──────────────┴────────────────────────┴────────────────────────────┘
+┌─────────┬───────┬─────────────────────────────────────────┬──────────────┬───────────────────────┬────────────────────────────┐
+│   src   │  id   │                 n_text                  │ n_small_text │        bn_text        │          dt_text           │
+│ varchar │ int64 │                 varchar                 │   varchar    │        varchar        │          varchar           │
+├─────────┼───────┼─────────────────────────────────────────┼──────────────┼───────────────────────┼────────────────────────────┤
+│ parquet │     1 │ 12345678901234567890123456789.123456789 │ -0.000000001 │ 1.234567890123457e+37 │ 2024-01-02 03:04:05.678901 │
+│ parquet │     2 │ NULL                                    │ NULL         │ NULL                  │ NULL                       │
+└─────────┴───────┴─────────────────────────────────────────┴──────────────┴───────────────────────┴────────────────────────────┘
+

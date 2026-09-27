@@ -1,0 +1,34 @@
+# b18b: read the BIGNUMERIC/GEOGRAPHY Parquet export
+# sql: analyses/transport_b/sql/b18b_edge_parquet_read.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 1.10s  exit 0  peak RSS 40688 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b18b.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b18b: BIGNUMERIC (76 significant digits) and GEOGRAPHY, read back from b13b's Parquet.
+CREATE SECRET tb_http (TYPE http, BEARER_TOKEN '__TOKEN__');
+DESCRIBE SELECT * FROM read_parquet(['https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b13b/edge-000000000000.parquet']);
+SELECT * FROM read_parquet(['https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b13b/edge-000000000000.parquet']) ORDER BY id;
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+[90m┌─────────────┐[00m[90m
+[00m[90m│  [00m[1mDescribe[00m[90m   │[00m[90m
+[00m[90m│             │[00m[90m
+[00m[90m│ [00mid[90m [00m[90mbigint[00m[90m   [00m[90m│[00m[90m
+[00m[90m│ [00mbn[90m [00m[90mdouble[00m[90m   [00m[90m│[00m[90m
+[00m[90m│ [00mg[90m  [00m[90mgeometry[00m[90m [00m[90m│[00m[90m
+[00m[90m└─────────────┘[00m[90m
+[00m┌───────┬───────────────────────┬──────────────────────────────────┐
+│  id   │          bn           │                g                 │
+│ int64 │        double         │             geometry             │
+├───────┼───────────────────────┼──────────────────────────────────┤
+│     1 │ 1.234567890123457e+37 │ POINT (-122.40000000000002 37.7) │
+│     2 │                  NULL │ NULL                             │
+└───────┴───────────────────────┴──────────────────────────────────┘
+

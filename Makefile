@@ -9,6 +9,7 @@ DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
 .PHONY: help setup check-env fixtures duck bq build-both parity polyglot portability transport-a clean
+.PHONY: transport-b
 
 help:
 	@printf 'make targets:\n\n'
@@ -34,6 +35,12 @@ help:
 	@printf '                    needs BQ_KEYFILE and Google credentials, and costs money.\n'
 	@printf '  make portability  compile both targets and scan each render for the other\n'
 	@printf '                    dialect (scripts/check_portability.py)\n'
+	@printf '  make transport-b  Transport B measured: EXPORT DATA to GCS as Parquet and\n'
+	@printf '                    back through DuckDB (the wildcard/split and 1 GB rules, the\n'
+	@printf '                    nested-to-CSV and JSON-to-Parquet refusals, row order, the\n'
+	@printf '                    reverse load, and the type-fidelity table). Writes\n'
+	@printf '                    analyses/transport_b/results.{json,md} and logs/; needs\n'
+	@printf '                    BQ_KEYFILE, a writable GCS bucket, and costs money.\n'
 	@printf '  make clean        remove target/ and the local dev.duckdb file\n\n'
 	@printf 'See README.md, in particular the "What is verified" section.\n'
 
@@ -78,6 +85,13 @@ portability: check-env
 # the harness only passes the path to DuckDB.
 transport-a:
 	@python3 scripts/transport_a_measure.py
+
+# Transport B measured (analyses/transport_b/README.md): EXPORT DATA to GCS as Parquet,
+# read back through DuckDB over the GCS XML API, and the reverse load. Costs BigQuery
+# bytes and writes objects into the bucket; b31 deletes every object it wrote and drops
+# the probe tables, so the bucket and the dataset are left as they were found.
+transport-b:
+	@python3 scripts/transport_b_measure.py
 
 # `dbt clean` is deliberately not used: it resolves the duckdb profile first,
 # which opens the very file it is asked to delete, and the failing exit that

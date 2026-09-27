@@ -1,0 +1,227 @@
+# b27: the reverse direction, step 2: upload the Parquet, load it, read the schema back
+# upload: POST /upload/storage/v1/b/coreychimpbot-experiments/o?uploadType=media&name=transport_b/b27/reverse_src.parquet  local reverse_src.parquet (56912 bytes)  -> 200  0.53s
+# load: jobs.insert configuration.load sourceUris=[gs://coreychimpbot-experiments/transport_b/b27/reverse_src.parquet] sourceFormat=PARQUET writeDisposition=WRITE_TRUNCATE  -> 200  3.34s
+# destination: coreychimpbot.experiments_dev.transport_b_reverse
+# the table metadata below is what BigQuery inferred from the Parquet file:
+# compare it with the DuckDB DESCRIBE in the b26 log
+
+# ---- upload response ----
+{
+ "kind": "storage#object",
+ "id": "coreychimpbot-experiments/transport_b/b27/reverse_src.parquet/1790526336932802",
+ "selfLink": "https://www.googleapis.com/storage/v1/b/coreychimpbot-experiments/o/transport_b%2Fb27%2Freverse_src.parquet",
+ "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/coreychimpbot-experiments/o/transport_b%2Fb27%2Freverse_src.parquet?generation=1790526336932802&alt=media",
+ "name": "transport_b/b27/reverse_src.parquet",
+ "bucket": "coreychimpbot-experiments",
+ "generation": "1790526336932802",
+ "metageneration": "1",
+ "contentType": "application/octet-stream",
+ "storageClass": "STANDARD",
+ "size": "56912",
+ "md5Hash": "9j9pcUrM4B6DQ+kHMrV8Lg==",
+ "crc32c": "EfCRYQ==",
+ "etag": "CMK3mLKWj5cDEAE=",
+ "timeCreated": "2026-09-27T16:25:36.997Z",
+ "updated": "2026-09-27T16:25:36.997Z",
+ "timeStorageClassUpdated": "2026-09-27T16:25:36.997Z",
+ "timeFinalized": "2026-09-27T16:25:36.997Z"
+}
+# ---- load job ----
+{
+ "kind": "bigquery#job",
+ "etag": "beZraK9dFZD/1bEckLPmRQ==",
+ "id": "coreychimpbot:US.job_mpT90tyaZc1HMMgOejaRmwdrAxO1",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_mpT90tyaZc1HMMgOejaRmwdrAxO1?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "load": {
+   "sourceUris": [
+    "gs://coreychimpbot-experiments/transport_b/b27/reverse_src.parquet"
+   ],
+   "destinationTable": {
+    "projectId": "coreychimpbot",
+    "datasetId": "experiments_dev",
+    "tableId": "transport_b_reverse"
+   },
+   "writeDisposition": "WRITE_TRUNCATE",
+   "sourceFormat": "PARQUET",
+   "autodetect": false
+  },
+  "jobType": "LOAD"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_mpT90tyaZc1HMMgOejaRmwdrAxO1",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526337436",
+  "startTime": "1790526337635",
+  "endTime": "1790526339913",
+  "load": {
+   "inputFiles": "1",
+   "inputFileBytes": "56912",
+   "outputRows": "1000",
+   "outputBytes": "160170",
+   "badRecords": "0",
+   "timeline": [
+    {
+     "elapsedMs": "650",
+     "totalSlotMs": "252",
+     "pendingUnits": "0",
+     "completedUnits": "1",
+     "shuffleRamUsageRatio": 1.52587890625e-05,
+     "estimatedRunnableUnits": "0"
+    }
+   ]
+  },
+  "totalSlotMs": "252",
+  "reservation_id": "default-pipeline",
+  "finalExecutionDurationMs": "346"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- destination table metadata ----
+{
+ "kind": "bigquery#table",
+ "etag": "xgFgWxw0gcy8u81zUj5/zA==",
+ "id": "coreychimpbot:experiments_dev.transport_b_reverse",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/datasets/experiments_dev/tables/transport_b_reverse",
+ "tableReference": {
+  "projectId": "coreychimpbot",
+  "datasetId": "experiments_dev",
+  "tableId": "transport_b_reverse"
+ },
+ "schema": {
+  "fields": [
+   {
+    "name": "id",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "n",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "d",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "s",
+    "type": "STRING",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "b",
+    "type": "BOOLEAN",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "dt",
+    "type": "DATE",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "ts",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "tstz",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "bin",
+    "type": "BYTES",
+    "mode": "NULLABLE"
+   },
+   {
+    "name": "arr_i",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+     {
+      "name": "list",
+      "type": "RECORD",
+      "mode": "REPEATED",
+      "fields": [
+       {
+        "name": "element",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "st",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+     {
+      "name": "a",
+      "type": "INTEGER",
+      "mode": "NULLABLE"
+     },
+     {
+      "name": "b",
+      "type": "STRING",
+      "mode": "NULLABLE"
+     }
+    ]
+   },
+   {
+    "name": "arr_st",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+     {
+      "name": "list",
+      "type": "RECORD",
+      "mode": "REPEATED",
+      "fields": [
+       {
+        "name": "element",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+         {
+          "name": "x",
+          "type": "INTEGER",
+          "mode": "NULLABLE"
+         },
+         {
+          "name": "y",
+          "type": "STRING",
+          "mode": "NULLABLE"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "numBytes": "160170",
+ "numLongTermBytes": "0",
+ "numRows": "1000",
+ "creationTime": "1790526339834",
+ "lastModifiedTime": "1790526339834",
+ "type": "TABLE",
+ "location": "US",
+ "numTotalLogicalBytes": "160170",
+ "numActiveLogicalBytes": "160170",
+ "numLongTermLogicalBytes": "0"
+}

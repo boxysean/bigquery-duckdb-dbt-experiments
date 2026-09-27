@@ -1,0 +1,138 @@
+# b12: create the type-probe tables
+# sql: analyses/transport_b/sql/b12_create_type_tables.sql
+# wall 7.77s  http 200  job job_7kJ5f9CKwUZziVkZjXPdL5yZ-WO_
+# job state DONE  statementType SCRIPT
+# expected to fail: False
+
+-- b12: four probe tables in the dbt target dataset. They are split the way the measured
+-- behaviour forces them to be split: BigQuery refuses to export JSON to Parquet (b13c),
+-- so JSON cannot ride along with the Parquet table, and CSV refuses anything nested
+-- (b14), so the nested table cannot ride along with the CSV one.
+--   transport_b_types       every type family that survives a Parquet export, plus
+--                           arrays, structs, arrays-of-structs and a nested struct
+--   transport_b_types_flat  the scalar subset, including BIGNUMERIC, for CSV vs Parquet
+--   transport_b_types_json  JSON alone: refused by Parquet (b13c), tried on CSV (b14b)
+--   transport_b_types_edge  BIGNUMERIC at full width and GEOGRAPHY, exported on their own
+-- Two rows each: one populated, one all-NULL, so NULL handling is measured too.
+CREATE OR REPLACE TABLE `coreychimpbot.experiments_dev.transport_b_types` AS
+SELECT
+  1 AS id,
+  9007199254740993 AS i64,
+  1.5 AS f64,
+  NUMERIC '12345678901234567890123456789.123456789' AS n,
+  NUMERIC '-0.000000001' AS n_small,
+  'héllo → wörld' AS s,
+  b'\x01\x02\xff' AS byt,
+  TRUE AS b,
+  DATE '2024-01-02' AS d,
+  DATETIME '2024-01-02 03:04:05.678901' AS dt,
+  TIME '03:04:05.678901' AS t,
+  TIMESTAMP '2024-01-02 03:04:05.678901+00' AS ts,
+  [1, 2, 3] AS arr_i,
+  ['a', 'b'] AS arr_s,
+  STRUCT(1 AS a, 'x' AS b) AS st,
+  [STRUCT(1 AS x, 'y' AS y), STRUCT(2 AS x, 'z' AS z)] AS arr_st,
+  STRUCT([STRUCT('q' AS z), STRUCT('r' AS z)] AS inner_list) AS nested
+UNION ALL SELECT
+  2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL;
+
+CREATE OR REPLACE TABLE `coreychimpbot.experiments_dev.transport_b_types_flat` AS
+SELECT
+  1 AS id,
+  9007199254740993 AS i64,
+  1.5 AS f64,
+  NUMERIC '12345678901234567890123456789.123456789' AS n,
+  NUMERIC '-0.000000001' AS n_small,
+  BIGNUMERIC '12345678901234567890123456789012345678.12345678901234567890' AS bn,
+  'héllo → wörld' AS s,
+  b'\x01\x02\xff' AS byt,
+  TRUE AS b,
+  DATE '2024-01-02' AS d,
+  DATETIME '2024-01-02 03:04:05.678901' AS dt,
+  TIME '03:04:05.678901' AS t,
+  TIMESTAMP '2024-01-02 03:04:05.678901+00' AS ts
+UNION ALL SELECT
+  2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL;
+
+CREATE OR REPLACE TABLE `coreychimpbot.experiments_dev.transport_b_types_json` AS
+SELECT 1 AS id, JSON '{"k":1,"a":[1,2],"s":"héllo"}' AS j
+UNION ALL SELECT 2, NULL;
+
+CREATE OR REPLACE TABLE `coreychimpbot.experiments_dev.transport_b_types_edge` AS
+SELECT 1 AS id,
+  BIGNUMERIC '12345678901234567890123456789012345678.12345678901234567890' AS bn,
+  ST_GEOGPOINT(-122.4, 37.7) AS g
+UNION ALL SELECT 2, NULL, NULL;
+
+SELECT table_name, column_name, data_type
+FROM `coreychimpbot.experiments_dev`.INFORMATION_SCHEMA.COLUMNS
+WHERE table_name LIKE 'transport_b_types%'
+ORDER BY table_name, ordinal_position;
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "lrtUJXk7UxXWKvlbSPAvIg==",
+ "id": "coreychimpbot:US.job_7kJ5f9CKwUZziVkZjXPdL5yZ-WO_",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_7kJ5f9CKwUZziVkZjXPdL5yZ-WO_?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b12: four probe tables in the dbt target dataset. They are split the way the measured\n-- behaviour forces them to be split: BigQuery refuses to export JSON to Parquet (b13c),\n-- so JSON cannot ride along with the Parquet table, and CSV refuses anything nested\n-- (b14), so the nested table cannot ride along with the CSV one.\n--   transport_b_types       every type family that survives a Parquet export, plus\n--                           arrays, structs, arrays-of-structs and a nested struct\n--   transport_b_types_flat  the scalar subset, including BIGNUMERIC, for CSV vs Parquet\n--   transport_b_types_json  JSON alone: refused by Parquet (b13c), tried on CSV (b14b)\n--   transport_b_types_edge  BIGNUMERIC at full width and GEOGRAPHY, exported on their own\n-- Two rows each: one populated, one all-NULL, so NULL handling is measured too.\nCREATE OR REPLACE TABLE `coreychimpbot.experiments_dev.transport_b_types` AS\nSELECT\n  1 AS id,\n  9007199254740993 AS i64,\n  1.5 AS f64,\n  NUMERIC '12345678901234567890123456789.123456789' AS n,\n  NUMERIC '-0.000000001' AS n_small,\n  'h\u00e9llo \u2192 w\u00f6rld' AS s,\n  b'\\x01\\x02\\xff' AS byt,\n  TRUE AS b,\n  DATE '2024-01-02' AS d,\n  DATETIME '2024-01-02 03:04:05.678901' AS dt,\n  TIME '03:04:05.678901' AS t,\n  TIMESTAMP '2024-01-02 03:04:05.678901+00' AS ts,\n  [1, 2, 3] AS arr_i,\n  ['a', 'b'] AS arr_s,\n  STRUCT(1 AS a, 'x' AS b) AS st,\n  [STRUCT(1 AS x, 'y' AS y), STRUCT(2 AS x, 'z' AS z)] AS arr_st,\n  STRUCT([STRUCT('q' AS z), STRUCT('r' AS z)] AS inner_list) AS nested\nUNION ALL SELECT\n  2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL;\n\nCREATE OR REPLACE TABLE `coreychimpbot.experiments_dev.transport_b_types_flat` AS\nSELECT\n  1 AS id,\n  9007199254740993 AS i64,\n  1.5 AS f64,\n  NUMERIC '12345678901234567890123456789.123456789' AS n,\n  NUMERIC '-0.000000001' AS n_small,\n  BIGNUMERIC '12345678901234567890123456789012345678.12345678901234567890' AS bn,\n  'h\u00e9llo \u2192 w\u00f6rld' AS s,\n  b'\\x01\\x02\\xff' AS byt,\n  TRUE AS b,\n  DATE '2024-01-02' AS d,\n  DATETIME '2024-01-02 03:04:05.678901' AS dt,\n  TIME '03:04:05.678901' AS t,\n  TIMESTAMP '2024-01-02 03:04:05.678901+00' AS ts\nUNION ALL SELECT\n  2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL;\n\nCREATE OR REPLACE TABLE `coreychimpbot.experiments_dev.transport_b_types_json` AS\nSELECT 1 AS id, JSON '{\"k\":1,\"a\":[1,2],\"s\":\"h\u00e9llo\"}' AS j\nUNION ALL SELECT 2, NULL;\n\nCREATE OR REPLACE TABLE `coreychimpbot.experiments_dev.transport_b_types_edge` AS\nSELECT 1 AS id,\n  BIGNUMERIC '12345678901234567890123456789012345678.12345678901234567890' AS bn,\n  ST_GEOGPOINT(-122.4, 37.7) AS g\nUNION ALL SELECT 2, NULL, NULL;\n\nSELECT table_name, column_name, data_type\nFROM `coreychimpbot.experiments_dev`.INFORMATION_SCHEMA.COLUMNS\nWHERE table_name LIKE 'transport_b_types%'\nORDER BY table_name, ordinal_position;\n",
+   "destinationTable": {
+    "projectId": "coreychimpbot",
+    "datasetId": "_2c3176284fe1a148c04f4bd4229cd439be3ca02d",
+    "tableId": "anon1181f4df_5e22_4ff2_8095_26fd494ce32b"
+   },
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_7kJ5f9CKwUZziVkZjXPdL5yZ-WO_",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526248572",
+  "startTime": "1790526248610",
+  "endTime": "1790526255355",
+  "totalBytesProcessed": "10485760",
+  "query": {
+   "totalBytesProcessed": "10485760",
+   "totalBytesBilled": "10485760",
+   "totalSlotMs": "3029",
+   "schema": {
+    "fields": [
+     {
+      "name": "table_name",
+      "type": "STRING",
+      "mode": "NULLABLE"
+     },
+     {
+      "name": "column_name",
+      "type": "STRING",
+      "mode": "NULLABLE"
+     },
+     {
+      "name": "data_type",
+      "type": "STRING",
+      "mode": "NULLABLE"
+     }
+    ]
+   },
+   "statementType": "SCRIPT"
+  },
+  "totalSlotMs": "3029",
+  "numChildJobs": "5"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}

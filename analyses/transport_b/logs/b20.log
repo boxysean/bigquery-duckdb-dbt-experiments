@@ -1,0 +1,67 @@
+# b20: the workaround: a script with two EXPORT DATA statements
+# sql: analyses/transport_b/sql/b20_script_two_exports.sql
+# wall (job insert + poll) 3.00s  http 200  job job_uYMvODz9RwxOmDBANU5XR86ZkHlA
+# statementType SCRIPT  state DONE
+# expected to fail: False
+# objects under gs://coreychimpbot-experiments/transport_b/b20/: 2
+
+-- b20: the documented workaround for "one table per extract job": a script. Multiple
+-- EXPORT DATA statements are allowed inside BEGIN...END, and they still cost one job each.
+BEGIN
+  EXPORT DATA OPTIONS(
+    uri='gs://coreychimpbot-experiments/transport_b/b20/revenue-*.parquet',
+    format='PARQUET', overwrite=true) AS
+  SELECT * FROM `coreychimpbot.experiments_dev.mart_daily_revenue`;
+
+  EXPORT DATA OPTIONS(
+    uri='gs://coreychimpbot-experiments/transport_b/b20/cohort-*.parquet',
+    format='PARQUET', overwrite=true) AS
+  SELECT * FROM `coreychimpbot.experiments_dev.mart_cohort_retention`;
+END;
+
+# ---- job resource ----
+{
+ "kind": "bigquery#job",
+ "etag": "OPvd6aJnrkgl5/BLzp1/rg==",
+ "id": "coreychimpbot:US.job_uYMvODz9RwxOmDBANU5XR86ZkHlA",
+ "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/coreychimpbot/jobs/job_uYMvODz9RwxOmDBANU5XR86ZkHlA?location=US",
+ "user_email": "coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "configuration": {
+  "query": {
+   "query": "-- b20: the documented workaround for \"one table per extract job\": a script. Multiple\n-- EXPORT DATA statements are allowed inside BEGIN...END, and they still cost one job each.\nBEGIN\n  EXPORT DATA OPTIONS(\n    uri='gs://coreychimpbot-experiments/transport_b/b20/revenue-*.parquet',\n    format='PARQUET', overwrite=true) AS\n  SELECT * FROM `coreychimpbot.experiments_dev.mart_daily_revenue`;\n\n  EXPORT DATA OPTIONS(\n    uri='gs://coreychimpbot-experiments/transport_b/b20/cohort-*.parquet',\n    format='PARQUET', overwrite=true) AS\n  SELECT * FROM `coreychimpbot.experiments_dev.mart_cohort_retention`;\nEND;\n",
+   "priority": "INTERACTIVE",
+   "maximumBytesBilled": "1000000000000",
+   "useLegacySql": false
+  },
+  "jobType": "QUERY"
+ },
+ "jobReference": {
+  "projectId": "coreychimpbot",
+  "jobId": "job_uYMvODz9RwxOmDBANU5XR86ZkHlA",
+  "location": "US"
+ },
+ "statistics": {
+  "creationTime": "1790526287593",
+  "startTime": "1790526287619",
+  "endTime": "1790526289934",
+  "totalBytesProcessed": "661896",
+  "query": {
+   "totalBytesProcessed": "661896",
+   "totalBytesBilled": "20971520",
+   "totalSlotMs": "748",
+   "statementType": "SCRIPT"
+  },
+  "totalSlotMs": "748",
+  "numChildJobs": "2"
+ },
+ "status": {
+  "state": "DONE"
+ },
+ "principal_subject": "serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com",
+ "jobCreationReason": {
+  "code": "REQUESTED"
+ }
+}
+# ---- objects ----
+transport_b/b20/cohort-000000000000.parquet  243063 bytes  2026-09-27T16:24:49.570Z
+transport_b/b20/revenue-000000000000.parquet  220598 bytes  2026-09-27T16:24:48.492Z

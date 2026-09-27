@@ -1,0 +1,30 @@
+# b07: read_parquet over the GCS XML API with an http secret carrying a bearer token
+# sql: analyses/transport_b/sql/b07_http_bearer_read.sql (placeholders substituted at run time;
+#      __SA_PATH__ stands for the service-account key path, __TOKEN__ for a
+#      short-lived access token — neither value is ever written to this log)
+# wall 1.42s  exit 0  peak RSS 40556 kB
+# command: /usr/bin/time -v -o /home/hermes/.hermes/profiles/bruno/cache/scratch/transport_b/b07.time /home/hermes/.local/bin/duckdb -init /dev/null :memory: <<'SQL'
+
+-- b07: the read route that works on this box — an OAuth bearer token on an `http`
+-- secret, against the GCS XML API object URL. __TOKEN__ is substituted at run time and
+-- scrubbed from the logs; the token is a one-hour access token for the service account.
+CREATE SECRET tb_http (TYPE http, BEARER_TOKEN '__TOKEN__');
+SELECT count(*) AS n,
+       sum(customer_count) AS customers,
+       sum(gross_revenue) AS revenue
+FROM read_parquet('https://storage.googleapis.com/coreychimpbot-experiments/transport_b/b02/mart_daily_revenue-000000000000.parquet');
+
+# ---- output ----
+┌─────────┐
+│ Success │
+│ boolean │
+├─────────┤
+│ true    │
+└─────────┘
+┌───────┬───────────┬────────────────────┐
+│   n   │ customers │      revenue       │
+│ int64 │  int128   │   decimal(38,9)    │
+├───────┼───────────┼────────────────────┤
+│  2761 │    124237 │ 10776978.731884066 │
+└───────┴───────────┴────────────────────┘
+
