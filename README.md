@@ -204,6 +204,12 @@ dialect. It also checks that nothing under `models/` or `tests/` reads the targe
 all (one allowlisted file, `models/staging/_thelook__sources.yml`, whose source
 *database* name is the single genuinely target-dependent value).
 
+The scanned set excludes the transport measurement trees, `analyses/transport_a/` and
+`analyses/transport_b/` (named in `EXCLUDED_ANALYSES`; the output reports how many compiled
+files each one dropped). Those scenarios are committed evidence for `make transport-a` /
+`make transport-b`, deliberately engine-specific; dbt compiles them only because they live
+under `analyses/`. A new `analyses/transport_*` tree is not excluded until it is added there.
+
 * **15 BigQuery-only tokens** must not appear in the DuckDB render:
   `float64`, `safe_cast`, `safe_divide`, `generate_array`, `generate_date_array`,
   `regexp_contains`, `format_date`, `timestamp_trunc`, `timestamp_diff`, `bignumeric`,
@@ -219,6 +225,9 @@ is deliberately not a DuckDB-direction token; `float64` is rejected, so it is.
 
 ```
 $ make portability
+excluded from the scan (measurement scenarios, not the warehouse project):
+  analyses/transport_a  22 file(s)
+  analyses/transport_b  38 file(s)
 compiled files checked: 30 (models: 29, analyses: 1)
 BigQuery-only tokens in the DuckDB render: 0/15
 DuckDB-only tokens in the BigQuery render: 0/13
@@ -547,8 +556,9 @@ Measured on this machine on 2026-09-26, dbt-oss 2.0.5 / DuckDB 1.5.5 / dbc 0.3.0
 * The decimal ceiling: the same command with `include_bignumeric` prints
   `bignumeric` on `--target bigquery` and **fails** on `--target duckdb` with the
   ceiling message (full text above). `make polyglot` asserts both halves.
-* `make portability` → `PORTABLE`: 30 compiled files (29 models + the analysis),
-  0/15 BigQuery-only tokens in the DuckDB render, 0/13 DuckDB-only tokens in the
+* `make portability` → `PORTABLE`: 30 compiled files (29 models + the analysis;
+  the 22 + 38 transport measurement scenarios under `analyses/transport_a` and
+  `analyses/transport_b` are excluded and reported as such), 0/15 BigQuery-only tokens in the DuckDB render, 0/13 DuckDB-only tokens in the
   BigQuery render, 0 target-branch findings.
 * `python3 scripts/check_portability.py --demo` → exit 0: reports 1 dialect finding
   and 1 target-branch finding in its injected demo model and `NOT PORTABLE: 2

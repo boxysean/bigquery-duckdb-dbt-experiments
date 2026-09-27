@@ -532,7 +532,7 @@ taken the day a model needs something on the "cannot move" list.**
 | 9 not called (README) | project README, "The macro layer" (card 3), not re-measured |
 | 3 files rewritten, 0 model files hand-edited, 167 skipped, 11 copied, 34 transcoded, 1 generated | `MOVE-REPORT.md` inventory totals (after the rebase onto `76d83cb`; 73 skipped before it) |
 | 47 files in `analyses/transport_a/`, 85 in `analyses/transport_b/` (38 SQL, 44 logs, 3 other) not moved | `MOVE-REPORT.md` inventory roll-up lines |
-| guardrail: 90 compiled files (29 models, 61 analyses), 39 findings (12 in `transport_a`, 27 in `transport_b`), 0 in models | `python3 scripts/check_portability.py` (after the rebase; 52 files / 12 findings before it) |
+| guardrail: 90 compiled files (29 models, 61 analyses), 39 findings (12 in `transport_a`, 27 in `transport_b`), 0 in models | `python3 scripts/check_portability.py` (after the rebase; 52 files / 12 findings before it). **Resolved afterwards:** the guardrail now excludes `analyses/transport_a` and `analyses/transport_b` from the scan |
 | detector: 1 finding in source (resolved), 0 after the move | `MOVE-REPORT.md` "Cannot move at all" |
 | 12/12 injected construct kinds found | `.venv/bin/python scripts/move_to_duckdb.py --demo` |
 | 151 call sites inlined with 3 models hand-moved | `--manual dim_date,stg_thelook__orders,mart_daily_revenue` final line |
@@ -573,9 +573,11 @@ taken the day a model needs something on the "cannot move" list.**
 * **Card 6 / PR #9 is cited, not re-run.** The `EXPORT DATA` → Parquet route is merged
   and in this tree as `analyses/transport_b/`, but this card did not re-run it or check
   its numbers, so none are quoted.
-* **The two-target guardrail is red, and was before this card (measured by the
-  orchestrator).** `make portability` and `make polyglot` fail on this repository, and
-  did so before this card: the 12 findings are all in
+* **The two-target guardrail was red at this measurement, and was before this card
+  (measured by the orchestrator); it was fixed afterwards** by excluding
+  `analyses/transport_a` and `analyses/transport_b` from the scan, and `make portability`
+  is green again. At this measurement `make portability` and `make polyglot` failed on
+  this repository, and did so before this card: the 12 findings are all in
   `analyses/transport_a/sql/t15..t17*.sql`, whose SQL is deliberately
   BigQuery-flavoured, and dbt parses those scenarios as analyses. Measured identically
   on a clean checkout of `35f3ba0` (the base commit). It is a pre-existing defect in the

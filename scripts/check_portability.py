@@ -31,6 +31,13 @@ DBT = ROOT / ".venv" / "bin" / "dbt"
 PORTABILITY_DIR = Path("target") / "portability"
 TARGETS = ("duckdb", "bigquery")
 SCANNED_DIRS = ("models", "analyses")
+# The transport measurement scenarios are committed evidence for `make transport-a` /
+# `make transport-b`, run by their own harnesses, not the warehouse project. dbt still
+# compiles every .sql under analyses/ as an analysis, and those scenarios are deliberately
+# engine-specific, so they are dropped from the scan (the same reason
+# scripts/move_to_duckdb.py skips them). The list is explicit on purpose: a new
+# analyses/transport_c/ is NOT excluded, it shows up as findings until someone decides here.
+EXCLUDED_ANALYSES = ("analyses/transport_a", "analyses/transport_b")
 DEMO_FILE = Path("models") / "intermediate" / "_portability_demo.sql"
 
 EXIT_PORTABLE, EXIT_FINDINGS, EXIT_CANNOT_RUN = 0, 1, 2
@@ -158,19 +165,37 @@ def compile_target(target):
     return True
 
 
+def excluded_prefix(rel):
+    """The EXCLUDED_ANALYSES prefix covering a compiled-tree posix path, else None."""
+    for prefix in EXCLUDED_ANALYSES:
+        if rel == prefix or rel.startswith(prefix + "/"):
+            return prefix
+    return None
+
+
 def compiled_files(target):
+    """Compiled .sql files to scan per SCANNED_DIRS entry, and files dropped per excluded prefix."""
     base = ROOT / PORTABILITY_DIR / target / "compiled" / PROJECT
-    files = {}
+    files, dropped = {}, dict.fromkeys(EXCLUDED_ANALYSES, 0)
     for sub in SCANNED_DIRS:
-        files[sub] = sorted((base / sub).rglob("*.sql")) if (base / sub).is_dir() else []
-    return files
+        files[sub] = []
+        for path in sorted((base / sub).rglob("*.sql")) if (base / sub).is_dir() else []:
+            prefix = excluded_prefix(path.relative_to(base).as_posix())
+            if prefix:
+                dropped[prefix] += 1
+            else:
+                files[sub].append(path)
+    return files, dropped
 
 
 def scan_render(target, tokens):
-    """Scan one compiled tree. Returns (findings, distinct tokens hit, per-dir file counts)."""
+    """Scan one compiled tree.
+
+    Returns (findings, distinct tokens hit, per-dir file counts, per-prefix excluded counts).
+    """
     regexes = [(t, token_regex(t)) for t in tokens]
     findings, hit = [], set()
-    files = compiled_files(target)
+    files, dropped = compiled_files(target)
     for path in (p for sub in SCANNED_DIRS for p in files[sub]):
         raw = path.read_text(encoding="utf-8").splitlines()
         stripped = strip_sql_comments("\n".join(raw)).splitlines()
@@ -180,7 +205,7 @@ def scan_render(target, tokens):
                     hit.add(token)
                     findings.append(f"{path.relative_to(ROOT).as_posix()}:{lineno}: "
                                     f"token '{token}' -> {raw[lineno - 1].strip()}")
-    return findings, hit, {sub: len(files[sub]) for sub in SCANNED_DIRS}
+    return findings, hit, {sub: len(files[sub]) for sub in SCANNED_DIRS}, dropped
 
 
 def scan_purity():
@@ -213,10 +238,12 @@ def check(targets=TARGETS):
             return EXIT_CANNOT_RUN, []
     print()
 
-    duck_findings, duck_hit, counts = scan_render("duckdb", BIGQUERY_ONLY) if "duckdb" in targets else ([], set(), None)
-    bq_findings, bq_hit, bq_counts = scan_render("bigquery", DUCKDB_ONLY) if "bigquery" in targets else ([], set(), None)
+    none = ([], set(), None, None)
+    duck_findings, duck_hit, counts, dropped = scan_render("duckdb", BIGQUERY_ONLY) if "duckdb" in targets else none
+    bq_findings, bq_hit, bq_counts, bq_dropped = scan_render("bigquery", DUCKDB_ONLY) if "bigquery" in targets else none
     purity_findings = scan_purity()
     counts = counts or bq_counts
+    dropped = dropped if "duckdb" in targets else bq_dropped
 
     findings = duck_findings + bq_findings + purity_findings
     for line in findings:
@@ -224,6 +251,9 @@ def check(targets=TARGETS):
     if findings:
         print()
 
+    print("excluded from the scan (measurement scenarios, not the warehouse project):")
+    for prefix in sorted(dropped):
+        print(f"  {prefix}  {dropped[prefix]} file(s)")
     n_files = sum(counts.values())
     print(f"compiled files checked: {n_files} (models: {counts['models']}, analyses: {counts['analyses']})")
     skipped = "not compiled in this run"
