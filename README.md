@@ -234,10 +234,10 @@ make move-to-duckdb # generate a DuckDB-only version of the project
 
 ### What the main targets do
 
-- `make duck` builds the project locally on DuckDB.
-- `make bq` builds the project on BigQuery.
+- `make duck` builds the shared project locally on DuckDB.
+- `make bq` builds the shared project on BigQuery.
 - `make value-parity` is the most important verification run: it loads the same real source rows into DuckDB, builds both targets, and compares outputs.
-- `make transport-a` and `make transport-b` produce the evidence behind the transport conclusions above.
+- `make transport-a` and `make transport-b` run the engine-specific transport measurement suites in `analyses/`; they are evidence runs, not part of the shared portable model tree.
 
 ## Where to go deeper
 
