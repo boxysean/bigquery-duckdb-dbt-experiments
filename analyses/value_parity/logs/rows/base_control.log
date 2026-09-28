@@ -1,0 +1,32 @@
+[
+ {
+  "source": "products.cost",
+  "n": 29120,
+  "changes": 1,
+  "examples": "6.644999999552965 (1 rows: 6.64 vs 6.65)"
+ },
+ {
+  "source": "products.retail_price",
+  "n": 29120,
+  "changes": 0,
+  "examples": null
+ },
+ {
+  "source": "order_items.sale_price",
+  "n": 182483,
+  "changes": 0,
+  "examples": null
+ },
+ {
+  "source": "inventory_items.cost",
+  "n": 492226,
+  "changes": 35,
+  "examples": "6.644999999552965 (35 rows: 6.64 vs 6.65)"
+ },
+ {
+  "source": "inventory_items.product_retail_price",
+  "n": 492226,
+  "changes": 0,
+  "examples": null
+ }
+]

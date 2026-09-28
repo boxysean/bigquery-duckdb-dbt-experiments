@@ -1,0 +1,7 @@
+# query_timeout.py  2026-09-28T07:11:30Z  relation `coreychimpbot.experiments_rows.int_order_items__enriched`
+raw jobs.query, timeoutMs=1: jobComplete=False rows=0  -> the old code's rows[0] raises IndexError
+BigQueryLeg.query, timeoutMs=1 (polled): __rows=182483
+BigQueryLeg.query, default:              __rows=182483
+every metric equal: True (67 metrics)
+raw jobs.query, cache off, default timeoutMs: 10.3 s, jobComplete=False rows=0 cacheHit=None
+BigQueryLeg.query, cache off, default timeoutMs: 13.4 s, __rows=182483

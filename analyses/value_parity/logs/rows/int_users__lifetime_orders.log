@@ -1,0 +1,329 @@
+{
+ "model": "int_users__lifetime_orders",
+ "key": "user_id",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 100000,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 100000,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 100000,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 100000,
+  "matched": 100000,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 18216616,
+  "wall_s": 17.1,
+  "types": {
+   "user_id": "BIGINT",
+   "lifetime_gross_margin": "DECIMAL(38,9)",
+   "lifetime_gross_revenue": "DECIMAL(38,9)",
+   "lifetime_total_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "int_users__lifetime_orders",
+   "column": "lifetime_gross_margin",
+   "key": "user_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 100000,
+   "cents_differ": 15535,
+   "raw_differ": 79935,
+   "identical": 20065,
+   "A": 64400,
+   "B": 15535,
+   "C": 0,
+   "l9_equals_bq": 100000,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.03",
+     "n": 1
+    },
+    {
+     "delta": "-0.02",
+     "n": 141
+    },
+    {
+     "delta": "-0.01",
+     "n": 6872
+    },
+    {
+     "delta": "0.00",
+     "n": 84465
+    },
+    {
+     "delta": "0.01",
+     "n": 8259
+    },
+    {
+     "delta": "0.02",
+     "n": 258
+    },
+    {
+     "delta": "0.03",
+     "n": 4
+    }
+   ],
+   "examples": [
+    {
+     "key": "2",
+     "l2": "143.55",
+     "l9": "143.538069680",
+     "bq": "143.538069680",
+     "bucket": "B"
+    },
+    {
+     "key": "4",
+     "l2": "134.97",
+     "l9": "134.957097914",
+     "bq": "134.957097914",
+     "bucket": "B"
+    },
+    {
+     "key": "5",
+     "l2": "133.43",
+     "l9": "133.419457174",
+     "bq": "133.419457174",
+     "bucket": "B"
+    },
+    {
+     "key": "9",
+     "l2": "122.34",
+     "l9": "122.350826847",
+     "bq": "122.350826847",
+     "bucket": "B"
+    },
+    {
+     "key": "14",
+     "l2": "142.60",
+     "l9": "142.589841029",
+     "bq": "142.589841029",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_users__lifetime_orders.sql:35: cast(coalesce(order_totals.lifetime_gross_margin, 0) as {{ money_type() }})         as lifetime_gross_margin,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "int_users__lifetime_orders",
+   "column": "lifetime_gross_revenue",
+   "key": "user_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 100000,
+   "cents_differ": 0,
+   "raw_differ": 58118,
+   "identical": 41882,
+   "A": 58118,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 100000,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 100000
+    }
+   ],
+   "examples": [
+    {
+     "key": "1",
+     "l2": "235.97",
+     "l9": "235.970001220",
+     "bq": "235.970001220",
+     "bucket": "A"
+    },
+    {
+     "key": "2",
+     "l2": "271.83",
+     "l9": "271.829998970",
+     "bq": "271.829998970",
+     "bucket": "A"
+    },
+    {
+     "key": "3",
+     "l2": "9.95",
+     "l9": "9.949999809",
+     "bq": "9.949999809",
+     "bucket": "A"
+    },
+    {
+     "key": "4",
+     "l2": "288.00",
+     "l9": "287.999996186",
+     "bq": "287.999996186",
+     "bucket": "A"
+    },
+    {
+     "key": "5",
+     "l2": "239.94",
+     "l9": "239.939994812",
+     "bq": "239.939994812",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_users__lifetime_orders.sql:33: cast(coalesce(order_totals.lifetime_gross_revenue, 0) as {{ money_type() }})        as lifetime_gross_revenue,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "int_users__lifetime_orders",
+   "column": "lifetime_total_cost",
+   "key": "user_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 100000,
+   "cents_differ": 15411,
+   "raw_differ": 79935,
+   "identical": 20065,
+   "A": 64524,
+   "B": 15411,
+   "C": 0,
+   "l9_equals_bq": 100000,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.03",
+     "n": 4
+    },
+    {
+     "delta": "-0.02",
+     "n": 257
+    },
+    {
+     "delta": "-0.01",
+     "n": 8193
+    },
+    {
+     "delta": "0.00",
+     "n": 84589
+    },
+    {
+     "delta": "0.01",
+     "n": 6815
+    },
+    {
+     "delta": "0.02",
+     "n": 141
+    },
+    {
+     "delta": "0.03",
+     "n": 1
+    }
+   ],
+   "examples": [
+    {
+     "key": "2",
+     "l2": "128.28",
+     "l9": "128.291929290",
+     "bq": "128.291929290",
+     "bucket": "B"
+    },
+    {
+     "key": "4",
+     "l2": "153.03",
+     "l9": "153.042898272",
+     "bq": "153.042898272",
+     "bucket": "B"
+    },
+    {
+     "key": "5",
+     "l2": "106.51",
+     "l9": "106.520537638",
+     "bq": "106.520537638",
+     "bucket": "B"
+    },
+    {
+     "key": "9",
+     "l2": "93.51",
+     "l9": "93.499167812",
+     "bq": "93.499167812",
+     "bucket": "B"
+    },
+    {
+     "key": "14",
+     "l2": "158.33",
+     "l9": "158.340161183",
+     "bq": "158.340161183",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_users__lifetime_orders.sql:34: cast(coalesce(order_totals.lifetime_total_cost, 0) as {{ money_type() }})           as lifetime_total_cost,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 82012,
+  "A": 187042,
+  "B": 30946,
+  "C": 0
+ }
+}

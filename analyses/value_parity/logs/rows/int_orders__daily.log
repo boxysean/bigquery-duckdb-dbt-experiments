@@ -1,0 +1,489 @@
+{
+ "model": "int_orders__daily",
+ "key": "order_date",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 2773,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 2773,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 2773,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 2773,
+  "matched": 2773,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 18216616,
+  "wall_s": 2.69,
+  "types": {
+   "order_date": "DATE",
+   "gross_margin": "DECIMAL(38,9)",
+   "gross_revenue": "DECIMAL(38,9)",
+   "total_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "int_orders__daily",
+   "column": "gross_margin",
+   "key": "order_date",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 2773,
+   "cents_differ": 2125,
+   "raw_differ": 2773,
+   "identical": 0,
+   "A": 648,
+   "B": 2125,
+   "C": 0,
+   "l9_equals_bq": 2773,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.12",
+     "n": 1
+    },
+    {
+     "delta": "-0.09",
+     "n": 1
+    },
+    {
+     "delta": "-0.08",
+     "n": 3
+    },
+    {
+     "delta": "-0.07",
+     "n": 6
+    },
+    {
+     "delta": "-0.06",
+     "n": 13
+    },
+    {
+     "delta": "-0.05",
+     "n": 10
+    },
+    {
+     "delta": "-0.04",
+     "n": 42
+    },
+    {
+     "delta": "-0.03",
+     "n": 94
+    },
+    {
+     "delta": "-0.02",
+     "n": 200
+    },
+    {
+     "delta": "-0.01",
+     "n": 432
+    },
+    {
+     "delta": "0.00",
+     "n": 648
+    },
+    {
+     "delta": "0.01",
+     "n": 492
+    },
+    {
+     "delta": "0.02",
+     "n": 309
+    },
+    {
+     "delta": "0.03",
+     "n": 199
+    },
+    {
+     "delta": "0.04",
+     "n": 112
+    },
+    {
+     "delta": "0.05",
+     "n": 78
+    },
+    {
+     "delta": "0.06",
+     "n": 42
+    },
+    {
+     "delta": "0.07",
+     "n": 33
+    },
+    {
+     "delta": "0.08",
+     "n": 14
+    },
+    {
+     "delta": "0.09",
+     "n": 23
+    },
+    {
+     "delta": "0.10",
+     "n": 7
+    },
+    {
+     "delta": "0.11",
+     "n": 7
+    },
+    {
+     "delta": "0.12",
+     "n": 2
+    },
+    {
+     "delta": "0.14",
+     "n": 2
+    },
+    {
+     "delta": "0.16",
+     "n": 1
+    },
+    {
+     "delta": "0.26",
+     "n": 1
+    },
+    {
+     "delta": "0.43",
+     "n": 1
+    }
+   ],
+   "examples": [
+    {
+     "key": "2019-01-10",
+     "l2": "65.99",
+     "l9": "65.983120470",
+     "bq": "65.983120470",
+     "bucket": "B"
+    },
+    {
+     "key": "2019-01-30",
+     "l2": "58.57",
+     "l9": "58.562250446",
+     "bq": "58.562250446",
+     "bucket": "B"
+    },
+    {
+     "key": "2019-02-15",
+     "l2": "151.27",
+     "l9": "151.262809748",
+     "bq": "151.262809748",
+     "bucket": "B"
+    },
+    {
+     "key": "2019-02-24",
+     "l2": "71.30",
+     "l9": "71.307440417",
+     "bq": "71.307440417",
+     "bucket": "B"
+    },
+    {
+     "key": "2019-03-08",
+     "l2": "109.57",
+     "l9": "109.577882325",
+     "bq": "109.577882325",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_orders__daily.sql:10: cast(sum(gross_margin) as {{ money_type() }})           as gross_margin,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "int_orders__daily",
+   "column": "gross_revenue",
+   "key": "order_date",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 2773,
+   "cents_differ": 0,
+   "raw_differ": 2732,
+   "identical": 41,
+   "A": 2732,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 2773,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 2773
+    }
+   ],
+   "examples": [
+    {
+     "key": "2019-01-10",
+     "l2": "114.78",
+     "l9": "114.780000687",
+     "bq": "114.780000687",
+     "bucket": "A"
+    },
+    {
+     "key": "2019-01-12",
+     "l2": "135.77",
+     "l9": "135.769998550",
+     "bq": "135.769998550",
+     "bucket": "A"
+    },
+    {
+     "key": "2019-01-17",
+     "l2": "33.98",
+     "l9": "33.979999542",
+     "bq": "33.979999542",
+     "bucket": "A"
+    },
+    {
+     "key": "2019-01-26",
+     "l2": "190.94",
+     "l9": "190.940006256",
+     "bq": "190.940006256",
+     "bucket": "A"
+    },
+    {
+     "key": "2019-01-30",
+     "l2": "116.45",
+     "l9": "116.450000763",
+     "bq": "116.450000763",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_orders__daily.sql:8: cast(sum(gross_revenue) as {{ money_type() }})          as gross_revenue,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "int_orders__daily",
+   "column": "total_cost",
+   "key": "order_date",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 2773,
+   "cents_differ": 2124,
+   "raw_differ": 2773,
+   "identical": 0,
+   "A": 649,
+   "B": 2124,
+   "C": 0,
+   "l9_equals_bq": 2773,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.43",
+     "n": 1
+    },
+    {
+     "delta": "-0.26",
+     "n": 1
+    },
+    {
+     "delta": "-0.16",
+     "n": 1
+    },
+    {
+     "delta": "-0.14",
+     "n": 2
+    },
+    {
+     "delta": "-0.12",
+     "n": 2
+    },
+    {
+     "delta": "-0.11",
+     "n": 7
+    },
+    {
+     "delta": "-0.10",
+     "n": 7
+    },
+    {
+     "delta": "-0.09",
+     "n": 23
+    },
+    {
+     "delta": "-0.08",
+     "n": 14
+    },
+    {
+     "delta": "-0.07",
+     "n": 33
+    },
+    {
+     "delta": "-0.06",
+     "n": 42
+    },
+    {
+     "delta": "-0.05",
+     "n": 77
+    },
+    {
+     "delta": "-0.04",
+     "n": 112
+    },
+    {
+     "delta": "-0.03",
+     "n": 200
+    },
+    {
+     "delta": "-0.02",
+     "n": 309
+    },
+    {
+     "delta": "-0.01",
+     "n": 491
+    },
+    {
+     "delta": "0.00",
+     "n": 649
+    },
+    {
+     "delta": "0.01",
+     "n": 432
+    },
+    {
+     "delta": "0.02",
+     "n": 200
+    },
+    {
+     "delta": "0.03",
+     "n": 94
+    },
+    {
+     "delta": "0.04",
+     "n": 43
+    },
+    {
+     "delta": "0.05",
+     "n": 9
+    },
+    {
+     "delta": "0.06",
+     "n": 13
+    },
+    {
+     "delta": "0.07",
+     "n": 6
+    },
+    {
+     "delta": "0.08",
+     "n": 3
+    },
+    {
+     "delta": "0.09",
+     "n": 1
+    },
+    {
+     "delta": "0.12",
+     "n": 1
+    }
+   ],
+   "examples": [
+    {
+     "key": "2019-01-10",
+     "l2": "48.79",
+     "l9": "48.796880217",
+     "bq": "48.796880217",
+     "bucket": "B"
+    },
+    {
+     "key": "2019-01-30",
+     "l2": "57.88",
+     "l9": "57.887750317",
+     "bq": "57.887750317",
+     "bucket": "B"
+    },
+    {
+     "key": "2019-02-15",
+     "l2": "152.48",
+     "l9": "152.487190252",
+     "bq": "152.487190252",
+     "bucket": "B"
+    },
+    {
+     "key": "2019-02-24",
+     "l2": "60.22",
+     "l9": "60.212560041",
+     "bq": "60.212560041",
+     "bucket": "B"
+    },
+    {
+     "key": "2019-03-08",
+     "l2": "82.61",
+     "l9": "82.602121794",
+     "bq": "82.602121794",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_orders__daily.sql:9: cast(sum(total_cost) as {{ money_type() }})             as total_cost,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 41,
+  "A": 4029,
+  "B": 4249,
+  "C": 0
+ }
+}

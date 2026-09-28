@@ -371,6 +371,125 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
 * **Classification.** dual-target: a harness for two legs has to control what each leg reads,
   not only what gates.
 
+## 10. Row-by-row join of the two legs (t_48e969eb)
+
+### 10.1 The public source moved: the of-record pair can no longer be joined row by row
+
+* **Symptom.** The first `scripts/row_join.py` run gated on the values the of-record run
+  recorded, and stopped with exit 2. Its logs were replaced when the design changed. The
+  same recomputation is now kept as a finding (`analyses/value_parity/logs/rows/run.log:4`):
+  ```
+  of-record: BigQuery 57/99, DuckDB 9/99 recorded values reproduce
+  ```
+  for example (`analyses/value_parity/logs/rows/of_record_gate.log:54`)
+  ```
+  duckdb   fct_inventory_items                unit_cost                column_checksum          1034642813736075   1040187569323442  MISMATCH
+  ```
+  Row counts had moved too: `fct_inventory_items` 489,625 on the of-record BigQuery table
+  against 492,226 in this worktree's `dev.duckdb` (`of_record_gate.log:6`).
+* **Cause.** `bigquery-public-data.thelook_ecommerce` grew between the two loads:
+  `inventory_items` 489,625 → 492,226, `orders` 124,952 → 125,545, `order_items`
+  181,313 → 182,483, `events` 2,425,698 → 2,436,872
+  (`analyses/value_parity/logs/loader.log:1,8-14` at 2026-09-27T19:31:51Z against
+  `analyses/value_parity/logs/row_join_loader.log:1,8-14` at 2026-09-28T05:52:29Z). The
+  of-record BigQuery *tables* are frozen at the old rows, and 54 of their 54 recorded values
+  still reproduce. Its 10 *views* are recomputed over the live source, so every one of the 42
+  mismatches on the BigQuery side is a view. Any DuckDB load made today reads the new rows.
+* **Resolution.** The of-record figures stay as published. The row join runs on a fresh pair
+  built from one load, with the BigQuery leg in `coreychimpbot.experiments_rows`
+  (`analyses/value_parity/fresh/`). `row_join.py` refuses `DBT_ENV=dev`
+  (`scripts/row_join.py:922`) and gates on the source itself: the seven tables' row counts
+  and the money columns' hashes, in `dev.duckdb` against BigQuery now
+  (`analyses/value_parity/rows.md:53-63`).
+* **Classification.** data, not engine: a public dataset that grows makes "the same rows" a
+  property of one load, not of a dataset name.
+
+### 10.2 `list index out of range`: jobs.query answered before the job finished
+
+* **Symptom.** The fresh parity run left one model unmeasured
+  (`analyses/value_parity/fresh/results.md:37,137-140`):
+  ```
+  | intermediate | `int_order_items__enriched` | 182483 | n/a | 22 | not_measured | 0 | ...
+  list index out of range
+  ```
+* **Cause.** `BigQueryLeg.query` posts to `jobs.query`, which waits at most `timeoutMs`
+  (10 s by default). A slower job gets `jobComplete: false` and no `rows` back, and
+  `measure_of` then takes `rows[0]` of an empty list (`scripts/parity.py:495`). This view's
+  metrics query takes longer than that wait when the query cache is off. With the default
+  `timeoutMs`, the first answer arrives empty:
+  `raw jobs.query, cache off, default timeoutMs: 10.3 s, jobComplete=False rows=0 cacheHit=None`,
+  and the whole query takes `13.4 s`
+  (`analyses/value_parity/logs/rows/probe_query_timeout.log:6-7`). Forcing `timeoutMs=1`
+  gives the same empty answer:
+  `raw jobs.query, timeoutMs=1: jobComplete=False rows=0` (`probe_query_timeout.log:2`).
+* **Resolution.** `BigQueryLeg.query` polls `getQueryResults` until the job is complete
+  (`scripts/parity.py:425-462`). The probe `analyses/value_parity/probes/query_timeout.py`
+  shows the forced-incomplete query and a normal one returning the same answer:
+  `every metric equal: True (67 metrics)` (`probe_query_timeout.log:3-5`). The uncached call
+  through the fixed `BigQueryLeg.query` completes and measures `__rows=182483` (`:7`). The row join
+  measures the model's BigQuery relation with the fixed call, and its transfer proof passes
+  on it. `fresh/results.md` is left as it was recorded.
+* **Classification.** harness bug: an asynchronous API read as if it were synchronous.
+
+### 10.3 Reading BigQuery views into DuckDB: the Storage API refuses them, and `bigquery_query` cannot be aggregated directly
+
+* **Symptom.** `analyses/value_parity/logs/rows/probe_scan_view.log`:
+  ```
+  ## bigquery_scan on a VIEW (exit 1)
+  Binder Error: Error while creating read session: Permanent error, with a last message of request failed: non-table entities cannot be read with the storage API
+  ## bigquery_query on the same VIEW, aggregated directly, every column used (exit 1)
+  INTERNAL Error: Attempted to access index 1 within vector of size 1
+  ```
+  (`:3-5,7-9`). The same INTERNAL error comes back when the aggregate uses one column, no
+  column, or wraps `bigquery_query` in a subquery (`:15-33,50-52`).
+* **Cause.** `bigquery_scan` reads through the BigQuery Storage Read API, which serves
+  tables only; the 10 staging and intermediate models are views. `bigquery_query`
+  (`use_rest_api := true`) runs a query job instead and returns `NUMERIC` as
+  `DECIMAL(38,9)`, but an aggregate evaluated directly over its output fails inside the
+  extension (DuckDB 1.5.5, extension `27d85ad`). A plain projection works (`:39-43`).
+  Materialising first and aggregating the copy also works (`:45-48`).
+* **Resolution.** `row_join.py` reads tables with `bigquery_scan` and views with
+  `bigquery_query`. Each view query is dry-run first against `MAX_BYTES`, because the
+  extension exposes no `maximum_bytes_billed` (the largest was 18,672,120 bytes,
+  `logs/rows/pull.log`). It always materialises into `bq_leg.<model>` before measuring
+  anything (`scripts/row_join.py:380-398`). The transfer proof then compares the copy
+  with the REST measurement of the same relation on all 255 metrics
+  (`analyses/value_parity/rows.md:66`).
+* **Classification.** DuckDB 1.5.5 / ext 27d85ad: the view limit is BigQuery's Storage API;
+  the INTERNAL error is the extension's.
+
+### 10.4 The declared-scale emulation is off by a cent on 7 rows: `DECIMAL / BIGINT` is DOUBLE on DuckDB
+
+* **Symptom.** L9 (the DuckDB build with `money_type()` = `decimal(38,9)`) equals BigQuery
+  on 6,605,902 of 6,605,909 column-rows. The 7 others are all
+  `mart_customer_summary.average_order_value`, e.g. user 34544: L9 `95.620000000`, BigQuery
+  `95.630000000`, L2 `95.63` (`analyses/value_parity/rows.md:993-1007`).
+* **Cause.** The column is `round(lifetime_gross_revenue / nullif(lifetime_orders, 0), 2)`
+  (`models/marts/mart_customer_summary.sql:39-40`). On both legs the inputs are the same
+  money, `191.249999999 / 2`. DuckDB divides `DECIMAL / BIGINT` in DOUBLE, so it rounds
+  `95.6249999995` to 95.62. BigQuery's `NUMERIC / INT64` is `NUMERIC`: the quotient is
+  rounded to nine decimals first, `95.625000000`, and then to 95.63. Recomputing both rules
+  exactly reproduces L9 and BigQuery on 7 of 7 rows (`division_rule_explains`). L2 agrees
+  with BigQuery because its numerator is whole cents, `191.25`.
+* **Resolution.** The rows are counted as they are (bucket *identical*, since L2 equals
+  BigQuery). The unapplied proposal in `rows.md` says that the one-line `decimal(38,9)`
+  change removes all 273,826 cent differences but would create these 7. No model or macro
+  changed.
+* **Classification.** dual-target: the same arithmetic on the same declared type has
+  different result types on the two engines.
+
+### 10.5 Two row-join runs ended without an error of their own
+
+* **Symptom.** One run ended with `Exit code 137`. A later run's log stops after
+  `of-record recomputation (reported, not a gate)`, with no traceback. The next identical
+  command completed with the same totals.
+* **Cause.** Not established. Exit 137 is a SIGKILL from outside the process. The first kill
+  overlapped the orchestrator's fresh `make value-parity`, which rebuilt `dev.duckdb` at the
+  same time (its mtime is within minutes).
+* **Resolution.** Recorded, not reproduced. Every figure in `rows.md` comes from a run that
+  completed (`logs/rows/run.log` ends with the totals line).
+* **Classification.** environment, if anything.
+
 ## The verdict
 
 **Sean's question: what fraction of the models run unchanged on both targets, and what does
@@ -448,6 +567,11 @@ still reads the fixture and still reports 28 of 29 differing on that path
 | 9.1 `'12.30'` vs `'12.3'`, fix and self-check rows | `analyses/value_parity/logs/probe_decimal_text.log:3-5,8`; `scripts/parity.py:281-291,612-613,629-630`; commit `ba3b202` |
 | 9.2 12 columns shifted -1/-2 h, mapping proved | `analyses/value_parity/logs/loader-raw-timestamps.log:120-133`; `analyses/value_parity/logs/loader.log:16-24,108-121`; `scripts/load_duckdb_real_sources.sh:138-158`; `models/staging/_thelook__sources.yml:16`; `macros/polyglot/casting.sql:49-51`; `analyses/transport_a/README.md:179` |
 | 9.3 `--same-data` over `make duck` | `git show a51515d:scripts/parity.py` lines 586, 624; `git show a51515d:docs/gaps.md` line 23; `scripts/parity.py:640-663,788-796,968-969`; `analyses/value_parity/logs/parity.log:44` |
+| 10.1 source grew, of-record values today | `analyses/value_parity/logs/loader.log:1,8-14`; `analyses/value_parity/logs/row_join_loader.log:1,8-14`; `analyses/value_parity/logs/rows/of_record_gate.log`; `analyses/value_parity/rows.md:19-67`; `scripts/row_join.py:922` |
+| 10.2 `list index out of range`, polling fix | `analyses/value_parity/fresh/results.md:37,137-140`; `analyses/value_parity/logs/rows/probe_query_timeout.log`; `analyses/value_parity/probes/query_timeout.py`; `scripts/parity.py:425-462,495` |
+| 10.3 views refused, INTERNAL error on aggregates | `analyses/value_parity/logs/rows/probe_scan_view.log`; `analyses/value_parity/probes/scan_view.py`; `scripts/row_join.py:380-398`; `analyses/value_parity/logs/rows/pull.log` |
+| 10.4 7 rows, division typing | `analyses/value_parity/rows.md:993-1007,1047`; `models/marts/mart_customer_summary.sql:39-40` |
+| 10.5 runs ended without an error | this session's command output (2026-09-28, **not in a file**); `analyses/value_parity/logs/rows/run.log` of the completed run |
 | verdict: guardrail, `make duck`, `make bq`, `datasets.get` | orchestrator's runs in this worktree, 2026-09-27; the guardrail re-run for this document; `make bq` not re-run (it costs money) |
 | verdict: 148 / 5.10 / 15 / 27 / 175, 25 of 29, 16 of 26 | the counting script described above (re-run for this document); `docs/move_to_duckdb.md:77-116` |
 | verdict: 0 forked, 3 rewritten, 1 helper in 11 marts | `docs/move_to_duckdb.md:447-451,509-511`; `README.md:303-307` |

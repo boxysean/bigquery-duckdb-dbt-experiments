@@ -8,7 +8,7 @@ SHELL := /bin/bash
 DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup check-env fixtures duck fixtures-real duck-real value-parity bq build-both parity polyglot portability pre-pr transport-a transport-b move-to-duckdb handmove-example clean
+.PHONY: help setup check-env fixtures duck fixtures-real duck-real value-parity row-join bq build-both parity polyglot portability pre-pr transport-a transport-b move-to-duckdb handmove-example clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -29,6 +29,13 @@ help:
 	@printf '                    checksums gating (parity.py --sources real --bq-source\n'
 	@printf '                    materialised --same-data). Writes analyses/value_parity/\n'
 	@printf '                    results.{md,json} and logs/; needs BQ_KEYFILE, costs money\n'
+	@printf '  make row-join     after make value-parity with the same DBT_ENV (use\n'
+	@printf '                    DBT_ENV=rows): join the two legs row by row on each model'"'"'s\n'
+	@printf '                    key, every money column, with an L9 control build\n'
+	@printf '                    (money_type() = decimal(38,9)) in target/row_join/. Gates:\n'
+	@printf '                    source rows, row counts, transfer proof (exit 2 before the\n'
+	@printf '                    join). Writes analyses/value_parity/rows.{md,json} and\n'
+	@printf '                    logs/rows/; needs BQ_KEYFILE (Storage API + view queries)\n'
 	@printf '  make bq           dbt build --target bigquery  (needs Google credentials;\n'
 	@printf '                    refuses with exit 2 when the machine has none)\n'
 	@printf '  make build-both   both targets, in that order\n'
@@ -100,6 +107,11 @@ duck-real: check-env fixtures-real
 value-parity: check-env fixtures-real
 	@set -o pipefail; python3 scripts/parity.py --sources real --bq-source materialised \
 	    --same-data --out-dir analyses/value_parity 2>&1 | tee analyses/value_parity/logs/parity.log
+
+# Row-by-row join of the pair value-parity last built (SPEC-rows.md). Refuses
+# DBT_ENV=dev: experiments_dev is the of-record leg, whose source has since moved.
+row-join: check-env
+	python3 scripts/row_join.py
 
 # Configured but not runnable without credentials; the script says so plainly.
 bq: check-env

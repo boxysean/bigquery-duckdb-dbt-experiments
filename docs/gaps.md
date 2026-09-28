@@ -2,7 +2,9 @@
 
 **Cross-engine value parity is now measured, and it does not hold for money.** On the same
 input rows, row counts are equal on all 29 models, but values are equal on 8 of 29 and on 1
-of the 11 marts; which rows differ, and by how much, is not measured. The next largest is the BigQuery
+of the 11 marts. Joined row by row (2026-09-28), no row holds genuinely different money:
+every cent that differs is BigQuery's nine-decimal `numeric` propagated, reproduced exactly
+by a DuckDB build with the same declared scale. The next largest is the BigQuery
 write path beyond a plain build: it now materialises all 29 models, but the cost ceiling
 has never been hit, and no partitioning or clustering is used. Most of the other gaps are
 documented limits that were never reached, not failures.
@@ -29,14 +31,24 @@ DuckDB-vs-DuckDB baseline matched. Evidence: `analyses/value_parity/` (`results.
 figures (28 of 29 differ, `stg_thelook__distribution_centers` matches) describe that path
 only.
 
+The same measurement was repeated on 2026-09-28 over a fresh load, with the BigQuery leg
+in `coreychimpbot.experiments_rows` (`analyses/value_parity/fresh/`: 8 of 29 match, marts 1
+of 11, row counts equal on every measured model), because the public source had grown
+since the first run (row "Source drift" below). `make row-join DBT_ENV=rows`
+(`scripts/row_join.py`, `analyses/value_parity/rows.md`) then joined that pair row by row on
+each model's key, for all 55 money columns of the 21 models that hold one, against a third
+leg: the same DuckDB build with `money_type()` = `decimal(38,9)` (L9, built from a scratch
+copy; the repository is unchanged).
+
 Closed by this run: **surrogate-key values across engines**. The three key columns
 (`product_center_key`, `user_month_key`, `cohort_activity_key`) are not among the
 differences, so their checksum, null count and distinct count agree on both legs.
 
 | gap | why it could not be established | size |
 |---|---|---|
-| **Cross-engine value parity (money)** | Measured, and it fails: the same SQL over the same rows gives different money. `money_type()` is `decimal(18,2)` on DuckDB and `numeric` (nine decimals) on BigQuery (`macros/polyglot/types.sql:85-91`), and the source prices and costs are `FLOAT64`, so DuckDB rounds to cents where BigQuery keeps sub-cent digits (29,035 of 29,120 `products.cost` values are not whole cents on BigQuery). Inherent to dual-target SQL (numeric type). | Row counts equal on **29 of 29**. **8 of 29** match on every check; marts **1 of 11** (`dim_date`). 21 models differ in 55 columns, all money columns except `mart_product_performance.gross_margin_rate` (distinct values: 18,699 DuckDB, 328 BigQuery); 0 row-count, 0 null-count and 0 name/type differences. Rounding BigQuery to cents reconciles 23 of the 55 columns; 32 (cost and what is computed from it) still differ. |
-| **Which rows differ, and by how much** | The harness compares aggregates per column (checksum, nulls, distinct). It says *that* a column differs, not which rows or by how much; the two legs were never joined row by row. | Unmeasured. The attribution above is per column (`probe_scale_attribution.py`); the one row-level figure is an emulation on DuckDB: 1 of 29,120 `products.cost` values lands on a different cent when rounded once (DuckDB) versus through nine decimals first (BigQuery), `6.644999999552965`. |
+| **Cross-engine value parity (money)** | Measured, and it fails: the same SQL over the same rows gives different money. `money_type()` is `decimal(18,2)` on DuckDB and `numeric` (nine decimals) on BigQuery (`macros/polyglot/types.sql:85-91`), and the source prices and costs are `FLOAT64`, so DuckDB rounds to cents where BigQuery keeps sub-cent digits (29,035 of 29,120 `products.cost` values are not whole cents on BigQuery). Inherent to dual-target SQL (numeric type). | Row counts equal on **29 of 29**. **8 of 29** match on every check; marts **1 of 11** (`dim_date`). 21 models differ in 55 columns, all money columns except `mart_product_performance.gross_margin_rate` (distinct values: 18,699 DuckDB, 328 BigQuery; 18,693 and 328 on the fresh pair); 0 row-count, 0 null-count and 0 name/type differences. Rounding BigQuery to cents reconciles 23 of the 55 columns; 32 (cost and what is computed from it) still differ. The fresh pair's row join confirms the split row by row: 23 columns have 0 rows whose cents differ, 32 have at least one; every one of the 55 differs in raw value on at least 10 rows. |
+| **Which rows differ, and by how much** | Measured on the fresh pair (2026-09-28) by joining both legs and L9 on each model's key. Every compared row lands in one bucket: identical, **A** same cents at a different declared scale, **B** the cents differ and L9 reproduces BigQuery exactly, **C** anything else. | **0 rows of genuinely different money (C = 0).** 6,605,909 column-rows over 55 columns: identical 1,564,764, A 4,767,319, B 273,826, C 0; 0 unmatched, NULL or duplicate keys; 0 rows NULL on one leg only. Cent differences per column range from +0.01 only (`unit_cost`, `product_cost`) to -8.99..+0.19 (`dim_distribution_centers.open_inventory_value`, a sum over whole centres). At the base, 1 of 29,120 `products.cost` and 35 of 492,226 `inventory_items.cost` values land on a different cent (all `6.644999999552965`, 6.64 vs 6.65). L9 differs from BigQuery on 7 rows only, all `mart_customer_summary.average_order_value` rows on which L2 already equals BigQuery: DuckDB divides `DECIMAL / BIGINT` in DOUBLE, BigQuery's `NUMERIC / INT64` rounds the quotient to nine decimals first. So the one-line `decimal(38,9)` change removes all 273,826 cent differences but would create those 7 (proposal in `rows.md`, unapplied). |
+| **Source drift: the of-record pair cannot be joined row by row** | `bigquery-public-data.thelook_ecommerce` grew between the of-record load (2026-09-27T19:31:51Z) and the fresh one (2026-09-28T05:52:29Z). The of-record BigQuery tables are frozen at the old rows; its views, and any new DuckDB load, read the new ones. | `inventory_items` 489,625 → 492,226 (+2,601), `orders` 124,952 → 125,545 (+593), `order_items` 181,313 → 182,483 (+1,170), `events` 2,425,698 → 2,436,872 (+11,174); `products`, `users`, `distribution_centers` keep their row counts (`users` bytes 19,818,028 → 19,816,148). Recomputed on 2026-09-28, 57 of 99 of-record BigQuery values reproduce (every miss is a view) and 9 of 99 of-record DuckDB values reproduce on today's `dev.duckdb`. Every published figure of `results.md` stays as measured; a row-level comparison needs a pair built from one load, as `fresh/` is. |
 | **One dataset, one run, one box** | One of-record run of each build, one dataset (`thelook_ecommerce`), 3 CPUs. The two probe logs were recorded 12-14 minutes before the of-record run, against the previous run's report (same 55 differing columns). | Durations are single runs: DuckDB 19.96 s and BigQuery 230.25 s of dbt model time (11.5x; per model 3.1x to 62.0x). |
 | **The fixture's schema is a subset of the real one** | Measured by the loader: the real tables carry `users.user_geom` and `distribution_centers.distribution_center_geom` (`GEOMETRY`), which the fixture lacks. Staging selects named columns, so they are inert. | 2 columns. Nothing reads them. A model that did would reference a column the fixture lacks (not tried). |
 | **The real dataset's value distributions** | The fixture's rows are invented, and every revenue figure in `README.md` comes from the fixture. | Row counts and test outcomes on the real data are measured. Distributions are unverified. |
@@ -120,7 +132,13 @@ differences, so their checksum, null count and distinct count agree on both legs
 | money cause: `decimal(18,2)` vs `numeric`, 29,035 of 29,120 not whole cents | `macros/polyglot/types.sql:85-91`; `analyses/value_parity/logs/probe_decimal_text.log:8,11` |
 | 23 reconcile at 2 decimals, 32 do not | `analyses/value_parity/logs/probe_scale_attribution.log:59` |
 | `gross_margin_rate` 18,699 vs 328 distinct | `analyses/value_parity/results.md:236`; raw ratios 328 vs 18,723 at cents, `analyses/value_parity/logs/probe_decimal_text.log:15` |
-| one-row double rounding, `6.644999999552965` | `analyses/value_parity/logs/probe_decimal_text.log:13` |
+| one-row double rounding, `6.644999999552965` | `analyses/value_parity/logs/probe_decimal_text.log:13`; on the fresh load, `analyses/value_parity/rows.md:1015,1018` (1 of 29,120 `products.cost`, 35 of 492,226 `inventory_items.cost`) |
+| fresh pair: 8/29, marts 1/11, rows equal, `int_order_items__enriched` not_measured | `analyses/value_parity/fresh/results.md:11-12,37,137-140` |
+| row join: C = 0, buckets, keys, NULLs, gates | `analyses/value_parity/rows.md:7-13,51-67,114`; `analyses/value_parity/rows.json`; `analyses/value_parity/logs/rows/run.log`, `gates.log`, `pull.log`, `<model>.log` |
+| per-column delta ranges, 23 columns without a cent difference | `analyses/value_parity/rows.md:118-176` (per-column summary) |
+| L9 off on 7 `average_order_value` rows, division typing | `analyses/value_parity/rows.md:993-1007`; `models/marts/mart_customer_summary.sql:39-40` |
+| source drift, row and byte counts | `analyses/value_parity/logs/loader.log:1,8-14`; `analyses/value_parity/logs/row_join_loader.log:1,8-14`; `analyses/value_parity/rows.md:19-49` |
+| of-record values today: 57/99 BigQuery, 9/99 DuckDB | `analyses/value_parity/logs/rows/of_record_gate.log` |
 | durations 19.96 s / 230.25 s, 3.1x-62.0x | `analyses/value_parity/results.md:52`; `analyses/value_parity/logs/parity.log:14,42` |
 | probe timing vs the of-record run | `analyses/value_parity/logs/probe_scale_attribution.log:2` (`2026-09-27T19:17:58Z`), `probe_decimal_text.log:2` (`19:19:36Z`), `loader.log:1` (`19:31:51Z`) |
 | fixture schema a subset (two `GEOMETRY` columns) | `analyses/value_parity/logs/loader.log:103-106` |

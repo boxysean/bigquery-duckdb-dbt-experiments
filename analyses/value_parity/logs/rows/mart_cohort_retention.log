@@ -1,0 +1,125 @@
+{
+ "model": "mart_cohort_retention",
+ "key": "cohort_activity_key",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 3871,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 3871,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 3871,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 3871,
+  "matched": 3871,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 1.91,
+  "types": {
+   "cohort_activity_key": "VARCHAR",
+   "revenue": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "mart_cohort_retention",
+   "column": "revenue",
+   "key": "cohort_activity_key",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 3871,
+   "cents_differ": 0,
+   "raw_differ": 3620,
+   "identical": 251,
+   "A": 3620,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 3871,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 3871
+    }
+   ],
+   "examples": [
+    {
+     "key": "0000765532832799627eff063d60218d",
+     "l2": "1614.19",
+     "l9": "1614.189999578",
+     "bq": "1614.189999578",
+     "bucket": "A"
+    },
+    {
+     "key": "0001133d6fe5852a60dcbcc7a431ad59",
+     "l2": "649.08",
+     "l9": "649.079999208",
+     "bq": "649.079999208",
+     "bucket": "A"
+    },
+    {
+     "key": "002c1ccb6b8e260da7d0cfd66a55c363",
+     "l2": "273.95",
+     "l9": "273.949996948",
+     "bq": "273.949996948",
+     "bucket": "A"
+    },
+    {
+     "key": "00342b67b07579dd0aba60d410a625bf",
+     "l2": "772.01",
+     "l9": "772.009997367",
+     "bq": "772.009997367",
+     "bucket": "A"
+    },
+    {
+     "key": "005fc9335ece1e4bdc363c9f82f10f52",
+     "l2": "1116.98",
+     "l9": "1116.979994774",
+     "bq": "1116.979994774",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/marts/mart_cohort_retention.sql:44: cast(cohort_months.revenue as {{ money_type() }})               as revenue,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 251,
+  "A": 3620,
+  "B": 0,
+  "C": 0
+ }
+}

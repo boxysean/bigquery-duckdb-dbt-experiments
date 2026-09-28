@@ -1,0 +1,219 @@
+{
+ "model": "stg_thelook__inventory_items",
+ "key": "inventory_item_id",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 492226,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 492226,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 492226,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 492226,
+  "matched": 492226,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 11813424,
+  "wall_s": 38.31,
+  "types": {
+   "inventory_item_id": "BIGINT",
+   "cost": "DECIMAL(38,9)",
+   "product_retail_price": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "stg_thelook__inventory_items",
+   "column": "cost",
+   "key": "inventory_item_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 492226,
+   "cents_differ": 35,
+   "raw_differ": 490850,
+   "identical": 1376,
+   "A": 490815,
+   "B": 35,
+   "C": 0,
+   "l9_equals_bq": 492226,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 492191
+    },
+    {
+     "delta": "0.01",
+     "n": 35
+    }
+   ],
+   "examples": [
+    {
+     "key": "3630",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    },
+    {
+     "key": "3631",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    },
+    {
+     "key": "7142",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    },
+    {
+     "key": "7143",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    },
+    {
+     "key": "7144",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "direct cast",
+    "source": "thelook_ecommerce.inventory_items.cost",
+    "sql_line": "models/staging/stg_thelook__inventory_items.sql:15: cast(cost as {{ money_type() }})                    as cost,",
+    "lineage_check": {
+     "n": 492226,
+     "l2_not_cast": 0,
+     "l9_not_cast": 0,
+     "bq_not_cast9": 0
+    },
+    "c_rows": [],
+    "base_explains": 0,
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "stg_thelook__inventory_items",
+   "column": "product_retail_price",
+   "key": "inventory_item_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 492226,
+   "cents_differ": 0,
+   "raw_differ": 264590,
+   "identical": 227636,
+   "A": 264590,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 492226,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 492226
+    }
+   ],
+   "examples": [
+    {
+     "key": "1",
+     "l2": "44.98",
+     "l9": "44.979999542",
+     "bq": "44.979999542",
+     "bucket": "A"
+    },
+    {
+     "key": "2",
+     "l2": "44.98",
+     "l9": "44.979999542",
+     "bq": "44.979999542",
+     "bucket": "A"
+    },
+    {
+     "key": "3",
+     "l2": "44.98",
+     "l9": "44.979999542",
+     "bq": "44.979999542",
+     "bucket": "A"
+    },
+    {
+     "key": "4",
+     "l2": "44.98",
+     "l9": "44.979999542",
+     "bq": "44.979999542",
+     "bucket": "A"
+    },
+    {
+     "key": "5",
+     "l2": "34.99",
+     "l9": "34.990001678",
+     "bq": "34.990001678",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "direct cast",
+    "source": "thelook_ecommerce.inventory_items.product_retail_price",
+    "sql_line": "models/staging/stg_thelook__inventory_items.sql:19: cast(product_retail_price as {{ money_type() }})    as product_retail_price,",
+    "lineage_check": {
+     "n": 492226,
+     "l2_not_cast": 0,
+     "l9_not_cast": 0,
+     "bq_not_cast9": 0
+    },
+    "c_rows": [],
+    "base_explains": 0,
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 229012,
+  "A": 755405,
+  "B": 35,
+  "C": 0
+ }
+}

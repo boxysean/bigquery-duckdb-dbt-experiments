@@ -1,0 +1,319 @@
+{
+ "model": "int_inventory__by_product_center",
+ "key": "product_center_key",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 29054,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 29054,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 29054,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 29054,
+  "matched": 29054,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 17211096,
+  "wall_s": 7.57,
+  "types": {
+   "product_center_key": "VARCHAR",
+   "open_inventory_value": "DECIMAL(38,9)",
+   "open_retail_value": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "int_inventory__by_product_center",
+   "column": "open_inventory_value",
+   "key": "product_center_key",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 29054,
+   "cents_differ": 22563,
+   "raw_differ": 28969,
+   "identical": 85,
+   "A": 6406,
+   "B": 22563,
+   "C": 0,
+   "l9_equals_bq": 29054,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.14",
+     "n": 2
+    },
+    {
+     "delta": "-0.13",
+     "n": 10
+    },
+    {
+     "delta": "-0.12",
+     "n": 13
+    },
+    {
+     "delta": "-0.11",
+     "n": 35
+    },
+    {
+     "delta": "-0.10",
+     "n": 73
+    },
+    {
+     "delta": "-0.09",
+     "n": 130
+    },
+    {
+     "delta": "-0.08",
+     "n": 267
+    },
+    {
+     "delta": "-0.07",
+     "n": 520
+    },
+    {
+     "delta": "-0.06",
+     "n": 870
+    },
+    {
+     "delta": "-0.05",
+     "n": 1146
+    },
+    {
+     "delta": "-0.04",
+     "n": 1709
+    },
+    {
+     "delta": "-0.03",
+     "n": 2019
+    },
+    {
+     "delta": "-0.02",
+     "n": 2424
+    },
+    {
+     "delta": "-0.01",
+     "n": 2399
+    },
+    {
+     "delta": "0.00",
+     "n": 6491
+    },
+    {
+     "delta": "0.01",
+     "n": 2409
+    },
+    {
+     "delta": "0.02",
+     "n": 2444
+    },
+    {
+     "delta": "0.03",
+     "n": 1890
+    },
+    {
+     "delta": "0.04",
+     "n": 1533
+    },
+    {
+     "delta": "0.05",
+     "n": 1014
+    },
+    {
+     "delta": "0.06",
+     "n": 756
+    },
+    {
+     "delta": "0.07",
+     "n": 390
+    },
+    {
+     "delta": "0.08",
+     "n": 280
+    },
+    {
+     "delta": "0.09",
+     "n": 103
+    },
+    {
+     "delta": "0.10",
+     "n": 78
+    },
+    {
+     "delta": "0.11",
+     "n": 25
+    },
+    {
+     "delta": "0.12",
+     "n": 13
+    },
+    {
+     "delta": "0.13",
+     "n": 7
+    },
+    {
+     "delta": "0.14",
+     "n": 3
+    },
+    {
+     "delta": "0.16",
+     "n": 1
+    }
+   ],
+   "examples": [
+    {
+     "key": "00031a75eb3acff3634f6425dfc550e1",
+     "l2": "335.83",
+     "l9": "335.877854972",
+     "bq": "335.877854972",
+     "bucket": "B"
+    },
+    {
+     "key": "00037bc6fcd9f8170b02996c205889c4",
+     "l2": "86.40",
+     "l9": "86.469120144",
+     "bq": "86.469120144",
+     "bucket": "B"
+    },
+    {
+     "key": "0004e7e0778aaa0e008b712ca018219b",
+     "l2": "206.64",
+     "l9": "206.660156355",
+     "bq": "206.660156355",
+     "bucket": "B"
+    },
+    {
+     "key": "000d616851489120531f8d06f16c45ad",
+     "l2": "1933.63",
+     "l9": "1933.667994623",
+     "bq": "1933.667994623",
+     "bucket": "B"
+    },
+    {
+     "key": "00120d14e6df9045b08b29f89bea1e37",
+     "l2": "38.57",
+     "l9": "38.554319202",
+     "bq": "38.554319202",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_inventory__by_product_center.sql:25: cast(open_inventory_value as {{ money_type() }})                        as open_inventory_value,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "int_inventory__by_product_center",
+   "column": "open_retail_value",
+   "key": "product_center_key",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 29054,
+   "cents_differ": 0,
+   "raw_differ": 15640,
+   "identical": 13414,
+   "A": 15640,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 29054,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 29054
+    }
+   ],
+   "examples": [
+    {
+     "key": "00031a75eb3acff3634f6425dfc550e1",
+     "l2": "652.19",
+     "l9": "652.190010076",
+     "bq": "652.190010076",
+     "bucket": "A"
+    },
+    {
+     "key": "00037bc6fcd9f8170b02996c205889c4",
+     "l2": "207.36",
+     "l9": "207.360000608",
+     "bq": "207.360000608",
+     "bucket": "A"
+    },
+    {
+     "key": "0004e7e0778aaa0e008b712ca018219b",
+     "l2": "440.64",
+     "l9": "440.639991756",
+     "bq": "440.639991756",
+     "bucket": "A"
+    },
+    {
+     "key": "00120d14e6df9045b08b29f89bea1e37",
+     "l2": "90.93",
+     "l9": "90.929998397",
+     "bq": "90.929998397",
+     "bucket": "A"
+    },
+    {
+     "key": "001992bdda958eda60ffbd566f92f891",
+     "l2": "311.92",
+     "l9": "311.920013424",
+     "bq": "311.920013424",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_inventory__by_product_center.sql:26: cast(open_retail_value as {{ money_type() }})                           as open_retail_value",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 13499,
+  "A": 22046,
+  "B": 22563,
+  "C": 0
+ }
+}

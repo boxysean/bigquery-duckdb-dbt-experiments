@@ -1,0 +1,411 @@
+{
+ "model": "dim_products",
+ "key": "product_id",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 29120,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 29120,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 29120,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 29120,
+  "matched": 29120,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.31,
+  "types": {
+   "product_id": "BIGINT",
+   "gross_margin": "DECIMAL(38,9)",
+   "gross_revenue": "DECIMAL(38,9)",
+   "retail_price": "DECIMAL(38,9)",
+   "unit_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "dim_products",
+   "column": "gross_margin",
+   "key": "product_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 29120,
+   "cents_differ": 21107,
+   "raw_differ": 28969,
+   "identical": 151,
+   "A": 7862,
+   "B": 21107,
+   "C": 0,
+   "l9_equals_bq": 29120,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.08",
+     "n": 3
+    },
+    {
+     "delta": "-0.07",
+     "n": 15
+    },
+    {
+     "delta": "-0.06",
+     "n": 60
+    },
+    {
+     "delta": "-0.05",
+     "n": 248
+    },
+    {
+     "delta": "-0.04",
+     "n": 833
+    },
+    {
+     "delta": "-0.03",
+     "n": 1813
+    },
+    {
+     "delta": "-0.02",
+     "n": 3171
+    },
+    {
+     "delta": "-0.01",
+     "n": 4056
+    },
+    {
+     "delta": "0.00",
+     "n": 8013
+    },
+    {
+     "delta": "0.01",
+     "n": 4034
+    },
+    {
+     "delta": "0.02",
+     "n": 3455
+    },
+    {
+     "delta": "0.03",
+     "n": 2050
+    },
+    {
+     "delta": "0.04",
+     "n": 971
+    },
+    {
+     "delta": "0.05",
+     "n": 303
+    },
+    {
+     "delta": "0.06",
+     "n": 78
+    },
+    {
+     "delta": "0.07",
+     "n": 14
+    },
+    {
+     "delta": "0.08",
+     "n": 3
+    }
+   ],
+   "examples": [
+    {
+     "key": "1",
+     "l2": "153.65",
+     "l9": "153.664000588",
+     "bq": "153.664000588",
+     "bucket": "B"
+    },
+    {
+     "key": "2",
+     "l2": "65.74",
+     "l9": "65.747000162",
+     "bq": "65.747000162",
+     "bucket": "B"
+    },
+    {
+     "key": "3",
+     "l2": "171.00",
+     "l9": "170.970000840",
+     "bq": "170.970000840",
+     "bucket": "B"
+    },
+    {
+     "key": "4",
+     "l2": "305.22",
+     "l9": "305.208000540",
+     "bq": "305.208000540",
+     "bucket": "B"
+    },
+    {
+     "key": "5",
+     "l2": "249.84",
+     "l9": "249.852000774",
+     "bq": "249.852000774",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/marts/dim_products.sql:53: sales.gross_margin,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "dim_products",
+   "column": "gross_revenue",
+   "key": "product_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 29120,
+   "cents_differ": 0,
+   "raw_differ": 15640,
+   "identical": 13480,
+   "A": 15640,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 29120,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 29120
+    }
+   ],
+   "examples": [
+    {
+     "key": "13",
+     "l2": "383.50",
+     "l9": "383.499984740",
+     "bq": "383.499984740",
+     "bucket": "A"
+    },
+    {
+     "key": "16",
+     "l2": "164.75",
+     "l9": "164.750003815",
+     "bq": "164.750003815",
+     "bucket": "A"
+    },
+    {
+     "key": "20",
+     "l2": "317.00",
+     "l9": "317.000007630",
+     "bq": "317.000007630",
+     "bucket": "A"
+    },
+    {
+     "key": "28",
+     "l2": "301.98",
+     "l9": "301.980010986",
+     "bq": "301.980010986",
+     "bucket": "A"
+    },
+    {
+     "key": "31",
+     "l2": "289.75",
+     "l9": "289.750003815",
+     "bq": "289.750003815",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/marts/dim_products.sql:52: sales.gross_revenue,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "dim_products",
+   "column": "retail_price",
+   "key": "product_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 29120,
+   "cents_differ": 0,
+   "raw_differ": 15675,
+   "identical": 13445,
+   "A": 15675,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 29120,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 29120
+    }
+   ],
+   "examples": [
+    {
+     "key": "13",
+     "l2": "76.70",
+     "l9": "76.699996948",
+     "bq": "76.699996948",
+     "bucket": "A"
+    },
+    {
+     "key": "16",
+     "l2": "32.95",
+     "l9": "32.950000763",
+     "bq": "32.950000763",
+     "bucket": "A"
+    },
+    {
+     "key": "20",
+     "l2": "63.40",
+     "l9": "63.400001526",
+     "bq": "63.400001526",
+     "bucket": "A"
+    },
+    {
+     "key": "28",
+     "l2": "150.99",
+     "l9": "150.990005493",
+     "bq": "150.990005493",
+     "bucket": "A"
+    },
+    {
+     "key": "31",
+     "l2": "57.95",
+     "l9": "57.950000763",
+     "bq": "57.950000763",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "direct cast",
+    "source": "thelook_ecommerce.products.retail_price",
+    "sql_line": "models/marts/dim_products.sql:50: products.retail_price,",
+    "lineage_check": {
+     "n": 29120,
+     "l2_not_cast": 0,
+     "l9_not_cast": 0,
+     "bq_not_cast9": 0
+    },
+    "c_rows": [],
+    "base_explains": 0,
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "dim_products",
+   "column": "unit_cost",
+   "key": "product_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 29120,
+   "cents_differ": 1,
+   "raw_differ": 29035,
+   "identical": 85,
+   "A": 29034,
+   "B": 1,
+   "C": 0,
+   "l9_equals_bq": 29120,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 29119
+    },
+    {
+     "delta": "0.01",
+     "n": 1
+    }
+   ],
+   "examples": [
+    {
+     "key": "9500",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "direct cast",
+    "source": "thelook_ecommerce.products.cost",
+    "sql_line": "models/marts/dim_products.sql:49: products.cost                       as unit_cost,",
+    "lineage_check": {
+     "n": 29120,
+     "l2_not_cast": 0,
+     "l9_not_cast": 0,
+     "bq_not_cast9": 0
+    },
+    "c_rows": [],
+    "base_explains": 0,
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 27161,
+  "A": 68211,
+  "B": 21108,
+  "C": 0
+ }
+}

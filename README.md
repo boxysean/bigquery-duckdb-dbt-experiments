@@ -791,8 +791,12 @@ boolean `accepted_values` test was removed — `docs/challenges.md` 5.2).
   cents reconciles 23 of those columns (prices and revenue); the other 32 are sums of
   cost or values computed from them, and still differ
   (`analyses/value_parity/logs/probe_scale_attribution.log`).
-  Which rows differ, and by how much, is not measured: the harness compares aggregates
-  per column. Details and sources in [`docs/gaps.md`](docs/gaps.md) §1.
+  Which rows differ, and by how much, is now measured: `make row-join DBT_ENV=rows`
+  joins a fresh pair built from one load (the public source has grown since the first
+  run) row by row, for all 55 money columns (`analyses/value_parity/rows.md`). No row
+  holds genuinely different money: every one of the 273,826 column-rows whose cents
+  differ is reproduced exactly by a DuckDB build with `money_type()` = `decimal(38,9)`.
+  Details and sources in [`docs/gaps.md`](docs/gaps.md) §1.
 * **The default `make parity` still runs on the fixture.** It compares all 29 models
   on both targets and separates the two kinds of difference that exist on that path:
 
