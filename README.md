@@ -19,7 +19,7 @@ What matters to an architect:
 - The portability pattern is real: **29 models** build on both targets with **no forked copies** and **no `target.type` branching in models**.
 - The biggest divergence is also the most important one: **money precision**. BigQuery keeps sub-cent precision in `NUMERIC`; DuckDB rounds the same source values into `DECIMAL(18,2)`.
 - On the same real dataset, **row counts match on all 29 models**. Exact value parity holds for **8 of 29** models and **1 of 11 marts**.
-- A row-by-row follow-up shows **0 genuinely different money values**. The differences are attributable to declared scale and rounding behavior, not unexplained logic drift.
+- A row-by-row follow-up on the **money-column mismatches** shows **0 genuinely different money values**. Those differences are attributable to declared scale and rounding behavior, not unexplained logic drift.
 - The project also measures two ways to get BigQuery data into DuckDB:
   - **Transport A** = direct read via DuckDB's community BigQuery extension
   - **Transport B** = `EXPORT DATA` to GCS as Parquet, then read the files
@@ -198,6 +198,7 @@ If you are a senior architect deciding whether this pattern is worth using:
 
 | Path | Purpose |
 |---|---|
+| `Makefile` | Entry point for setup, build, parity, and transport measurement commands |
 | `models/` | Shared dbt model tree |
 | `macros/polyglot/` | Cross-engine compatibility seam |
 | `scripts/parity.py` | Cross-target parity harness |
@@ -220,6 +221,8 @@ make check-env
 ```
 
 ### Common commands
+
+The commands below are defined in `Makefile`. The transport commands write their evidence under `analyses/transport_a/` and `analyses/transport_b/`.
 
 ```bash
 make duck           # build the DuckDB target against the local fixture
