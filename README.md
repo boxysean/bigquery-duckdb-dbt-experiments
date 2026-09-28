@@ -222,18 +222,18 @@ make check-env
 
 ### Common commands
 
-The commands below are the main entrypoints. The transport and row-join commands write their evidence under `analyses/`.
+The supported command surface is the `Makefile`. The transport and row-join targets are wrappers around the scripts in `scripts/` and write their evidence under `analyses/`.
 
 ```bash
-make duck                         # build the DuckDB target against the local fixture
-make bq                           # build the BigQuery target (credentials required)
-make parity                       # structural parity checks across both targets
-make value-parity                 # same-data value comparison across both targets
-python3 scripts/transport_a_measure.py  # direct-read transport evidence
-python3 scripts/transport_b_measure.py  # file-based transport evidence
-python3 scripts/row_join.py             # row-level follow-up on money mismatches
-make portability                 # fail if one target leaks the other target's dialect
-make move-to-duckdb              # generate a DuckDB-only version of the project
+make duck            # build the DuckDB target against the local fixture
+make bq              # build the BigQuery target (credentials required)
+make parity          # structural parity checks across both targets
+make value-parity    # same-data value comparison across both targets
+make transport-a     # wrapper for scripts/transport_a_measure.py
+make transport-b     # wrapper for scripts/transport_b_measure.py
+make row-join        # wrapper for scripts/row_join.py
+make portability     # fail if one target leaks the other target's dialect
+make move-to-duckdb  # generate a DuckDB-only version of the project
 ```
 
 ### What the main targets do
@@ -241,8 +241,8 @@ make move-to-duckdb              # generate a DuckDB-only version of the project
 - `make duck` builds the shared project locally on DuckDB.
 - `make bq` builds the shared project on BigQuery.
 - `make value-parity` is the most important verification run: it loads the same real source rows into DuckDB, builds both targets, and compares outputs.
-- `scripts/transport_a_measure.py` and `scripts/transport_b_measure.py` run the engine-specific transport measurement suites in `analyses/`; they are evidence runs, not part of the shared portable model tree.
-- `scripts/row_join.py` is the row-level follow-up for the money-column mismatches once `make value-parity` has produced a comparable pair.
+- `make transport-a` and `make transport-b` run the engine-specific transport measurement suites in `analyses/`; they are evidence runs, not part of the shared portable model tree.
+- `make row-join` is the row-level follow-up for the money-column mismatches once `make value-parity` has produced a comparable pair.
 
 ## Where to go deeper
 
