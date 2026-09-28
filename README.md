@@ -222,15 +222,13 @@ make check-env
 
 ### Common commands
 
-The supported command surface is the `Makefile`. The transport targets run the engine-specific measurement suites and write their evidence under `analyses/`.
+The supported command surface is the `Makefile`. The commands below are the main day-to-day entrypoints for the shared project.
 
 ```bash
 make duck            # build the DuckDB target against the local fixture
 make bq              # build the BigQuery target (credentials required)
 make parity          # structural parity checks across both targets
 make value-parity    # same-data value comparison across both targets
-make transport-a     # run the direct-read transport measurement suite
-make transport-b     # run the file-based transport measurement suite
 make portability     # fail if one target leaks the other target's dialect
 make move-to-duckdb  # generate a DuckDB-only version of the project
 ```
@@ -240,7 +238,7 @@ make move-to-duckdb  # generate a DuckDB-only version of the project
 - `make duck` builds the shared project locally on DuckDB.
 - `make bq` builds the shared project on BigQuery.
 - `make value-parity` is the most important verification run: it loads the same real source rows into DuckDB, builds both targets, and compares outputs.
-- `make transport-a` and `make transport-b` run the engine-specific transport measurement suites in `analyses/`; they are evidence runs, not part of the shared portable model tree.
+- The transport evidence lives under [`analyses/transport_a/`](analyses/transport_a/) and [`analyses/transport_b/`](analyses/transport_b/); those are separate measurement suites, not part of the shared portable model tree.
 - The row-level follow-up on money-column mismatches is documented in [`analyses/value_parity/rows.md`](analyses/value_parity/rows.md) after a `make value-parity` run has produced a comparable pair.
 
 ## Where to go deeper
