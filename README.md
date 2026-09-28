@@ -202,11 +202,10 @@ If you are a senior architect deciding whether this pattern is worth using:
 | `models/` | Shared dbt model tree |
 | `macros/polyglot/` | Cross-engine compatibility seam |
 | `scripts/parity.py` | Cross-target parity harness |
-| `analyses/value_parity/rows.md` | Generated row-level evidence for the money-mismatch follow-up |
 | `scripts/check_portability.py` | Guardrail against engine-specific leakage |
 | `analyses/transport_a/` | Direct-read transport evidence |
 | `analyses/transport_b/` | File-based transport evidence |
-| `analyses/value_parity/` | Same-data parity results |
+| `analyses/value_parity/` | Same-data parity results and generated row-level follow-up artifacts |
 | [`docs/challenges.md`](docs/challenges.md) | Full list of issues encountered and resolved |
 | [`docs/gaps.md`](docs/gaps.md) | What remains unverified or intentionally unresolved |
 | [`docs/move_to_duckdb.md`](docs/move_to_duckdb.md) | What it takes to turn this into a DuckDB-only project |
@@ -239,14 +238,14 @@ make move-to-duckdb  # generate a DuckDB-only version of the project
 - `make bq` builds the shared project on BigQuery.
 - `make value-parity` is the most important verification run: it loads the same real source rows into DuckDB, builds both targets, and compares outputs.
 - The transport evidence lives under [`analyses/transport_a/`](analyses/transport_a/) and [`analyses/transport_b/`](analyses/transport_b/); those are separate measurement suites, not part of the shared portable model tree.
-- The row-level follow-up on money-column mismatches is captured in the generated [`analyses/value_parity/rows.md`](analyses/value_parity/rows.md) artifact after a comparable pair has been produced.
+- The row-level follow-up on money-column mismatches is a generated artifact under `analyses/value_parity/` after a comparable pair has been produced, so it may be absent in a fresh checkout.
 
 ## Where to go deeper
 
 If you want the evidence rather than the summary:
 
 - Start with [`analyses/value_parity/results.md`](analyses/value_parity/results.md)
-- Then use the generated [`analyses/value_parity/rows.md`](analyses/value_parity/rows.md) artifact for the row-level money follow-up
+- If you generate the row-level follow-up, look under `analyses/value_parity/` for the money-mismatch artifacts
 - Then read [`analyses/transport_a/README.md`](analyses/transport_a/README.md)
 - Then [`analyses/transport_b/README.md`](analyses/transport_b/README.md)
 - Use [`docs/challenges.md`](docs/challenges.md) for the blow-by-blow history
