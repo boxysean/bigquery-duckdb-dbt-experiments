@@ -229,8 +229,8 @@ make duck           # build the DuckDB target against the local fixture
 make bq             # build the BigQuery target (credentials required)
 make parity         # structural parity checks across both targets
 make value-parity   # same-data value comparison across both targets
-make transport-a    # measure the direct-read path
-make transport-b    # measure the file-based path
+make transport-a    # alias for `python3 scripts/transport_a_measure.py`
+make transport-b    # alias for `python3 scripts/transport_b_measure.py`
 make portability    # fail if one target leaks the other target's dialect
 make move-to-duckdb # generate a DuckDB-only version of the project
 ```
@@ -240,7 +240,7 @@ make move-to-duckdb # generate a DuckDB-only version of the project
 - `make duck` builds the shared project locally on DuckDB.
 - `make bq` builds the shared project on BigQuery.
 - `make value-parity` is the most important verification run: it loads the same real source rows into DuckDB, builds both targets, and compares outputs.
-- `make transport-a` and `make transport-b` run the engine-specific transport measurement suites in `analyses/`; they are evidence runs, not part of the shared portable model tree.
+- `make transport-a` and `make transport-b` are Makefile entrypoints to `scripts/transport_a_measure.py` and `scripts/transport_b_measure.py`; they run the engine-specific transport measurement suites in `analyses/`, not the shared portable model tree.
 
 ## Where to go deeper
 
