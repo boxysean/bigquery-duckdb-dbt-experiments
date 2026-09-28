@@ -7,19 +7,25 @@ project power both with using macros to help transpile."*
 
 ## Executive summary
 
-* **It is possible, and it is done.** One dbt v2 project builds and tests against both BigQuery and
-  DuckDB from a single source file per model — 29 of 29 models, no fork and no `target.type` branch —
-  and the two engines hold the *same money*: of 6,605,909 money values compared row by row, **0 are
-  genuinely different**.
-* **The test that proves it** is a pair of local gates. `make pre-pr` compiles both targets and fails
-  if either render contains the other engine's dialect. `make value-parity` and `make row-join` load
-  the real `thelook_ecommerce` tables into DuckDB, build both targets over the *same rows*, then
-  compare every model column by column and finally row by row on its keys.
-* **Open questions.** Money is declared at different scales (`decimal(18,2)` against nine-decimal
-  `numeric`), so the two engines *print* money differently; aligning the scales removes 273,826
-  cent-level differences but introduces 7 in one metric, and that trade is unmade. Separately,
-  BigQuery runs **11.5× slower** than DuckDB over the same rows (230 s against 20 s of model time),
-  its cost ceiling has never been measured, and **no transport between the engines has been chosen**.
+* **The experiment succeeded.** The goal was to build one data project that serves both a cloud
+  warehouse (BigQuery) and a local engine (DuckDB), with a small translation layer absorbing the
+  differences so that no model ever has to be written twice. It works: the same 29 models run on
+  both engines, with no forked copies and no engine-specific branches, and where it matters most the
+  results agree exactly — every money value was compared row by row on both engines from identical
+  input data, and not one of the 6.6 million values was genuinely different.
+* **What was built to prove it.** A test project of 29 data models over 7 public retail data sources,
+  arranged in staging, intermediate and reporting layers, plus about 28 small translation rules — the
+  macros — which rewrite only the handful of places where the two engines express the same idea
+  differently. Two automated checks guard it: one compiles the project for both engines and fails if
+  either version has leaked the other engine's syntax; the other loads the real source data into both
+  engines, builds the whole project on each, and compares every table column by column and then row
+  by row.
+* **Still open.** Money is stored at different levels of precision on the two engines, so the same
+  amount can print differently; a small change to align them would remove those differences but
+  introduce a few new ones in one metric, and that trade-off has not been made. Beyond that, BigQuery
+  runs about 12 times slower than the local engine over identical data, its cost at production scale
+  has never been measured, and nothing has been decided about how data should move between the two
+  engines in practice.
 
 ## How close are the two targets?
 
