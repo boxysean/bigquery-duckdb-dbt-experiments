@@ -127,7 +127,7 @@ Why it matters:
 - It keeps the DuckDB leg close to the real source definition.
 - It is the right path when you want to study **query behavior, pushdown, type fidelity, and real parity**.
 
-What the measurements say:
+What the measurements say (see [`analyses/transport_a/README.md`](analyses/transport_a/README.md)):
 
 - Filter pushdown works.
 - Projection pushdown works.
@@ -148,7 +148,7 @@ Why it matters:
 - It creates a reusable artifact that can be read by more than DuckDB.
 - It is closer to a batch interchange or distribution pattern than a live compatibility path.
 
-What the measurements say:
+What the measurements say (see [`analyses/transport_b/README.md`](analyses/transport_b/README.md)):
 
 - It works well for Parquet-based interchange.
 - Row order is **not reproducible** without `ORDER BY`.
