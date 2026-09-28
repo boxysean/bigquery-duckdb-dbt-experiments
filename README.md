@@ -127,7 +127,7 @@ Why it matters:
 - It keeps the DuckDB leg close to the real source definition.
 - It is the right path when you want to study **query behavior, pushdown, type fidelity, and real parity**.
 
-What the measurements say (see [`analyses/transport_a/README.md`](analyses/transport_a/README.md)):
+What the measurements say (see the committed summary in [`analyses/transport_a/README.md`](analyses/transport_a/README.md)):
 
 - Filter pushdown works.
 - Projection pushdown works.
@@ -148,7 +148,7 @@ Why it matters:
 - It creates a reusable artifact that can be read by more than DuckDB.
 - It is closer to a batch interchange or distribution pattern than a live compatibility path.
 
-What the measurements say (see [`analyses/transport_b/README.md`](analyses/transport_b/README.md)):
+What the measurements say (see the committed summary in [`analyses/transport_b/README.md`](analyses/transport_b/README.md)):
 
 - It works well for Parquet-based interchange.
 - Row order is **not reproducible** without `ORDER BY`.
@@ -203,9 +203,9 @@ If you are a senior architect deciding whether this pattern is worth using:
 | `macros/polyglot/` | Cross-engine compatibility seam |
 | `scripts/parity.py` | Cross-target parity harness |
 | `scripts/check_portability.py` | Guardrail against engine-specific leakage |
-| `analyses/transport_a/` | Direct-read transport evidence |
-| `analyses/transport_b/` | File-based transport evidence |
-| `analyses/value_parity/` | Same-data parity results and generated row-level follow-up artifacts |
+| `analyses/transport_a/` | Direct-read transport evidence (committed README plus generated results) |
+| `analyses/transport_b/` | File-based transport evidence (committed README plus generated results) |
+| `analyses/value_parity/` | Committed parity overview plus generated results and row-level follow-up artifacts |
 | [`docs/challenges.md`](docs/challenges.md) | Full list of issues encountered and resolved |
 | [`docs/gaps.md`](docs/gaps.md) | What remains unverified or intentionally unresolved |
 | [`docs/move_to_duckdb.md`](docs/move_to_duckdb.md) | What it takes to turn this into a DuckDB-only project |
@@ -244,10 +244,9 @@ make move-to-duckdb  # generate a DuckDB-only version of the project
 
 If you want the evidence rather than the summary:
 
-- Start with [`analyses/value_parity/results.md`](analyses/value_parity/results.md)
-- If you generate the row-level follow-up, look under `analyses/value_parity/` for the money-mismatch artifacts
-- Then read [`analyses/transport_a/README.md`](analyses/transport_a/README.md)
-- Then [`analyses/transport_b/README.md`](analyses/transport_b/README.md)
+- Start with the committed [`analyses/value_parity/README.md`](analyses/value_parity/README.md) overview
+- Then read the committed [`analyses/transport_a/README.md`](analyses/transport_a/README.md) and [`analyses/transport_b/README.md`](analyses/transport_b/README.md) summaries
+- If you generate parity outputs locally, look under `analyses/value_parity/` for `results.md`, `results.json`, and the optional row-level money-mismatch artifacts
 - Use [`docs/challenges.md`](docs/challenges.md) for the blow-by-blow history
 - Use [`docs/gaps.md`](docs/gaps.md) for the unresolved edges
 
