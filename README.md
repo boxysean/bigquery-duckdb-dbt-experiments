@@ -5,6 +5,22 @@ and against a local **DuckDB** file, with the dialect differences pushed into
 `macros/` rather than into a forked model tree. Sean's framing: *"one single
 project power both with using macros to help transpile."*
 
+## Executive summary
+
+* **It is possible, and it is done.** One dbt v2 project builds and tests against both BigQuery and
+  DuckDB from a single source file per model — 29 of 29 models, no fork and no `target.type` branch —
+  and the two engines hold the *same money*: of 6,605,909 money values compared row by row, **0 are
+  genuinely different**.
+* **The test that proves it** is a pair of local gates. `make pre-pr` compiles both targets and fails
+  if either render contains the other engine's dialect. `make value-parity` and `make row-join` load
+  the real `thelook_ecommerce` tables into DuckDB, build both targets over the *same rows*, then
+  compare every model column by column and finally row by row on its keys.
+* **Open questions.** Money is declared at different scales (`decimal(18,2)` against nine-decimal
+  `numeric`), so the two engines *print* money differently; aligning the scales removes 273,826
+  cent-level differences but introduces 7 in one metric, and that trade is unmade. Separately,
+  BigQuery runs **11.5× slower** than DuckDB over the same rows (230 s against 20 s of model time),
+  its cost ceiling has never been measured, and **no transport between the engines has been chosen**.
+
 ## How close are the two targets?
 
 **Identical in structure and row counts; not yet in every value, because money is rounded
