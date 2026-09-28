@@ -221,7 +221,7 @@ make check-env
 
 ### Common commands
 
-The supported command surface is the `Makefile`. Before using the commands below, run `make setup` and `make check-env`. `make duck` uses the local fixture automatically; `make bq` and `make value-parity` require BigQuery credentials (for example `BQ_KEYFILE`); `make value-parity` performs the real-data load itself, then spends money comparing the two builds over that shared input; and the separate transport suites need additional cloud permissions, with Transport B also requiring a writable GCS bucket.
+The supported command surface is the `Makefile`. Before using the commands below, run `make setup` and `make check-env`. `make duck` uses the local fixture automatically; `make bq` and `make value-parity` require BigQuery credentials (for example `BQ_KEYFILE`); `make value-parity` performs the real-data load itself, then costs money to compare the two builds over that shared input; and the separate transport suites are available as `make transport-a` and `make transport-b`, which need additional cloud permissions, with Transport B also requiring a writable GCS bucket.
 
 ```bash
 make duck            # build the DuckDB target against the local fixture
