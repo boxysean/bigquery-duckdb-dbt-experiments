@@ -202,7 +202,7 @@ If you are a senior architect deciding whether this pattern is worth using:
 | `models/` | Shared dbt model tree |
 | `macros/polyglot/` | Cross-engine compatibility seam |
 | `scripts/parity.py` | Cross-target parity harness |
-| `scripts/row_join.py` | Row-level follow-up on money differences |
+| `analyses/value_parity/rows.md` | Row-level evidence for the money-mismatch follow-up |
 | `scripts/check_portability.py` | Guardrail against engine-specific leakage |
 | `analyses/transport_a/` | Direct-read transport evidence |
 | `analyses/transport_b/` | File-based transport evidence |
@@ -222,16 +222,15 @@ make check-env
 
 ### Common commands
 
-The supported command surface is the `Makefile`. The transport and row-join targets are wrappers around the scripts in `scripts/` and write their evidence under `analyses/`.
+The supported command surface is the `Makefile`. The transport targets run the engine-specific measurement suites and write their evidence under `analyses/`.
 
 ```bash
 make duck            # build the DuckDB target against the local fixture
 make bq              # build the BigQuery target (credentials required)
 make parity          # structural parity checks across both targets
 make value-parity    # same-data value comparison across both targets
-make transport-a     # wrapper for scripts/transport_a_measure.py
-make transport-b     # wrapper for scripts/transport_b_measure.py
-make row-join        # wrapper for scripts/row_join.py
+make transport-a     # run the direct-read transport measurement suite
+make transport-b     # run the file-based transport measurement suite
 make portability     # fail if one target leaks the other target's dialect
 make move-to-duckdb  # generate a DuckDB-only version of the project
 ```
@@ -242,13 +241,14 @@ make move-to-duckdb  # generate a DuckDB-only version of the project
 - `make bq` builds the shared project on BigQuery.
 - `make value-parity` is the most important verification run: it loads the same real source rows into DuckDB, builds both targets, and compares outputs.
 - `make transport-a` and `make transport-b` run the engine-specific transport measurement suites in `analyses/`; they are evidence runs, not part of the shared portable model tree.
-- `make row-join` is the row-level follow-up for the money-column mismatches once `make value-parity` has produced a comparable pair.
+- The row-level follow-up on money-column mismatches is documented in [`analyses/value_parity/rows.md`](analyses/value_parity/rows.md) after a `make value-parity` run has produced a comparable pair.
 
 ## Where to go deeper
 
 If you want the evidence rather than the summary:
 
 - Start with [`analyses/value_parity/results.md`](analyses/value_parity/results.md)
+- Then use [`analyses/value_parity/rows.md`](analyses/value_parity/rows.md) for the row-level money follow-up
 - Then read [`analyses/transport_a/README.md`](analyses/transport_a/README.md)
 - Then [`analyses/transport_b/README.md`](analyses/transport_b/README.md)
 - Use [`docs/challenges.md`](docs/challenges.md) for the blow-by-blow history
