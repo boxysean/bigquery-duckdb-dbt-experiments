@@ -1,0 +1,394 @@
+{
+ "model": "fct_order_items",
+ "key": "inventory_item_id",
+ "other_unique_keys": [
+  "order_item_id"
+ ],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 182483,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 182483,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 182483,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 182483,
+  "matched": 182483,
+  "unmatched": 0,
+  "other_keys_disagree": {
+   "order_item_id": 0
+  },
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.46,
+  "types": {
+   "inventory_item_id": "BIGINT",
+   "order_item_id": "BIGINT",
+   "gross_margin": "DECIMAL(38,9)",
+   "product_cost": "DECIMAL(38,9)",
+   "product_retail_price": "DECIMAL(38,9)",
+   "sale_price": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "fct_order_items",
+   "column": "gross_margin",
+   "key": "inventory_item_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 182483,
+   "cents_differ": 534,
+   "raw_differ": 181975,
+   "identical": 508,
+   "A": 181441,
+   "B": 534,
+   "C": 0,
+   "l9_equals_bq": 182483,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.01",
+     "n": 249
+    },
+    {
+     "delta": "0.00",
+     "n": 181949
+    },
+    {
+     "delta": "0.01",
+     "n": 285
+    }
+   ],
+   "examples": [
+    {
+     "key": "305",
+     "l2": "6.90",
+     "l9": "6.894999981",
+     "bq": "6.894999981",
+     "bucket": "B"
+    },
+    {
+     "key": "798",
+     "l2": "15.90",
+     "l9": "15.894999812",
+     "bq": "15.894999812",
+     "bucket": "B"
+    },
+    {
+     "key": "2973",
+     "l2": "9.37",
+     "l9": "9.375000000",
+     "bq": "9.375000000",
+     "bucket": "B"
+    },
+    {
+     "key": "6007",
+     "l2": "6.90",
+     "l9": "6.894999981",
+     "bq": "6.894999981",
+     "bucket": "B"
+    },
+    {
+     "key": "6246",
+     "l2": "22.49",
+     "l9": "22.495000839",
+     "bq": "22.495000839",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/marts/fct_order_items.sql:53: order_items.gross_margin,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "fct_order_items",
+   "column": "product_cost",
+   "key": "inventory_item_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 182483,
+   "cents_differ": 12,
+   "raw_differ": 181975,
+   "identical": 508,
+   "A": 181963,
+   "B": 12,
+   "C": 0,
+   "l9_equals_bq": 182483,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 182471
+    },
+    {
+     "delta": "0.01",
+     "n": 12
+    }
+   ],
+   "examples": [
+    {
+     "key": "3631",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    },
+    {
+     "key": "7144",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    },
+    {
+     "key": "39523",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    },
+    {
+     "key": "61665",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    },
+    {
+     "key": "101817",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "direct cast",
+    "source": "thelook_ecommerce.inventory_items.cost",
+    "sql_line": "models/marts/fct_order_items.sql:52: order_items.product_cost,",
+    "lineage_check": {
+     "n": 182483,
+     "l2_not_cast": 0,
+     "l9_not_cast": 0,
+     "bq_not_cast9": 0
+    },
+    "c_rows": [],
+    "base_explains": 0,
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "fct_order_items",
+   "column": "product_retail_price",
+   "key": "inventory_item_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 182483,
+   "cents_differ": 0,
+   "raw_differ": 98069,
+   "identical": 84414,
+   "A": 98069,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 182483,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 182483
+    }
+   ],
+   "examples": [
+    {
+     "key": "4",
+     "l2": "44.98",
+     "l9": "44.979999542",
+     "bq": "44.979999542",
+     "bucket": "A"
+    },
+    {
+     "key": "7",
+     "l2": "34.99",
+     "l9": "34.990001678",
+     "bq": "34.990001678",
+     "bucket": "A"
+    },
+    {
+     "key": "17",
+     "l2": "49.94",
+     "l9": "49.939998627",
+     "bq": "49.939998627",
+     "bucket": "A"
+    },
+    {
+     "key": "19",
+     "l2": "39.95",
+     "l9": "39.950000763",
+     "bq": "39.950000763",
+     "bucket": "A"
+    },
+    {
+     "key": "21",
+     "l2": "21.99",
+     "l9": "21.989999771",
+     "bq": "21.989999771",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "direct cast",
+    "source": "thelook_ecommerce.products.retail_price",
+    "sql_line": "models/marts/fct_order_items.sql:61: products.retail_price               as product_retail_price,",
+    "lineage_check": {
+     "n": 182483,
+     "l2_not_cast": 0,
+     "l9_not_cast": 0,
+     "bq_not_cast9": 0
+    },
+    "c_rows": [],
+    "base_explains": 0,
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "fct_order_items",
+   "column": "sale_price",
+   "key": "inventory_item_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 182483,
+   "cents_differ": 0,
+   "raw_differ": 98069,
+   "identical": 84414,
+   "A": 98069,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 182483,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 182483
+    }
+   ],
+   "examples": [
+    {
+     "key": "4",
+     "l2": "44.98",
+     "l9": "44.979999542",
+     "bq": "44.979999542",
+     "bucket": "A"
+    },
+    {
+     "key": "7",
+     "l2": "34.99",
+     "l9": "34.990001678",
+     "bq": "34.990001678",
+     "bucket": "A"
+    },
+    {
+     "key": "17",
+     "l2": "49.94",
+     "l9": "49.939998627",
+     "bq": "49.939998627",
+     "bucket": "A"
+    },
+    {
+     "key": "19",
+     "l2": "39.95",
+     "l9": "39.950000763",
+     "bq": "39.950000763",
+     "bucket": "A"
+    },
+    {
+     "key": "21",
+     "l2": "21.99",
+     "l9": "21.989999771",
+     "bq": "21.989999771",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "direct cast",
+    "source": "thelook_ecommerce.order_items.sale_price",
+    "sql_line": "models/marts/fct_order_items.sql:51: order_items.sale_price,",
+    "lineage_check": {
+     "n": 182483,
+     "l2_not_cast": 0,
+     "l9_not_cast": 0,
+     "bq_not_cast9": 0
+    },
+    "c_rows": [],
+    "base_explains": 0,
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 169844,
+  "A": 559542,
+  "B": 546,
+  "C": 0
+ }
+}

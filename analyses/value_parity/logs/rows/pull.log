@@ -1,0 +1,269 @@
+{
+ "dim_distribution_centers": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.04,
+  "types": {
+   "distribution_center_id": "BIGINT",
+   "open_inventory_value": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "dim_products": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.31,
+  "types": {
+   "product_id": "BIGINT",
+   "gross_margin": "DECIMAL(38,9)",
+   "gross_revenue": "DECIMAL(38,9)",
+   "retail_price": "DECIMAL(38,9)",
+   "unit_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "dim_users": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.35,
+  "types": {
+   "user_id": "BIGINT",
+   "lifetime_gross_margin": "DECIMAL(38,9)",
+   "lifetime_gross_revenue": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "fct_inventory_items": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.59,
+  "types": {
+   "inventory_item_id": "BIGINT",
+   "product_retail_price": "DECIMAL(38,9)",
+   "unit_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "fct_order_items": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.46,
+  "types": {
+   "inventory_item_id": "BIGINT",
+   "order_item_id": "BIGINT",
+   "gross_margin": "DECIMAL(38,9)",
+   "product_cost": "DECIMAL(38,9)",
+   "product_retail_price": "DECIMAL(38,9)",
+   "sale_price": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "fct_orders": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.62,
+  "types": {
+   "order_id": "BIGINT",
+   "gross_margin": "DECIMAL(38,9)",
+   "gross_revenue": "DECIMAL(38,9)",
+   "total_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "int_cohorts__user_months": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 15283168,
+  "wall_s": 18.53,
+  "types": {
+   "user_month_key": "VARCHAR",
+   "revenue": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "int_inventory__by_product_center": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 17211096,
+  "wall_s": 7.57,
+  "types": {
+   "product_center_key": "VARCHAR",
+   "open_inventory_value": "DECIMAL(38,9)",
+   "open_retail_value": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "int_inventory_items__enriched": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 11813424,
+  "wall_s": 38.24,
+  "types": {
+   "inventory_item_id": "BIGINT",
+   "product_retail_price": "DECIMAL(38,9)",
+   "unit_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "int_order_items__enriched": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 18672120,
+  "wall_s": 26.63,
+  "types": {
+   "inventory_item_id": "BIGINT",
+   "order_item_id": "BIGINT",
+   "gross_margin": "DECIMAL(38,9)",
+   "product_cost": "DECIMAL(38,9)",
+   "sale_price": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "int_orders__daily": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 18216616,
+  "wall_s": 2.69,
+  "types": {
+   "order_date": "DATE",
+   "gross_margin": "DECIMAL(38,9)",
+   "gross_revenue": "DECIMAL(38,9)",
+   "total_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "int_orders__item_rollup": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 17212256,
+  "wall_s": 20.57,
+  "types": {
+   "order_id": "BIGINT",
+   "gross_margin": "DECIMAL(38,9)",
+   "gross_revenue": "DECIMAL(38,9)",
+   "total_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "int_products__sales": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 17212256,
+  "wall_s": 7.55,
+  "types": {
+   "product_id": "BIGINT",
+   "gross_margin": "DECIMAL(38,9)",
+   "gross_revenue": "DECIMAL(38,9)",
+   "total_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "int_users__lifetime_orders": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 18216616,
+  "wall_s": 17.1,
+  "types": {
+   "user_id": "BIGINT",
+   "lifetime_gross_margin": "DECIMAL(38,9)",
+   "lifetime_gross_revenue": "DECIMAL(38,9)",
+   "lifetime_total_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "mart_cohort_retention": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 1.91,
+  "types": {
+   "cohort_activity_key": "VARCHAR",
+   "revenue": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "mart_customer_summary": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.51,
+  "types": {
+   "user_id": "BIGINT",
+   "average_order_value": "DECIMAL(38,9)",
+   "lifetime_gross_margin": "DECIMAL(38,9)",
+   "lifetime_gross_revenue": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "mart_daily_revenue": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.05,
+  "types": {
+   "revenue_date": "DATE",
+   "average_order_value": "DECIMAL(38,9)",
+   "gross_margin": "DECIMAL(38,9)",
+   "gross_revenue": "DECIMAL(38,9)",
+   "total_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "mart_product_performance": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.3,
+  "types": {
+   "product_id": "BIGINT",
+   "gross_margin": "DECIMAL(38,9)",
+   "gross_margin_rate": "DOUBLE",
+   "gross_revenue": "DECIMAL(38,9)",
+   "retail_price": "DECIMAL(38,9)",
+   "total_cost": "DECIMAL(38,9)",
+   "unit_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "stg_thelook__inventory_items": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 11813424,
+  "wall_s": 38.31,
+  "types": {
+   "inventory_item_id": "BIGINT",
+   "cost": "DECIMAL(38,9)",
+   "product_retail_price": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "stg_thelook__order_items": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 2919728,
+  "wall_s": 13.06,
+  "types": {
+   "order_item_id": "BIGINT",
+   "sale_price": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "stg_thelook__products": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 698880,
+  "wall_s": 4.79,
+  "types": {
+   "product_id": "BIGINT",
+   "cost": "DECIMAL(38,9)",
+   "retail_price": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ }
+}

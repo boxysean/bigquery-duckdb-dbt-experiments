@@ -1,0 +1,61 @@
+# v1.5.5 (Variegata) d8cdaa33fd
+
+## bigquery_scan on a VIEW (exit 1)
+SELECT count(*) FROM bigquery_scan('coreychimpbot.experiments_rows.stg_thelook__products', billing_project := 'coreychimpbot');
+Binder Error: Error while creating read session: Permanent error, with a last message of request failed: non-table entities cannot be read with the storage API
+
+## bigquery_query on the same VIEW, aggregated directly, every column used (exit 1)
+SELECT count(*) AS n, count(product_id) AS ids, any_value(typeof(cost)) AS cost_type FROM bigquery_query('coreychimpbot', 'SELECT product_id, cost FROM `coreychimpbot.experiments_rows.stg_thelook__products`', billing_project := 'coreychimpbot', use_rest_api := true);
+INTERNAL Error: Attempted to access index 1 within vector of size 1
+Stack Trace:
+This error signals an assertion failure within DuckDB. This usually occurs due to unexpected conditions or errors in the program's logic.
+For more information, see https://duckdb.org/docs/stable/dev/internal_errors
+(27 stack frames omitted)
+
+## bigquery_query, only the SECOND of two columns used (exit 1)
+SELECT count(*) AS n, any_value(typeof(cost)) AS cost_type FROM bigquery_query('coreychimpbot', 'SELECT product_id, cost FROM `coreychimpbot.experiments_rows.stg_thelook__products`', billing_project := 'coreychimpbot', use_rest_api := true);
+INTERNAL Error: Attempted to access index 1 within vector of size 1
+Stack Trace:
+This error signals an assertion failure within DuckDB. This usually occurs due to unexpected conditions or errors in the program's logic.
+For more information, see https://duckdb.org/docs/stable/dev/internal_errors
+(27 stack frames omitted)
+
+## bigquery_query, only the FIRST of two columns used (exit 1)
+SELECT count(*) AS n, any_value(typeof(product_id)) AS id_type FROM bigquery_query('coreychimpbot', 'SELECT product_id, cost FROM `coreychimpbot.experiments_rows.stg_thelook__products`', billing_project := 'coreychimpbot', use_rest_api := true);
+INTERNAL Error: Attempted to access index 1 within vector of size 1
+Stack Trace:
+This error signals an assertion failure within DuckDB. This usually occurs due to unexpected conditions or errors in the program's logic.
+For more information, see https://duckdb.org/docs/stable/dev/internal_errors
+(27 stack frames omitted)
+
+## bigquery_query, no column used (exit 1)
+SELECT count(*) AS n FROM bigquery_query('coreychimpbot', 'SELECT product_id, cost FROM `coreychimpbot.experiments_rows.stg_thelook__products`', billing_project := 'coreychimpbot', use_rest_api := true);
+INTERNAL Error: Attempted to access index 1 within vector of size 1
+Stack Trace:
+This error signals an assertion failure within DuckDB. This usually occurs due to unexpected conditions or errors in the program's logic.
+For more information, see https://duckdb.org/docs/stable/dev/internal_errors
+(27 stack frames omitted)
+
+## bigquery_query, plain projection of both columns (exit 0)
+SELECT product_id, cost, typeof(cost) AS cost_type FROM bigquery_query('coreychimpbot', 'SELECT product_id, cost FROM `coreychimpbot.experiments_rows.stg_thelook__products`', billing_project := 'coreychimpbot', use_rest_api := true) ORDER BY product_id LIMIT 2;
+product_id,cost,cost_type
+1,27.047999916,"DECIMAL(38,9)"
+2,36.626499919,"DECIMAL(38,9)"
+
+## bigquery_query materialised first (row_join.py's shape), then aggregated (exit 0)
+CREATE TEMP TABLE v AS SELECT product_id, cost FROM bigquery_query('coreychimpbot', 'SELECT product_id, cost FROM `coreychimpbot.experiments_rows.stg_thelook__products`', billing_project := 'coreychimpbot', use_rest_api := true); SELECT count(*) AS n, any_value(typeof(cost)) AS cost_type FROM v;
+n,cost_type
+29120,"DECIMAL(38,9)"
+
+## bigquery_query aggregated through a subquery (exit 1)
+SELECT count(*) AS n FROM (SELECT product_id, cost FROM bigquery_query('coreychimpbot', 'SELECT product_id, cost FROM `coreychimpbot.experiments_rows.stg_thelook__products`', billing_project := 'coreychimpbot', use_rest_api := true));
+INTERNAL Error: Attempted to access index 1 within vector of size 1
+Stack Trace:
+This error signals an assertion failure within DuckDB. This usually occurs due to unexpected conditions or errors in the program's logic.
+For more information, see https://duckdb.org/docs/stable/dev/internal_errors
+(16 stack frames omitted)
+
+## bigquery_scan on a TABLE (exit 0)
+SELECT count(*) AS n, any_value(typeof(unit_cost)) AS unit_cost_type FROM bigquery_scan('coreychimpbot.experiments_rows.dim_products', billing_project := 'coreychimpbot');
+n,unit_cost_type
+29120,"DECIMAL(38,9)"

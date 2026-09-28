@@ -1,0 +1,435 @@
+{
+ "model": "mart_customer_summary",
+ "key": "user_id",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 100000,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 100000,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 100000,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 100000,
+  "matched": 100000,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.51,
+  "types": {
+   "user_id": "BIGINT",
+   "average_order_value": "DECIMAL(38,9)",
+   "lifetime_gross_margin": "DECIMAL(38,9)",
+   "lifetime_gross_revenue": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "mart_customer_summary",
+   "column": "average_order_value",
+   "key": "user_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 100000,
+   "cents_differ": 5412,
+   "raw_differ": 5412,
+   "identical": 94588,
+   "A": 0,
+   "B": 5412,
+   "C": 0,
+   "l9_equals_bq": 99993,
+   "null_both": 19971,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.01",
+     "n": 4970
+    },
+    {
+     "delta": "0.00",
+     "n": 74617
+    },
+    {
+     "delta": "0.01",
+     "n": 442
+    },
+    {
+     "delta": null,
+     "n": 19971
+    }
+   ],
+   "examples": [
+    {
+     "key": "29",
+     "l2": "91.00",
+     "l9": "90.990000000",
+     "bq": "90.990000000",
+     "bucket": "B"
+    },
+    {
+     "key": "79",
+     "l2": "212.47",
+     "l9": "212.460000000",
+     "bq": "212.460000000",
+     "bucket": "B"
+    },
+    {
+     "key": "104",
+     "l2": "112.23",
+     "l9": "112.220000000",
+     "bq": "112.220000000",
+     "bucket": "B"
+    },
+    {
+     "key": "113",
+     "l2": "42.73",
+     "l9": "42.720000000",
+     "bq": "42.720000000",
+     "bucket": "B"
+    },
+    {
+     "key": "120",
+     "l2": "107.78",
+     "l9": "107.770000000",
+     "bq": "107.770000000",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/marts/mart_customer_summary.sql:39: cast(round(users.lifetime_gross_revenue / nullif(users.lifetime_orders, 0), 2) as {{ money_type() }})                                      as average_order_value,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 7,
+    "by_bucket": {
+     "identical": 7,
+     "A": 0,
+     "B": 0,
+     "C": 0
+    },
+    "detail": [
+     {
+      "key": "34544",
+      "numerator_l9": "191.249999999",
+      "numerator_bq": "191.249999999",
+      "numerator_l2": "191.25",
+      "l2_double_quotient": "95.625",
+      "denominator": "2",
+      "duckdb_double_quotient": "95.6249999995",
+      "numeric_quotient_9dp": "95.625000000",
+      "duckdb_cents": "95.62",
+      "numeric_rule_cents": "95.63",
+      "l2": "95.63",
+      "l9": "95.620000000",
+      "bq": "95.630000000",
+      "division_rule_explains": true
+     },
+     {
+      "key": "51071",
+      "numerator_l9": "669.499999999",
+      "numerator_bq": "669.499999999",
+      "numerator_l2": "669.50",
+      "l2_double_quotient": "167.375",
+      "denominator": "4",
+      "duckdb_double_quotient": "167.37499999975",
+      "numeric_quotient_9dp": "167.375000000",
+      "duckdb_cents": "167.37",
+      "numeric_rule_cents": "167.38",
+      "l2": "167.38",
+      "l9": "167.370000000",
+      "bq": "167.380000000",
+      "division_rule_explains": true
+     },
+     {
+      "key": "55516",
+      "numerator_l9": "304.249999999",
+      "numerator_bq": "304.249999999",
+      "numerator_l2": "304.25",
+      "l2_double_quotient": "152.125",
+      "denominator": "2",
+      "duckdb_double_quotient": "152.1249999995",
+      "numeric_quotient_9dp": "152.125000000",
+      "duckdb_cents": "152.12",
+      "numeric_rule_cents": "152.13",
+      "l2": "152.13",
+      "l9": "152.120000000",
+      "bq": "152.130000000",
+      "division_rule_explains": true
+     },
+     {
+      "key": "61817",
+      "numerator_l9": "136.499999999",
+      "numerator_bq": "136.499999999",
+      "numerator_l2": "136.50",
+      "l2_double_quotient": "34.125",
+      "denominator": "4",
+      "duckdb_double_quotient": "34.12499999975",
+      "numeric_quotient_9dp": "34.125000000",
+      "duckdb_cents": "34.12",
+      "numeric_rule_cents": "34.13",
+      "l2": "34.13",
+      "l9": "34.120000000",
+      "bq": "34.130000000",
+      "division_rule_explains": true
+     },
+     {
+      "key": "66722",
+      "numerator_l9": "296.499999999",
+      "numerator_bq": "296.499999999",
+      "numerator_l2": "296.50",
+      "l2_double_quotient": "74.125",
+      "denominator": "4",
+      "duckdb_double_quotient": "74.12499999975",
+      "numeric_quotient_9dp": "74.125000000",
+      "duckdb_cents": "74.12",
+      "numeric_rule_cents": "74.13",
+      "l2": "74.13",
+      "l9": "74.120000000",
+      "bq": "74.130000000",
+      "division_rule_explains": true
+     },
+     {
+      "key": "69968",
+      "numerator_l9": "212.749999999",
+      "numerator_bq": "212.749999999",
+      "numerator_l2": "212.75",
+      "l2_double_quotient": "106.375",
+      "denominator": "2",
+      "duckdb_double_quotient": "106.3749999995",
+      "numeric_quotient_9dp": "106.375000000",
+      "duckdb_cents": "106.37",
+      "numeric_rule_cents": "106.38",
+      "l2": "106.38",
+      "l9": "106.370000000",
+      "bq": "106.380000000",
+      "division_rule_explains": true
+     },
+     {
+      "key": "96501",
+      "numerator_l9": "289.499999999",
+      "numerator_bq": "289.499999999",
+      "numerator_l2": "289.50",
+      "l2_double_quotient": "72.375",
+      "denominator": "4",
+      "duckdb_double_quotient": "72.37499999975",
+      "numeric_quotient_9dp": "72.375000000",
+      "duckdb_cents": "72.37",
+      "numeric_rule_cents": "72.38",
+      "l2": "72.38",
+      "l9": "72.370000000",
+      "bq": "72.380000000",
+      "division_rule_explains": true
+     }
+    ]
+   }
+  },
+  {
+   "model": "mart_customer_summary",
+   "column": "lifetime_gross_margin",
+   "key": "user_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 100000,
+   "cents_differ": 15535,
+   "raw_differ": 79935,
+   "identical": 20065,
+   "A": 64400,
+   "B": 15535,
+   "C": 0,
+   "l9_equals_bq": 100000,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.03",
+     "n": 1
+    },
+    {
+     "delta": "-0.02",
+     "n": 141
+    },
+    {
+     "delta": "-0.01",
+     "n": 6872
+    },
+    {
+     "delta": "0.00",
+     "n": 84465
+    },
+    {
+     "delta": "0.01",
+     "n": 8259
+    },
+    {
+     "delta": "0.02",
+     "n": 258
+    },
+    {
+     "delta": "0.03",
+     "n": 4
+    }
+   ],
+   "examples": [
+    {
+     "key": "2",
+     "l2": "143.55",
+     "l9": "143.538069680",
+     "bq": "143.538069680",
+     "bucket": "B"
+    },
+    {
+     "key": "4",
+     "l2": "134.97",
+     "l9": "134.957097914",
+     "bq": "134.957097914",
+     "bucket": "B"
+    },
+    {
+     "key": "5",
+     "l2": "133.43",
+     "l9": "133.419457174",
+     "bq": "133.419457174",
+     "bucket": "B"
+    },
+    {
+     "key": "9",
+     "l2": "122.34",
+     "l9": "122.350826847",
+     "bq": "122.350826847",
+     "bucket": "B"
+    },
+    {
+     "key": "14",
+     "l2": "142.60",
+     "l9": "142.589841029",
+     "bq": "142.589841029",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/marts/mart_customer_summary.sql:38: users.lifetime_gross_margin,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "mart_customer_summary",
+   "column": "lifetime_gross_revenue",
+   "key": "user_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 100000,
+   "cents_differ": 0,
+   "raw_differ": 58118,
+   "identical": 41882,
+   "A": 58118,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 100000,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 100000
+    }
+   ],
+   "examples": [
+    {
+     "key": "1",
+     "l2": "235.97",
+     "l9": "235.970001220",
+     "bq": "235.970001220",
+     "bucket": "A"
+    },
+    {
+     "key": "2",
+     "l2": "271.83",
+     "l9": "271.829998970",
+     "bq": "271.829998970",
+     "bucket": "A"
+    },
+    {
+     "key": "3",
+     "l2": "9.95",
+     "l9": "9.949999809",
+     "bq": "9.949999809",
+     "bucket": "A"
+    },
+    {
+     "key": "4",
+     "l2": "288.00",
+     "l9": "287.999996186",
+     "bq": "287.999996186",
+     "bucket": "A"
+    },
+    {
+     "key": "5",
+     "l2": "239.94",
+     "l9": "239.939994812",
+     "bq": "239.939994812",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/marts/mart_customer_summary.sql:37: users.lifetime_gross_revenue,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 156535,
+  "A": 122518,
+  "B": 20947,
+  "C": 0
+ }
+}

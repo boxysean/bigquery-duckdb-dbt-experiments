@@ -1,0 +1,83 @@
+row_join.py  L2 dev.duckdb  BQ coreychimpbot.experiments_rows
+  55 money columns in 21 models (54 DECIMAL(18,2) + gross_margin_rate)
+of-record recomputation (reported, not a gate)
+  of-record: BigQuery 57/99, DuckDB 9/99 recorded values reproduce
+gate source: dev.duckdb thelook_ecommerce = bigquery-public-data.thelook_ecommerce now
+  distribution_centers   rows bq       10 duckdb       10  money metrics -
+  products               rows bq    29120 duckdb    29120  money metrics True
+  users                  rows bq   100000 duckdb   100000  money metrics -
+  inventory_items        rows bq   492226 duckdb   492226  money metrics True
+  orders                 rows bq   125545 duckdb   125545  money metrics -
+  order_items            rows bq   182483 duckdb   182483  money metrics True
+  events                 rows bq  2436872 duckdb  2436872  money metrics -
+gate rows: L2 = BigQuery (REST) = fresh record, per model
+  dim_distribution_centers           L2      10  BQ      10  fresh {'duckdb': 10, 'bigquery': 10}  ok
+  dim_products                       L2   29120  BQ   29120  fresh {'duckdb': 29120, 'bigquery': 29120}  ok
+  dim_users                          L2  100000  BQ  100000  fresh {'duckdb': 100000, 'bigquery': 100000}  ok
+  fct_inventory_items                L2  492226  BQ  492226  fresh {'duckdb': 492226, 'bigquery': 492226}  ok
+  fct_order_items                    L2  182483  BQ  182483  fresh {'duckdb': 182483, 'bigquery': 182483}  ok
+  fct_orders                         L2  125545  BQ  125545  fresh {'duckdb': 125545, 'bigquery': 125545}  ok
+  int_cohorts__user_months           L2  121219  BQ  121219  fresh {'duckdb': 121219, 'bigquery': 121219}  ok
+  int_inventory__by_product_center   L2   29054  BQ   29054  fresh {'duckdb': 29054, 'bigquery': 29054}  ok
+  int_inventory_items__enriched      L2  492226  BQ  492226  fresh {'duckdb': 492226, 'bigquery': 492226}  ok
+  int_order_items__enriched          L2  182483  BQ  182483  fresh {'duckdb': 182483}  ok
+  int_orders__daily                  L2    2773  BQ    2773  fresh {'duckdb': 2773, 'bigquery': 2773}  ok
+  int_orders__item_rollup            L2  125545  BQ  125545  fresh {'duckdb': 125545, 'bigquery': 125545}  ok
+  int_products__sales                L2   29120  BQ   29120  fresh {'duckdb': 29120, 'bigquery': 29120}  ok
+  int_users__lifetime_orders         L2  100000  BQ  100000  fresh {'duckdb': 100000, 'bigquery': 100000}  ok
+  mart_cohort_retention              L2    3871  BQ    3871  fresh {'duckdb': 3871, 'bigquery': 3871}  ok
+  mart_customer_summary              L2  100000  BQ  100000  fresh {'duckdb': 100000, 'bigquery': 100000}  ok
+  mart_daily_revenue                 L2    2773  BQ    2773  fresh {'duckdb': 2773, 'bigquery': 2773}  ok
+  mart_product_performance           L2   29120  BQ   29120  fresh {'duckdb': 29120, 'bigquery': 29120}  ok
+  stg_thelook__inventory_items       L2  492226  BQ  492226  fresh {'duckdb': 492226, 'bigquery': 492226}  ok
+  stg_thelook__order_items           L2  182483  BQ  182483  fresh {'duckdb': 182483, 'bigquery': 182483}  ok
+  stg_thelook__products              L2   29120  BQ   29120  fresh {'duckdb': 29120, 'bigquery': 29120}  ok
+L9: reusing target/row_join (sources identical, money9 has all models)
+  pull dim_distribution_centers           TABLE bigquery_scan     2.04 s dry-run None B  transfer equal
+  pull dim_products                       TABLE bigquery_scan     2.31 s dry-run None B  transfer equal
+  pull dim_users                          TABLE bigquery_scan     2.35 s dry-run None B  transfer equal
+  pull fct_inventory_items                TABLE bigquery_scan     2.59 s dry-run None B  transfer equal
+  pull fct_order_items                    TABLE bigquery_scan     2.46 s dry-run None B  transfer equal
+  pull fct_orders                         TABLE bigquery_scan     2.62 s dry-run None B  transfer equal
+  pull int_cohorts__user_months           VIEW  bigquery_query   18.53 s dry-run 15283168 B  transfer equal
+  pull int_inventory__by_product_center   VIEW  bigquery_query    7.57 s dry-run 17211096 B  transfer equal
+  pull int_inventory_items__enriched      VIEW  bigquery_query   38.24 s dry-run 11813424 B  transfer equal
+  pull int_order_items__enriched          VIEW  bigquery_query   26.63 s dry-run 18672120 B  transfer equal
+  pull int_orders__daily                  VIEW  bigquery_query    2.69 s dry-run 18216616 B  transfer equal
+  pull int_orders__item_rollup            VIEW  bigquery_query   20.57 s dry-run 17212256 B  transfer equal
+  pull int_products__sales                VIEW  bigquery_query    7.55 s dry-run 17212256 B  transfer equal
+  pull int_users__lifetime_orders         VIEW  bigquery_query   17.10 s dry-run 18216616 B  transfer equal
+  pull mart_cohort_retention              TABLE bigquery_scan     1.91 s dry-run None B  transfer equal
+  pull mart_customer_summary              TABLE bigquery_scan     2.51 s dry-run None B  transfer equal
+  pull mart_daily_revenue                 TABLE bigquery_scan     2.05 s dry-run None B  transfer equal
+  pull mart_product_performance           TABLE bigquery_scan     2.30 s dry-run None B  transfer equal
+  pull stg_thelook__inventory_items       VIEW  bigquery_query   38.31 s dry-run 11813424 B  transfer equal
+  pull stg_thelook__order_items           VIEW  bigquery_query   13.06 s dry-run 2919728 B  transfer equal
+  pull stg_thelook__products              VIEW  bigquery_query    4.79 s dry-run 698880 B  transfer equal
+  join dim_distribution_centers           key distribution_center_id   rows 10/10/10 unmatched 0 join ok  identical 0 A 0 B 10 C 0  invariants hold
+  join dim_products                       key product_id               rows 29120/29120/29120 unmatched 0 join ok  identical 27161 A 68211 B 21108 C 0  invariants hold
+  join dim_users                          key user_id                  rows 100000/100000/100000 unmatched 0 join ok  identical 61947 A 122518 B 15535 C 0  invariants hold
+  join fct_inventory_items                key inventory_item_id        rows 492226/492226/492226 unmatched 0 join ok  identical 229012 A 755405 B 35 C 0  invariants hold
+  join fct_order_items                    key inventory_item_id        rows 182483/182483/182483 unmatched 0 join ok  identical 169844 A 559542 B 546 C 0  invariants hold
+  join fct_orders                         key order_id                 rows 125545/125545/125545 unmatched 0 join ok  identical 47350 A 307295 B 21990 C 0  invariants hold
+  join int_cohorts__user_months           key user_month_key           rows 121219/121219/121219 unmatched 0 join ok  identical 44341 A 76878 B 0 C 0  invariants hold
+  join int_inventory__by_product_center   key product_center_key       rows 29054/29054/29054 unmatched 0 join ok  identical 13499 A 22046 B 22563 C 0  invariants hold
+  join int_inventory_items__enriched      key inventory_item_id        rows 492226/492226/492226 unmatched 0 join ok  identical 229012 A 755405 B 35 C 0  invariants hold
+  join int_order_items__enriched          key inventory_item_id        rows 182483/182483/182483 unmatched 0 join ok  identical 85430 A 461473 B 546 C 0  invariants hold
+  join int_orders__daily                  key order_date               rows 2773/2773/2773 unmatched 0 join ok  identical 41 A 4029 B 4249 C 0  invariants hold
+  join int_orders__item_rollup            key order_id                 rows 125545/125545/125545 unmatched 0 join ok  identical 47350 A 307295 B 21990 C 0  invariants hold
+  join int_products__sales                key product_id               rows 29120/29120/29120 unmatched 0 join ok  identical 13782 A 31364 B 42214 C 0  invariants hold
+  join int_users__lifetime_orders         key user_id                  rows 100000/100000/100000 unmatched 0 join ok  identical 82012 A 187042 B 30946 C 0  invariants hold
+  join mart_cohort_retention              key cohort_activity_key      rows 3871/3871/3871 unmatched 0 join ok  identical 251 A 3620 B 0 C 0  invariants hold
+  join mart_customer_summary              key user_id                  rows 100000/100000/100000 unmatched 0 join ok  identical 156535 A 122518 B 20947 C 0  invariants hold
+  join mart_daily_revenue                 key revenue_date             rows 2773/2773/2773 unmatched 0 join ok  identical 2772 A 4029 B 4291 C 0  invariants hold
+  join mart_product_performance           key product_id               rows 29120/29120/29120 unmatched 0 join ok  identical 27469 A 80466 B 66785 C 0  invariants hold
+  join stg_thelook__inventory_items       key inventory_item_id        rows 492226/492226/492226 unmatched 0 join ok  identical 229012 A 755405 B 35 C 0  invariants hold
+  join stg_thelook__order_items           key order_item_id            rows 182483/182483/182483 unmatched 0 join ok  identical 84414 A 98069 B 0 C 0  invariants hold
+  join stg_thelook__products              key product_id               rows 29120/29120/29120 unmatched 0 join ok  identical 13530 A 44709 B 1 C 0  invariants hold
+  base products.cost                      1 of 29120 change cent  6.644999999552965 (1 rows: 6.64 vs 6.65)
+  base products.retail_price              0 of 29120 change cent  None
+  base order_items.sale_price             0 of 182483 change cent  None
+  base inventory_items.cost               35 of 492226 change cent  6.644999999552965 (35 rows: 6.64 vs 6.65)
+  base inventory_items.product_retail_price 0 of 492226 change cent  None
+totals {'rows_compared': 6605909, 'identical': 1564764, 'A': 4767319, 'B': 273826, 'C': 0, 'cents_differ': 273826, 'l9_equals_bq': 6605902, 'null_both': 20037, 'null_one_side': 0, 'columns': 55}; genuinely different rows 0; emulation imperfect rows 0

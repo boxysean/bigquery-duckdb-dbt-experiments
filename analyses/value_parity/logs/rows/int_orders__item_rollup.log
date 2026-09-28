@@ -1,0 +1,313 @@
+{
+ "model": "int_orders__item_rollup",
+ "key": "order_id",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 125545,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 125545,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 125545,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 125545,
+  "matched": 125545,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 17212256,
+  "wall_s": 20.57,
+  "types": {
+   "order_id": "BIGINT",
+   "gross_margin": "DECIMAL(38,9)",
+   "gross_revenue": "DECIMAL(38,9)",
+   "total_cost": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "int_orders__item_rollup",
+   "column": "gross_margin",
+   "key": "order_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 125545,
+   "cents_differ": 11127,
+   "raw_differ": 125302,
+   "identical": 243,
+   "A": 114175,
+   "B": 11127,
+   "C": 0,
+   "l9_equals_bq": 125545,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.02",
+     "n": 14
+    },
+    {
+     "delta": "-0.01",
+     "n": 4995
+    },
+    {
+     "delta": "0.00",
+     "n": 114418
+    },
+    {
+     "delta": "0.01",
+     "n": 6084
+    },
+    {
+     "delta": "0.02",
+     "n": 34
+    }
+   ],
+   "examples": [
+    {
+     "key": "7",
+     "l2": "54.02",
+     "l9": "54.014728691",
+     "bq": "54.014728691",
+     "bucket": "B"
+    },
+    {
+     "key": "12",
+     "l2": "96.70",
+     "l9": "96.693958653",
+     "bq": "96.693958653",
+     "bucket": "B"
+    },
+    {
+     "key": "16",
+     "l2": "122.34",
+     "l9": "122.350826847",
+     "bq": "122.350826847",
+     "bucket": "B"
+    },
+    {
+     "key": "20",
+     "l2": "142.60",
+     "l9": "142.589841029",
+     "bq": "142.589841029",
+     "bucket": "B"
+    },
+    {
+     "key": "31",
+     "l2": "48.37",
+     "l9": "48.376861034",
+     "bq": "48.376861034",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_orders__item_rollup.sql:34: cast(coalesce(item_totals.gross_margin, 0) as {{ money_type() }})       as gross_margin,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "int_orders__item_rollup",
+   "column": "gross_revenue",
+   "key": "order_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 125545,
+   "cents_differ": 0,
+   "raw_differ": 78681,
+   "identical": 46864,
+   "A": 78681,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 125545,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 125545
+    }
+   ],
+   "examples": [
+    {
+     "key": "1",
+     "l2": "235.97",
+     "l9": "235.970001220",
+     "bq": "235.970001220",
+     "bucket": "A"
+    },
+    {
+     "key": "2",
+     "l2": "49.94",
+     "l9": "49.939998627",
+     "bq": "49.939998627",
+     "bucket": "A"
+    },
+    {
+     "key": "3",
+     "l2": "39.95",
+     "l9": "39.950000763",
+     "bq": "39.950000763",
+     "bucket": "A"
+    },
+    {
+     "key": "4",
+     "l2": "21.99",
+     "l9": "21.989999771",
+     "bq": "21.989999771",
+     "bucket": "A"
+    },
+    {
+     "key": "5",
+     "l2": "159.95",
+     "l9": "159.949999809",
+     "bq": "159.949999809",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_orders__item_rollup.sql:32: cast(coalesce(item_totals.gross_revenue, 0) as {{ money_type() }})      as gross_revenue,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "int_orders__item_rollup",
+   "column": "total_cost",
+   "key": "order_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 125545,
+   "cents_differ": 10863,
+   "raw_differ": 125302,
+   "identical": 243,
+   "A": 114439,
+   "B": 10863,
+   "C": 0,
+   "l9_equals_bq": 125545,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-0.02",
+     "n": 34
+    },
+    {
+     "delta": "-0.01",
+     "n": 5944
+    },
+    {
+     "delta": "0.00",
+     "n": 114682
+    },
+    {
+     "delta": "0.01",
+     "n": 4871
+    },
+    {
+     "delta": "0.02",
+     "n": 14
+    }
+   ],
+   "examples": [
+    {
+     "key": "7",
+     "l2": "45.96",
+     "l9": "45.965268944",
+     "bq": "45.965268944",
+     "bucket": "B"
+    },
+    {
+     "key": "12",
+     "l2": "68.29",
+     "l9": "68.296039211",
+     "bq": "68.296039211",
+     "bucket": "B"
+    },
+    {
+     "key": "16",
+     "l2": "93.51",
+     "l9": "93.499167812",
+     "bq": "93.499167812",
+     "bucket": "B"
+    },
+    {
+     "key": "20",
+     "l2": "158.33",
+     "l9": "158.340161183",
+     "bq": "158.340161183",
+     "bucket": "B"
+    },
+    {
+     "key": "31",
+     "l2": "45.83",
+     "l9": "45.823140682",
+     "bq": "45.823140682",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_orders__item_rollup.sql:33: cast(coalesce(item_totals.total_cost, 0) as {{ money_type() }})         as total_cost,",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 47350,
+  "A": 307295,
+  "B": 21990,
+  "C": 0
+ }
+}

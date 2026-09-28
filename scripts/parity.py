@@ -422,16 +422,37 @@ class BigQueryLeg:
             self._token = access_token(self.key)
         return self._token
 
-    def query(self, sql: str):
-        """(schema fields, rows as list-of-dict-of-text)."""
-        data = json.dumps({"query": sql, "useLegacySql": False,
-                           "maximumBytesBilled": str(MAX_BYTES)}).encode()
-        req = urllib.request.Request(BQ_API.format(project=self.project), data=data)
+    def query(self, sql: str, extra: dict | None = None):
+        """(schema fields, rows as list-of-dict-of-text).
+
+        jobs.query waits at most its timeoutMs (default 10 s) and then answers
+        `jobComplete: false` with no rows; the job keeps running. Measured on
+        2026-09-28: the uncached metrics query of int_order_items__enriched took 9.5 s,
+        and one run over the limit made measure_of's rows[0] raise "list index out of
+        range". So an incomplete answer is polled with getQueryResults until it is done.
+        `extra` merges into the request body (tests force timeoutMs=1 with it).
+        """
+        body = {"query": sql, "useLegacySql": False, "maximumBytesBilled": str(MAX_BYTES)}
+        body.update(extra or {})
+        req = urllib.request.Request(BQ_API.format(project=self.project),
+                                     data=json.dumps(body).encode())
         req.add_header("Authorization", "Bearer " + self.token)
         req.add_header("Content-Type", "application/json")
         try:
             with urllib.request.urlopen(req, timeout=900) as resp:
                 out = json.loads(resp.read().decode())
+            deadline = time.time() + 900
+            while not out.get("jobComplete", True):
+                if time.time() > deadline:
+                    raise RuntimeError("BigQuery job did not complete within 900 s")
+                ref = out["jobReference"]
+                poll = urllib.request.Request(
+                    f"{BQ_API.format(project=self.project)}/{ref['jobId']}?"
+                    + urllib.parse.urlencode({"location": ref.get("location", ""),
+                                              "timeoutMs": 60000}))
+                poll.add_header("Authorization", "Bearer " + self.token)
+                with urllib.request.urlopen(poll, timeout=900) as resp:
+                    out = {**json.loads(resp.read().decode()), "jobReference": ref}
         except urllib.error.HTTPError as e:
             raise RuntimeError(f"BigQuery HTTP {e.code}: {e.read().decode()[:600]}")
         fields = out.get("schema", {}).get("fields", [])

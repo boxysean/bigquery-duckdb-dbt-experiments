@@ -1,0 +1,125 @@
+{
+ "model": "int_cohorts__user_months",
+ "key": "user_month_key",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 121219,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 121219,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 121219,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 121219,
+  "matched": 121219,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 15283168,
+  "wall_s": 18.53,
+  "types": {
+   "user_month_key": "VARCHAR",
+   "revenue": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "int_cohorts__user_months",
+   "column": "revenue",
+   "key": "user_month_key",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 121219,
+   "cents_differ": 0,
+   "raw_differ": 76878,
+   "identical": 44341,
+   "A": 76878,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 121219,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 121219
+    }
+   ],
+   "examples": [
+    {
+     "key": "0000ae018ce1ba062c15053d4bcffdee",
+     "l2": "78.13",
+     "l9": "78.129997253",
+     "bq": "78.129997253",
+     "bucket": "A"
+    },
+    {
+     "key": "0001429ba0bb4c4d7eb8283e3e420ba1",
+     "l2": "44.99",
+     "l9": "44.990001678",
+     "bq": "44.990001678",
+     "bucket": "A"
+    },
+    {
+     "key": "0002ff7fa54e373c78e9f26a63476b90",
+     "l2": "163.54",
+     "l9": "163.539997101",
+     "bq": "163.539997101",
+     "bucket": "A"
+    },
+    {
+     "key": "00045553e28a033a949b64814803826d",
+     "l2": "34.82",
+     "l9": "34.819999695",
+     "bq": "34.819999695",
+     "bucket": "A"
+    },
+    {
+     "key": "00066f27790caaf76beea917479e4d5a",
+     "l2": "13.79",
+     "l9": "13.789999962",
+     "bq": "13.789999962",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/intermediate/int_cohorts__user_months.sql:43: cast(user_months.revenue as {{ money_type() }})     as revenue",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 44341,
+  "A": 76878,
+  "B": 0,
+  "C": 0
+ }
+}

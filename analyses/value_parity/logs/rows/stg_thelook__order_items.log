@@ -1,0 +1,131 @@
+{
+ "model": "stg_thelook__order_items",
+ "key": "order_item_id",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 182483,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 182483,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 182483,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 182483,
+  "matched": 182483,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 2919728,
+  "wall_s": 13.06,
+  "types": {
+   "order_item_id": "BIGINT",
+   "sale_price": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "stg_thelook__order_items",
+   "column": "sale_price",
+   "key": "order_item_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 182483,
+   "cents_differ": 0,
+   "raw_differ": 98069,
+   "identical": 84414,
+   "A": 98069,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 182483,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 182483
+    }
+   ],
+   "examples": [
+    {
+     "key": "1",
+     "l2": "44.98",
+     "l9": "44.979999542",
+     "bq": "44.979999542",
+     "bucket": "A"
+    },
+    {
+     "key": "2",
+     "l2": "34.99",
+     "l9": "34.990001678",
+     "bq": "34.990001678",
+     "bucket": "A"
+    },
+    {
+     "key": "5",
+     "l2": "49.94",
+     "l9": "49.939998627",
+     "bq": "49.939998627",
+     "bucket": "A"
+    },
+    {
+     "key": "6",
+     "l2": "39.95",
+     "l9": "39.950000763",
+     "bq": "39.950000763",
+     "bucket": "A"
+    },
+    {
+     "key": "7",
+     "l2": "21.99",
+     "l9": "21.989999771",
+     "bq": "21.989999771",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "direct cast",
+    "source": "thelook_ecommerce.order_items.sale_price",
+    "sql_line": "models/staging/stg_thelook__order_items.sql:20: cast(sale_price as {{ money_type() }})    as sale_price",
+    "lineage_check": {
+     "n": 182483,
+     "l2_not_cast": 0,
+     "l9_not_cast": 0,
+     "bq_not_cast9": 0
+    },
+    "c_rows": [],
+    "base_explains": 0,
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 84414,
+  "A": 98069,
+  "B": 0,
+  "C": 0
+ }
+}

@@ -1,0 +1,191 @@
+{
+ "model": "stg_thelook__products",
+ "key": "product_id",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 29120,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 29120,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 29120,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 29120,
+  "matched": 29120,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_query",
+  "relation_type": "VIEW",
+  "dry_run_bytes": 698880,
+  "wall_s": 4.79,
+  "types": {
+   "product_id": "BIGINT",
+   "cost": "DECIMAL(38,9)",
+   "retail_price": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "stg_thelook__products",
+   "column": "cost",
+   "key": "product_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 29120,
+   "cents_differ": 1,
+   "raw_differ": 29035,
+   "identical": 85,
+   "A": 29034,
+   "B": 1,
+   "C": 0,
+   "l9_equals_bq": 29120,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 29119
+    },
+    {
+     "delta": "0.01",
+     "n": 1
+    }
+   ],
+   "examples": [
+    {
+     "key": "9500",
+     "l2": "6.64",
+     "l9": "6.645000000",
+     "bq": "6.645000000",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "direct cast",
+    "source": "thelook_ecommerce.products.cost",
+    "sql_line": "models/staging/stg_thelook__products.sql:11: cast(cost as {{ money_type() }})            as cost,",
+    "lineage_check": {
+     "n": 29120,
+     "l2_not_cast": 0,
+     "l9_not_cast": 0,
+     "bq_not_cast9": 0
+    },
+    "c_rows": [],
+    "base_explains": 0,
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  },
+  {
+   "model": "stg_thelook__products",
+   "column": "retail_price",
+   "key": "product_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 29120,
+   "cents_differ": 0,
+   "raw_differ": 15675,
+   "identical": 13445,
+   "A": 15675,
+   "B": 0,
+   "C": 0,
+   "l9_equals_bq": 29120,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "0.00",
+     "n": 29120
+    }
+   ],
+   "examples": [
+    {
+     "key": "13",
+     "l2": "76.70",
+     "l9": "76.699996948",
+     "bq": "76.699996948",
+     "bucket": "A"
+    },
+    {
+     "key": "16",
+     "l2": "32.95",
+     "l9": "32.950000763",
+     "bq": "32.950000763",
+     "bucket": "A"
+    },
+    {
+     "key": "20",
+     "l2": "63.40",
+     "l9": "63.400001526",
+     "bq": "63.400001526",
+     "bucket": "A"
+    },
+    {
+     "key": "28",
+     "l2": "150.99",
+     "l9": "150.990005493",
+     "bq": "150.990005493",
+     "bucket": "A"
+    },
+    {
+     "key": "31",
+     "l2": "57.95",
+     "l9": "57.950000763",
+     "bq": "57.950000763",
+     "bucket": "A"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "direct cast",
+    "source": "thelook_ecommerce.products.retail_price",
+    "sql_line": "models/staging/stg_thelook__products.sql:15: cast(retail_price as {{ money_type() }})    as retail_price,",
+    "lineage_check": {
+     "n": 29120,
+     "l2_not_cast": 0,
+     "l9_not_cast": 0,
+     "bq_not_cast9": 0
+    },
+    "c_rows": [],
+    "base_explains": 0,
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 13530,
+  "A": 44709,
+  "B": 1,
+  "C": 0
+ }
+}

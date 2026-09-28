@@ -1,0 +1,123 @@
+# load_duckdb_real_sources.sh  2026-09-28T05:52:29Z
+# duckdb v1.5.5 (Variegata) d8cdaa33fd; bigquery extension 27d85ad from community
+# data bigquery-public-data.thelook_ecommerce, billing coreychimpbot, BQ_KEYFILE set
+# mode: D2: TIMESTAMP -> TIMESTAMPTZ via to_timestamp(epoch_us(c) / 1000000.0)
+# target dev.duckdb (schema thelook_ecommerce); session TimeZone Europe/Vienna
+
+BigQuery table metadata (tables.get, not a query job):
+  distribution_centers   numRows         10   numBytes         809
+  products               numRows      29120   numBytes     4285975
+  users                  numRows     100000   numBytes    19816148
+  inventory_items        numRows     492226   numBytes    81632957
+  orders                 numRows     125545   numBytes     6780025
+  order_items            numRows     182483   numBytes    13689221
+  events                 numRows    2436872   numBytes   387026591
+
+table                       local    numRows   rows  transfer_s      map_s  ts_cols  moved
+distribution_centers           10         10     ok        1.75       0.17        0      0
+products                    29120      29120     ok        2.15       0.30        0      0
+users                      100000     100000     ok        2.96       0.71        1      0
+inventory_items            492226     492226     ok        4.03       1.06        2      0
+orders                     125545     125545     ok        2.35       0.39        4      0
+order_items                182483     182483     ok        2.89       0.44        4      0
+events                    2436872    2436872     ok       22.57       5.22        1      0
+total wall 47.28 s for 7 tables
+
+Columns as loaded (table | column | DuckDB type):
+  distribution_centers|id|BIGINT
+  distribution_centers|name|VARCHAR
+  distribution_centers|latitude|DOUBLE
+  distribution_centers|longitude|DOUBLE
+  distribution_centers|distribution_center_geom|GEOMETRY
+  events|id|BIGINT
+  events|user_id|BIGINT
+  events|sequence_number|BIGINT
+  events|session_id|VARCHAR
+  events|created_at|TIMESTAMP WITH TIME ZONE
+  events|ip_address|VARCHAR
+  events|city|VARCHAR
+  events|state|VARCHAR
+  events|postal_code|VARCHAR
+  events|browser|VARCHAR
+  events|traffic_source|VARCHAR
+  events|uri|VARCHAR
+  events|event_type|VARCHAR
+  inventory_items|id|BIGINT
+  inventory_items|product_id|BIGINT
+  inventory_items|created_at|TIMESTAMP WITH TIME ZONE
+  inventory_items|sold_at|TIMESTAMP WITH TIME ZONE
+  inventory_items|cost|DOUBLE
+  inventory_items|product_category|VARCHAR
+  inventory_items|product_name|VARCHAR
+  inventory_items|product_brand|VARCHAR
+  inventory_items|product_retail_price|DOUBLE
+  inventory_items|product_department|VARCHAR
+  inventory_items|product_sku|VARCHAR
+  inventory_items|product_distribution_center_id|BIGINT
+  order_items|id|BIGINT
+  order_items|order_id|BIGINT
+  order_items|user_id|BIGINT
+  order_items|product_id|BIGINT
+  order_items|inventory_item_id|BIGINT
+  order_items|status|VARCHAR
+  order_items|created_at|TIMESTAMP WITH TIME ZONE
+  order_items|shipped_at|TIMESTAMP WITH TIME ZONE
+  order_items|delivered_at|TIMESTAMP WITH TIME ZONE
+  order_items|returned_at|TIMESTAMP WITH TIME ZONE
+  order_items|sale_price|DOUBLE
+  orders|order_id|BIGINT
+  orders|user_id|BIGINT
+  orders|status|VARCHAR
+  orders|gender|VARCHAR
+  orders|created_at|TIMESTAMP WITH TIME ZONE
+  orders|returned_at|TIMESTAMP WITH TIME ZONE
+  orders|shipped_at|TIMESTAMP WITH TIME ZONE
+  orders|delivered_at|TIMESTAMP WITH TIME ZONE
+  orders|num_of_item|BIGINT
+  products|id|BIGINT
+  products|cost|DOUBLE
+  products|category|VARCHAR
+  products|name|VARCHAR
+  products|brand|VARCHAR
+  products|retail_price|DOUBLE
+  products|department|VARCHAR
+  products|sku|VARCHAR
+  products|distribution_center_id|BIGINT
+  users|id|BIGINT
+  users|first_name|VARCHAR
+  users|last_name|VARCHAR
+  users|email|VARCHAR
+  users|age|BIGINT
+  users|gender|VARCHAR
+  users|state|VARCHAR
+  users|street_address|VARCHAR
+  users|postal_code|VARCHAR
+  users|city|VARCHAR
+  users|country|VARCHAR
+  users|latitude|DOUBLE
+  users|longitude|DOUBLE
+  users|traffic_source|VARCHAR
+  users|created_at|TIMESTAMP WITH TIME ZONE
+  users|user_geom|GEOMETRY
+
+Real vs fixture schema (columns that differ; the fixture is the local stand-in):
+  table                  column                     difference       real                         fixture
+  distribution_centers   distribution_center_geom   only in real     GEOMETRY                     -
+  users                  user_geom                  only in real     GEOMETRY                     -
+
+D2 probe, session TimeZone Europe/Vienna (macro = timezone('UTC', cast(c as timestamptz))):
+  table                  column         type                        non_null   shifted  shift_h      min_value                        macro_of_min
+  events                 created_at     TIMESTAMP WITH TIME ZONE     2436872         0  [0.0]        2019-01-02 01:24:00+01           2019-01-02 00:24:00
+  inventory_items        created_at     TIMESTAMP WITH TIME ZONE      492226         0  [0.0]        2018-12-04 16:21:56+01           2018-12-04 15:21:56
+  inventory_items        sold_at        TIMESTAMP WITH TIME ZONE      182483         0  [0.0]        2019-01-12 03:02:56+01           2019-01-12 02:02:56
+  order_items            created_at     TIMESTAMP WITH TIME ZONE      182483         0  [0.0]        2019-01-12 03:02:56+01           2019-01-12 02:02:56
+  order_items            shipped_at     TIMESTAMP WITH TIME ZONE      118569         0  [0.0]        2019-01-21 07:21:20+01           2019-01-21 06:21:20
+  order_items            delivered_at   TIMESTAMP WITH TIME ZONE       63421         0  [0.0]        2019-01-29 15:00:12+01           2019-01-29 14:00:12
+  order_items            returned_at    TIMESTAMP WITH TIME ZONE       18017         0  [0.0]        2019-02-01 15:10:28+01           2019-02-01 14:10:28
+  orders                 created_at     TIMESTAMP WITH TIME ZONE      125545         0  [0.0]        2019-01-10 14:44:05+01           2019-01-10 13:44:05
+  orders                 returned_at    TIMESTAMP WITH TIME ZONE       12427         0  [0.0]        2019-02-01 15:10:28+01           2019-02-01 14:10:28
+  orders                 shipped_at     TIMESTAMP WITH TIME ZONE       81421         0  [0.0]        2019-01-21 07:21:20+01           2019-01-21 06:21:20
+  orders                 delivered_at   TIMESTAMP WITH TIME ZONE       43533         0  [0.0]        2019-01-29 15:00:12+01           2019-01-29 14:00:12
+  users                  created_at     TIMESTAMP WITH TIME ZONE      100000         0  [0.0]        2019-01-02 02:48:00+01           2019-01-02 01:48:00
+
+Real sources loaded into dev.duckdb: every row count matches BigQuery, every timestamp mapped to TIMESTAMPTZ with no instant moved.

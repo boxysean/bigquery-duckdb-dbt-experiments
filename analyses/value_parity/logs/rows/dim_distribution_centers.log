@@ -1,0 +1,161 @@
+{
+ "model": "dim_distribution_centers",
+ "key": "distribution_center_id",
+ "other_unique_keys": [],
+ "join": {
+  "per_leg": {
+   "l2": {
+    "n": 10,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "l9": {
+    "n": 10,
+    "null_keys": 0,
+    "dup_keys": 0
+   },
+   "bq": {
+    "n": 10,
+    "null_keys": 0,
+    "dup_keys": 0
+   }
+  },
+  "joined": 10,
+  "matched": 10,
+  "unmatched": 0,
+  "other_keys_disagree": {},
+  "ok": true
+ },
+ "pull": {
+  "via": "bigquery_scan",
+  "relation_type": "TABLE",
+  "dry_run_bytes": null,
+  "wall_s": 2.04,
+  "types": {
+   "distribution_center_id": "BIGINT",
+   "open_inventory_value": "DECIMAL(38,9)"
+  },
+  "transfer_proof": "equal"
+ },
+ "columns": [
+  {
+   "model": "dim_distribution_centers",
+   "column": "open_inventory_value",
+   "key": "distribution_center_id",
+   "compare": "money_type(); delta in dollars, at cents",
+   "rows_compared": 10,
+   "cents_differ": 10,
+   "raw_differ": 10,
+   "identical": 0,
+   "A": 0,
+   "B": 10,
+   "C": 0,
+   "l9_equals_bq": 10,
+   "null_both": 0,
+   "null_one_side": 0,
+   "delta_distribution": [
+    {
+     "delta": "-8.99",
+     "n": 1
+    },
+    {
+     "delta": "-5.56",
+     "n": 1
+    },
+    {
+     "delta": "-5.35",
+     "n": 1
+    },
+    {
+     "delta": "-4.40",
+     "n": 1
+    },
+    {
+     "delta": "-4.22",
+     "n": 1
+    },
+    {
+     "delta": "-2.93",
+     "n": 1
+    },
+    {
+     "delta": "-2.78",
+     "n": 1
+    },
+    {
+     "delta": "-1.08",
+     "n": 1
+    },
+    {
+     "delta": "-0.68",
+     "n": 1
+    },
+    {
+     "delta": "0.19",
+     "n": 1
+    }
+   ],
+   "examples": [
+    {
+     "key": "1",
+     "l2": "1141040.83",
+     "l9": "1141035.270439304",
+     "bq": "1141035.270439304",
+     "bucket": "B"
+    },
+    {
+     "key": "2",
+     "l2": "1086750.74",
+     "l9": "1086750.930831553",
+     "bq": "1086750.930831553",
+     "bucket": "B"
+    },
+    {
+     "key": "3",
+     "l2": "1248313.90",
+     "l9": "1248304.907195048",
+     "bq": "1248304.907195048",
+     "bucket": "B"
+    },
+    {
+     "key": "4",
+     "l2": "786827.77",
+     "l9": "786822.423552274",
+     "bq": "786822.423552274",
+     "bucket": "B"
+    },
+    {
+     "key": "5",
+     "l2": "647543.23",
+     "l9": "647538.826563500",
+     "bq": "647538.826563500",
+     "bucket": "B"
+    }
+   ],
+   "invariants": {
+    "identical+A+B+C=rows_compared": true,
+    "A+B+C=raw_differ": true,
+    "B+C=cents_differ": true
+   },
+   "c_analysis": {
+    "lineage": "derived",
+    "sql_line": "models/marts/dim_distribution_centers.sql:31: cast(coalesce(stock.open_inventory_value, 0) as {{ money_type() }}) as open_inventory_value",
+    "l9_minus_bq": [],
+    "max_abs_l9_minus_bq": 0.0,
+    "c_rows": [],
+    "verdict": "no C rows"
+   },
+   "l9_not_bq": {
+    "rows": 0,
+    "by_bucket": {},
+    "detail": []
+   }
+  }
+ ],
+ "totals": {
+  "identical": 0,
+  "A": 0,
+  "B": 10,
+  "C": 0
+ }
+}
