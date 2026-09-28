@@ -205,7 +205,7 @@ If you are a senior architect deciding whether this pattern is worth using:
 | `scripts/check_portability.py` | Guardrail against engine-specific leakage |
 | `analyses/transport_a/` | Direct-read transport evidence (committed README plus generated results) |
 | `analyses/transport_b/` | File-based transport evidence (committed README plus generated results) |
-| `analyses/value_parity/` | Committed parity overview plus generated results and row-level follow-up artifacts |
+| [`analyses/value_parity/README.md`](analyses/value_parity/README.md) | Committed parity overview; generated results and row-level follow-up artifacts sit beside it |
 | [`docs/challenges.md`](docs/challenges.md) | Full list of issues encountered and resolved |
 | [`docs/gaps.md`](docs/gaps.md) | What remains unverified or intentionally unresolved |
 | [`docs/move_to_duckdb.md`](docs/move_to_duckdb.md) | What it takes to turn this into a DuckDB-only project |
