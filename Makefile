@@ -8,7 +8,7 @@ SHELL := /bin/bash
 DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup check-env fixtures duck fixtures-real duck-real value-parity row-join bq build-both parity polyglot portability pre-pr transport-a transport-b move-to-duckdb handmove-example clean
+.PHONY: help setup check-env fixtures duck fixtures-real duck-real value-parity row-join bq build-both parity polyglot portability pre-pr ci-compile transport-a transport-b move-to-duckdb handmove-example clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -57,6 +57,11 @@ help:
 	@printf '                    1 on a real finding, 2 when parity is NOT established (no\n'
 	@printf '                    BQ_KEYFILE; the guardrail still ran). make itself exits 2\n'
 	@printf '                    on either and prints it as "Error 1" / "Error 2"\n'
+	@printf '  make ci-compile   compile BOTH targets and run the guardrail — the same thing\n'
+	@printf '                    CI runs on every push and PR (scripts/ci_compile_both.sh).\n'
+	@printf '                    The script exits 1 on a real finding, 2 when the BigQuery\n'
+	@printf '                    leg could not be established (no credential; the DuckDB\n'
+	@printf '                    leg still ran)\n'
 	@printf '  make transport-b  Transport B measured: EXPORT DATA to GCS as Parquet and\n'
 	@printf '                    back through DuckDB (the wildcard/split and 1 GB rules, the\n'
 	@printf '                    nested-to-CSV and JSON-to-Parquet refusals, row order, the\n'
@@ -138,6 +143,15 @@ portability: check-env
 # call `bash scripts/pre_pr.sh` directly when the exit status itself matters.
 pre-pr:
 	bash scripts/pre_pr.sh
+
+# Both targets compiled, plus the guardrail (scripts/ci_compile_both.sh): the one
+# command CI runs (.github/workflows/ci.yml), and the one to run locally before a PR.
+# No prerequisites on purpose: the script runs check-env and the fixture itself. GNU
+# make reports the script's exit 2 (BigQuery leg not established) as "Error 2", and its
+# exit 1 as "Error 1", but make itself exits 2 for both; call
+# `bash scripts/ci_compile_both.sh` directly when the exit status itself matters.
+ci-compile:
+	bash scripts/ci_compile_both.sh
 
 # Transport A measured (analyses/transport_a/README.md). Not part of `make duck`:
 # it needs Google credentials AND it runs real BigQuery jobs, so it costs bytes.
