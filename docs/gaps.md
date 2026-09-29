@@ -122,6 +122,13 @@ differences, so their checksum, null count and distinct count agree on both legs
 | **Other stale numbers left in `README.md`** | The status paragraph still says BigQuery "never runs there". "The models" and "What is verified" say `168 tests` / `197 total` (card-3 era). Today's `make duck` prints `167 tests` / `196 total`, because the boolean `accepted_values` test was removed ([`challenges.md`](challenges.md) 5.2). | **Fixed** by card `t_c495bfea` (2026-09-27): the status paragraph, the test counts and `SPEC.md`'s superseded line were corrected. |
 | **Transport B's b07c/b07d status code** | `analyses/transport_b/README.md:60` says the no-secret and bogus-token controls fail with 403. The logs show `(HTTP 0 Internal Server Error)` (`b07c.log:16`, `b07d.log:19`). | The conclusion (the controls fail) holds. The status code in the README is wrong. |
 
+## 10. CI
+
+| gap | why | size |
+|---|---|---|
+| **CI's BigQuery leg** | CI (`make ci-compile`) compiles both targets, but the BigQuery leg is `n/a` until the `BQ_SA_KEY` repository secret exists. The token that built the workflow could not create repository secrets. The job exits 2 on that path, so **the workflow's jobs are red on `main` until the secret is added**. | Unverified in CI, not broken: the DuckDB compile and the guardrail run and pass. With the secret, the leg proves the project renders for BigQuery with a service-account-shaped key: not a live connection, not a build. `dbt compile` bills nothing on DuckDB, and on BigQuery it issued no query in the measured no-credential case (it exited 0 with no credentials at all). CI builds and queries neither target. |
+| **CI does not validate SQL** | Measured on 2026-09-29 with a deliberately broken model. The bad `ref('no_such_model')` was caught by the compile (`DependencyNotFound (dbt1048)`). The raw syntax error `select (( from ...` was not: it compiled (`258 total \| 258 success`) and was written to `target/compiled/` verbatim. A `try_cast` plus a `target.type` branch compiled on both engines, and the guardrail caught it (`NOT PORTABLE: 2 finding(s)`). The DuckDB leg does fail end to end: `FAIL ... (exit 1)`, script exit 1. | By design, not fixed: `dbt compile` renders, it does not parse the SQL. Only running the models (`make duck`, `make bq`) would catch a syntax error, and CI runs neither. |
+
 ## Where each claim comes from
 
 | gap | source |
@@ -165,3 +172,5 @@ differences, so their checksum, null count and distinct count agree on both legs
 | 168 vs 167 tests | `README.md:13,136,511-512,526-527`; orchestrator's `make duck` (`Processed: 29 models \| 167 tests`) |
 | b07c/b07d status | `analyses/transport_b/README.md:60`; `analyses/transport_b/logs/b07c.log:16`, `b07d.log:19` |
 | card-thread facts | t_2e263433 card thread (board, not in the repo); `analyses/transport_b/README.md:295-297` |
+| CI's BigQuery leg `n/a`, compile needs no credential | `scripts/ci_compile_both.sh` (header and the credential gate); `.github/workflows/ci.yml`; `.venv/bin/dbt compile --target bigquery` exiting 0 with no credential (2026-09-29, `Summary: 257 total \| 257 success`) |
+| CI does not validate SQL; guardrail and bad `ref()` caught | orchestrator's `make ci-compile` runs with a temporary `models/intermediate/_ci_break.sql`, removed again (2026-09-29, not in a file) |
