@@ -184,7 +184,7 @@ What the measurements say (see the committed summary in [`analyses/transport_b/R
 - That BigQuery-specific physical design features should be hidden behind the seam.
 - That file exports preserve every BigQuery type without compromise.
 - That money precision policy can be ignored.
-- That a green CI means the models work. CI does not cover the BigQuery target until the `BQ_SA_KEY` repository secret exists, and it never builds or queries either target. A green CI proves the project renders for both engines and that no target-specific dialect leaked. It does not prove the SQL is valid or that the data is right (see [CI](#ci)).
+- That a green CI means the models work. CI does not cover the BigQuery target until the `BQ_SA_KEY` repository secret exists (until then `ci-compile-bigquery` is skipped), and it never builds or queries either target. A green CI proves the project renders for both engines and that no target-specific dialect leaked. It does not prove the SQL is valid or that the data is right (see [CI](#ci)).
 
 ## Recommended interpretation
 
@@ -205,7 +205,7 @@ If you are a senior architect deciding whether this pattern is worth using:
 | `scripts/parity.py` | Cross-target parity harness |
 | `scripts/check_portability.py` | Guardrail against engine-specific leakage |
 | `scripts/ci_compile_both.sh` | Compiles both targets and runs the guardrail; behind `make ci-compile`, the one check CI runs |
-| `.github/workflows/ci.yml` | CI: runs `make ci-compile` on every push to `main` and every pull request |
+| `.github/workflows/ci.yml` | CI: runs `make ci-compile` on every push to `main` and every pull request; the gate `ci-compile` holds no credential, `ci-compile-bigquery` runs only with the `BQ_SA_KEY` secret ([`docs/ci.md`](docs/ci.md)) |
 | `analyses/transport_a/` | Direct-read transport evidence (committed README plus generated results) |
 | `analyses/transport_b/` | File-based transport evidence (committed README plus generated results) |
 | [`analyses/value_parity/`](analyses/value_parity/) | Committed parity overview; generated results and row-level follow-up artifacts sit beside it |
@@ -246,19 +246,24 @@ make move-to-duckdb  # generate a DuckDB-only version of the project
 
 ## CI
 
-On every push to `main` and every pull request, one GitHub Actions job ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) compiles the project on **both** targets, DuckDB and BigQuery, and runs the portability guardrail. The guardrail is part of the check on purpose: a raw `try_cast(...)` or a `target.type` branch in a model compiles cleanly on both targets, so only the guardrail catches it.
+On every push to `main` and every pull request, GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) compiles the project and runs the portability guardrail, in two jobs that both call `make ci-compile` (details and the decision table: [`docs/ci.md`](docs/ci.md)):
 
-The workflow calls `make ci-compile` (`scripts/ci_compile_both.sh`), and that is exactly the command to run locally before opening a PR. There is one definition of the check, so CI is a gate and not a surprise.
+- **`ci-compile`** is the gate. It deliberately holds no BigQuery credential, so its colour never depends on a secret: it compiles DuckDB and runs the guardrail, and it is green when those pass. The BigQuery leg is `n/a` there by construction; when the secret is absent the job says so out loud, with a `::warning` annotation and a job-summary line ("NOT ESTABLISHED ... this run says nothing about that target").
+- **`ci-compile-bigquery`** is the BigQuery leg: the same command with the `BQ_SA_KEY` secret as a key file. Without the secret it is **skipped**, which means nothing in that run speaks to the BigQuery target.
+
+A red job now means a real finding (a prerequisite, the fixture, a compile, the key's shape or the guardrail), never a missing secret. The guardrail is part of the check on purpose: a raw `try_cast(...)` or a `target.type` branch in a model compiles cleanly on both targets, so only the guardrail catches it.
+
+`make ci-compile` (`scripts/ci_compile_both.sh`) is exactly the command to run locally before opening a PR. There is one definition of the check, so CI is a gate and not a surprise.
 
 What the script's exit status means:
 
 - `0`: both targets compiled and the guardrail is clean.
-- `1`: a real failure (a prerequisite, the fixture, a compile or the guardrail).
-- `2`: everything ran except the BigQuery compile, which is **not established**.
+- `1`: a real failure (a prerequisite, the fixture, a compile or the guardrail). Red in either job.
+- `2`: everything ran except the BigQuery compile, which is **not established**. Green with a warning in `ci-compile`; red in `ci-compile-bigquery`, which always has a key.
 
-What each part catches, measured on 2026-09-29 with a temporary broken model. A `try_cast` plus a `target.type` branch compiled on both targets; only the guardrail failed (`NOT PORTABLE: 2 finding(s)`, script exit 1). A `ref()` to a missing model failed the compile itself (`DependencyNotFound`), as a Jinja error would. A plain SQL syntax error is not caught at all: `select (( from {{ ref(...) }}` compiled with `258 success` and was written to `target/compiled/` verbatim. `dbt compile` renders the SQL without validating it, so a green CI does not mean the models are valid SQL. Running them would catch that (`make duck`, `make bq`); CI does not, because `make bq` costs money and a full build is slower than the check is meant to be.
+What each part catches, measured on 2026-09-29 with a temporary broken model. A `try_cast` plus a `target.type` branch compiled on both targets; only the guardrail failed (`NOT PORTABLE: 2 finding(s)`, script exit 1). A `ref()` to a missing model failed the compile itself (`DependencyNotFound`), as a Jinja error would. A plain SQL syntax error is not caught at all: `select (( from {{ ref(...) }}` compiled with `258 total | 258 success` and was written to `target/compiled/` verbatim. `dbt compile` renders the SQL without validating it, so a green `dbt compile` means "renders for both engines, no dialect leaked"; it does **not** mean the models are valid SQL. Running them would catch that (`make duck`, `make bq`); CI does not, because `make bq` costs money and a full build is slower than the check is meant to be.
 
-**Until the `BQ_SA_KEY` repository secret is added, the BigQuery leg reports `n/a` and the job is red.** The token used to build this did not have permission to create repository secrets, so it has to be added by hand: a service-account JSON key, which the workflow writes to a temporary file and hands to `profiles.yml` as `BQ_KEYFILE` with `BQ_AUTH_METHOD=service-account`. A red job for this reason means "not established", not "broken"; the job summary says which legs ran.
+**Until the `BQ_SA_KEY` repository secret is added, `ci-compile-bigquery` is skipped and CI says nothing about the BigQuery target.** The token used to build this did not have permission to create repository secrets, so it has to be added by hand: a service-account JSON key, which the BigQuery job writes to a temporary file and hands to `profiles.yml` as `BQ_KEYFILE` with `BQ_AUTH_METHOD=service-account`. From then on that job runs on every push and PR and is a real check. Until then the BigQuery target is unverified in CI, not broken; the gate's job summary says which legs ran.
 
 What the BigQuery leg proves, even with the secret: `dbt compile --target bigquery` issues no query and does not authenticate (it exits 0 with no credentials at all, which is why the script gates the leg on a key being present instead of trusting that exit code). So it proves the project renders for BigQuery and that a key of the right shape was supplied. It does not prove a live BigQuery connection, or that anything was built there; that is `make bq` and `make value-parity`, which cost money and are not run in CI. Locally, `make ci-compile` exits 2 the same way unless `BQ_KEYFILE` is exported. As with `make pre-pr`, `make` itself reports that as `Error 2`; run `bash scripts/ci_compile_both.sh` directly when the status itself matters.
 
