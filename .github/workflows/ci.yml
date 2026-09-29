@@ -7,9 +7,21 @@
 # nothing on DuckDB, and on BigQuery it issues no query; no build and no query runs
 # on either target here.
 #
-# The BigQuery leg needs the BQ_SA_KEY repository secret (a service-account JSON
-# key). Without it the leg is reported n/a, the script exits 2, and this job is RED:
-# "not established", not "broken" (README.md > CI).
+# Two jobs, both running the identical `make ci-compile` (docs/ci.md):
+#
+#   ci-compile           the gate. It runs WITHOUT any BigQuery credential, so its
+#                        colour can never depend on a secret existing. It compiles
+#                        DuckDB and runs the guardrail; the script reports the BigQuery
+#                        leg n/a and exits 2, which this job maps to GREEN plus a
+#                        ::warning and a job-summary line. Exit 1 (a real finding) is RED.
+#   ci-compile-bigquery  the BigQuery leg. Runs only when the BQ_SA_KEY repository
+#                        secret exists; otherwise GitHub shows it SKIPPED. It fails on
+#                        any non-zero status.
+#
+# Why the split: the script's exit 2 means "not established", not "broken", and a
+# required check that is red for a missing secret can never go green for anyone who
+# cannot create that secret. A skipped job cannot annotate anything, so the loud part
+# of the absence (the ::warning and the summary line) is emitted by the gate.
 name: ci
 
 on:
@@ -25,6 +37,8 @@ jobs:
   ci-compile:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      bq_key_present: ${{ steps.bq-key.outputs.present }}
     steps:
       # Both tags checked against the GitHub API on 2026-09-29: actions/checkout's major
       # tag v7 exists; astral-sh/setup-uv is pinned to the exact release tag v10.2.0
@@ -52,29 +66,34 @@ jobs:
           bash scripts/install_prereqs.sh
           echo "$PREFIX" >> "$GITHUB_PATH"
 
-      # The only step that sees the secret. The key goes to a file outside the
-      # checkout and is never echoed; profiles.yml reads BQ_KEYFILE / BQ_AUTH_METHOD.
-      - name: BigQuery credential (BQ_SA_KEY secret)
+      # Presence only. GitHub cannot read `secrets` in a job-level `if:`, so this step
+      # turns "is the secret set?" into a job output that ci-compile-bigquery's `if:`
+      # reads. The key is not written anywhere and not exported to later steps: this
+      # job holds no credential.
+      - name: BQ_SA_KEY secret present?
         id: bq-key
         env:
           BQ_SA_KEY: ${{ secrets.BQ_SA_KEY }}
         run: |
           if [ -n "$BQ_SA_KEY" ]; then
-            keyfile="$RUNNER_TEMP/bq-sa-key.json"
-            ( umask 077; printf '%s' "$BQ_SA_KEY" > "$keyfile" )
-            echo "BQ_KEYFILE=$keyfile" >> "$GITHUB_ENV"
-            echo "BQ_AUTH_METHOD=service-account" >> "$GITHUB_ENV"
             echo "present=true" >> "$GITHUB_OUTPUT"
-            echo "BQ_SA_KEY secret is set: written to \$RUNNER_TEMP; the BigQuery leg will run."
+            echo "BQ_SA_KEY secret is set: the ci-compile-bigquery job will compile the BigQuery target."
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "No BQ_SA_KEY secret is set: make ci-compile will report the BigQuery leg n/a and exit 2."
+            echo "No BQ_SA_KEY secret is set: the ci-compile-bigquery job will be skipped."
           fi
 
-      # The one check. GNU make exits 2 for ANY failed recipe, so the script's own
-      # status is read back from make's "Error N" line rather than from make's exit.
+      # The gate. GNU make exits 2 for ANY failed recipe, so the script's own status is
+      # read back from make's "Error N" line rather than from make's exit. BQ_KEYFILE and
+      # GOOGLE_APPLICATION_CREDENTIALS are blanked on purpose: the script treats empty as
+      # unset, so the BigQuery leg here is n/a by construction and the gate's colour
+      # cannot depend on a secret.
       - name: make ci-compile
         id: check
+        env:
+          BQ_KEYFILE: ""
+          GOOGLE_APPLICATION_CREDENTIALS: ""
+          KEY_PRESENT: ${{ steps.bq-key.outputs.present }}
         run: |
           set +e
           make ci-compile 2>&1 | tee "$RUNNER_TEMP/ci-compile.log"
@@ -87,12 +106,17 @@ jobs:
           echo "rc=$rc" >> "$GITHUB_OUTPUT"
           case "$rc" in
             0)
-              echo "::notice title=ci-compile::both targets compiled (DuckDB and BigQuery) and the portability guardrail is clean"
+              echo "::notice title=ci-compile::every step ok and the portability guardrail is clean"
               exit 0 ;;
             2)
-              # A missing secret must never look like a green check: exit 2 fails the job.
-              echo "::error title=ci-compile: BigQuery NOT established::the DuckDB compile and the portability guardrail passed, but the BigQuery compile was NOT performed because the BQ_SA_KEY repository secret is absent. This run says nothing about the BigQuery target."
-              exit 2 ;;
+              # Green, never silent: a missing credential is not a finding, but the run
+              # must say out loud that it did not cover BigQuery.
+              if [ "$KEY_PRESENT" = "true" ]; then
+                echo "::notice title=ci-compile: BigQuery compiled by ci-compile-bigquery::the DuckDB compile and the portability guardrail passed. This job holds no credential by design; the BigQuery compile runs in the ci-compile-bigquery job of this run."
+              else
+                echo "::warning title=ci-compile: BigQuery NOT ESTABLISHED::the DuckDB compile and the portability guardrail passed, but the BigQuery compile was NOT performed in this run (n/a): the BQ_SA_KEY repository secret is absent, so ci-compile-bigquery is skipped. This run says nothing about that target."
+              fi
+              exit 0 ;;
             *)
               echo "::error title=ci-compile failed::a step FAILED (script exit $rc); see the FAIL line(s) in the log above"
               exit 1 ;;
@@ -105,13 +129,20 @@ jobs:
           RC: ${{ steps.check.outputs.rc }}
         run: |
           {
-            echo "## ci-compile"
+            echo "## ci-compile (the gate)"
             echo
             case "$RC" in
-              0) echo "**Both targets compiled** (DuckDB and BigQuery) and the portability guardrail is clean." ;;
-              2) echo "**The DuckDB compile and the portability guardrail ran and passed. The BigQuery compile did NOT run:** no \`BQ_SA_KEY\` secret, so the BigQuery target is **unverified in this run**. Red means not established, not broken." ;;
+              0) echo "**Every step ok** and the portability guardrail is clean." ;;
+              2)
+                echo "**The DuckDB compile and the portability guardrail ran and passed.** This job holds no BigQuery credential by design, so its BigQuery leg is \`n/a\`."
+                echo
+                if [ "$KEY_PRESENT" = "true" ]; then
+                  echo "BigQuery: the \`BQ_SA_KEY\` secret is present, so the **\`ci-compile-bigquery\`** job runs the BigQuery compile in this run; its result is that job's check."
+                else
+                  echo "**BigQuery: \`n/a\`, NOT ESTABLISHED.** No \`BQ_SA_KEY\` repository secret, so the BigQuery compile was NOT performed and this run says nothing about that target. The job that runs it, **\`ci-compile-bigquery\`**, is skipped. Green here means not established, not verified."
+                fi ;;
               "") echo "**make ci-compile did not run** (an earlier step failed)." ;;
-              *) echo "**A step FAILED** (script exit $RC); see the step lines below and the job log." ;;
+              *) echo "**A step FAILED** (script exit $RC); see the step lines below and the job log. A red gate is a real finding." ;;
             esac
             echo
             if [ "$KEY_PRESENT" = "true" ]; then
@@ -120,7 +151,91 @@ jobs:
               echo "BQ_SA_KEY secret: absent."
             fi
             echo
-            echo "Even when it runs, the BigQuery compile issues no query and does not authenticate: it proves the project renders for BigQuery with a key of the right shape, not a live connection or a build. Neither target is built or queried here."
+            echo "A green compile means the project renders for the engine(s) compiled and no target-specific dialect leaked. It does not mean the SQL is valid: \`dbt compile\` renders without parsing. Neither target is built or queried here."
+            if [ -f "$RUNNER_TEMP/ci-compile.log" ]; then
+              echo
+              echo '```'
+              grep -E '^  (ok|n/a|FAIL)  |^ci-compile:|^    (Processed|Summary):|^    (compiled files checked:|PORTABLE$|NOT PORTABLE:)' "$RUNNER_TEMP/ci-compile.log" || true
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  ci-compile-bigquery:
+    needs: ci-compile
+    # Skipped (not failed, not pending) when the secret is absent. Also skipped when the
+    # gate itself is red, because `needs` requires it to succeed; that red gate is the
+    # finding to look at first.
+    if: needs.ci-compile.outputs.bq_key_present == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Same pinned tags as the gate; read the comment there before changing either.
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+
+      - name: uv sync --frozen
+        run: uv sync --frozen
+
+      - name: bash scripts/install_prereqs.sh
+        env:
+          PREFIX: ${{ github.workspace }}/.local/bin
+        run: |
+          bash scripts/install_prereqs.sh
+          echo "$PREFIX" >> "$GITHUB_PATH"
+
+      # The only step that writes the secret anywhere. The key goes to a file outside
+      # the checkout and is never echoed; profiles.yml reads BQ_KEYFILE / BQ_AUTH_METHOD.
+      # Whether it is a service-account key is the script's check, not this step's.
+      - name: BigQuery credential (BQ_SA_KEY secret)
+        env:
+          BQ_SA_KEY: ${{ secrets.BQ_SA_KEY }}
+        run: |
+          keyfile="$RUNNER_TEMP/bq-sa-key.json"
+          ( umask 077; printf '%s' "$BQ_SA_KEY" > "$keyfile" )
+          echo "BQ_KEYFILE=$keyfile" >> "$GITHUB_ENV"
+          echo "BQ_AUTH_METHOD=service-account" >> "$GITHUB_ENV"
+          echo "BQ_SA_KEY written to \$RUNNER_TEMP; make ci-compile will run the BigQuery leg."
+
+      # The same command as the gate, now with a credential. Any non-zero status fails
+      # the job: with a key named, the script's exit 2 should not occur, and exit 1 is a
+      # real finding (a prerequisite, a compile, the key's shape or the guardrail).
+      - name: make ci-compile
+        id: check
+        run: |
+          set +e
+          make ci-compile 2>&1 | tee "$RUNNER_TEMP/ci-compile.log"
+          make_rc=${PIPESTATUS[0]}
+          set -e
+          rc=$make_rc
+          if [ "$make_rc" -ne 0 ]; then
+            rc=$(grep -oE 'ci-compile\] Error [0-9]+$' "$RUNNER_TEMP/ci-compile.log" | grep -oE '[0-9]+$' || echo 1)
+          fi
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          if [ "$rc" -eq 0 ]; then
+            echo "::notice title=ci-compile-bigquery::both targets compiled (DuckDB and BigQuery) and the portability guardrail is clean"
+            exit 0
+          fi
+          echo "::error title=ci-compile-bigquery failed::make ci-compile exited non-zero (script exit $rc) with the BQ_SA_KEY credential present; see the FAIL / n/a line(s) in the log above"
+          exit 1
+
+      - name: Job summary
+        if: always()
+        env:
+          RC: ${{ steps.check.outputs.rc }}
+        run: |
+          {
+            echo "## ci-compile-bigquery (the BigQuery leg)"
+            echo
+            case "$RC" in
+              0) echo "**Both targets compiled** (DuckDB and BigQuery) and the portability guardrail is clean." ;;
+              "") echo "**make ci-compile did not run** (an earlier step failed)." ;;
+              *) echo "**FAILED** (script exit $RC); see the step lines below and the job log." ;;
+            esac
+            echo
+            echo "The BigQuery compile issues no query and does not authenticate: it proves the project renders for BigQuery with a key of the right shape, not a live connection or a build. It does not mean the SQL is valid."
             if [ -f "$RUNNER_TEMP/ci-compile.log" ]; then
               echo
               echo '```'
