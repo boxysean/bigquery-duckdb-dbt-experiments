@@ -26,11 +26,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      # The current majors of both actions as of this card (2026-09-29).
+      # Both tags checked against the GitHub API on 2026-09-29: actions/checkout's major
+      # tag v7 exists; astral-sh/setup-uv is pinned to the exact release tag v10.2.0
+      # because it publishes no moving major tag beyond v7. `@v10` does NOT exist and
+      # fails at "Set up job", so do not shorten it back to `@v10`.
       - uses: actions/checkout@v7
 
       # requires-python is >=3.11,<3.13; the pinned toolchain is pyproject.toml + uv.lock.
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0
         with:
           python-version: "3.12"
 
