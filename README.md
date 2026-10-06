@@ -204,6 +204,7 @@ If you are a senior architect deciding whether this pattern is worth using:
 | `macros/polyglot/` | Cross-engine compatibility seam |
 | `scripts/parity.py` | Cross-target parity harness |
 | `scripts/check_portability.py` | Guardrail against engine-specific leakage |
+| `scripts/bq_preflight.py` | Read-only check that the BigQuery target can be built (dataset, job creation, dataset read); names the permission to grant when it cannot. `--create` creates the missing target dataset; run by `make bq` |
 | `scripts/ci_compile_both.sh` | Compiles both targets and runs the guardrail; behind `make ci-compile`, the one check CI runs |
 | `.github/workflows/ci.yml` | CI: runs `make ci-compile` on every push to `main` and every pull request; the gate `ci-compile` holds no credential, `ci-compile-bigquery` runs only with the `BQ_SA_KEY` secret ([`docs/ci.md`](docs/ci.md)) |
 | `analyses/transport_a/` | Direct-read transport evidence (committed README plus generated results) |
@@ -239,7 +240,7 @@ make move-to-duckdb  # generate a DuckDB-only version of the project
 ### What the main targets do
 
 - `make duck` builds the shared project locally on DuckDB.
-- `make bq` builds the shared project on BigQuery.
+- `make bq` builds the shared project on BigQuery. It now preflights the target first (`scripts/bq_preflight.py --create`: creates the dataset when it is missing) and, when the target cannot be written, names the exact permission to grant and exits 2 instead of starting a build that would end in a driver error.
 - `make value-parity` is the most important verification run: it loads the same real source rows into DuckDB, builds both targets, and compares outputs.
 - The transport evidence lives under [`analyses/transport_a/`](analyses/transport_a/) and [`analyses/transport_b/`](analyses/transport_b/); those are separate measurement suites, not part of the shared portable model tree.
 - The committed summary of the row-level money-mismatch finding is in [`docs/gaps.md`](docs/gaps.md); the generated follow-up artifacts live under `analyses/value_parity/` after a comparable pair has been produced, so they may be absent in a fresh checkout.

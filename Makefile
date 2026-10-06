@@ -38,6 +38,7 @@ help:
 	@printf '                    logs/rows/; needs BQ_KEYFILE (Storage API + view queries)\n'
 	@printf '  make bq           dbt build --target bigquery  (needs Google credentials;\n'
 	@printf '                    refuses with exit 2 when the machine has none)\n'
+	@printf '                    preflight first: creates a missing dataset, else exit 2 naming the grant\n'
 	@printf '  make build-both   both targets, in that order\n'
 	@printf '  make parity       compare every model across both targets: row count,\n'
 	@printf '                    column names, canonical column types and a per-column\n'
