@@ -1,17 +1,132 @@
 {
-  "generated_at": "2026-10-06T19:53:28+0200",
+  "generated_at": "2026-10-06T22:09:19+0200",
   "same_data": true,
   "spark_source": "compiled",
   "legs": {
     "spark": "ok",
     "bigquery": "ok"
   },
-  "self_check": {},
+  "self_check": {
+    "spark": {
+      "__rows": 6,
+      "i__nulls": 1,
+      "i__sum": 17298272059,
+      "i__distinct": 5,
+      "f__nulls": 1,
+      "f__sum": 9536711546,
+      "f__distinct": 5,
+      "b__nulls": 1,
+      "b__sum": 12525941646,
+      "b__distinct": 2,
+      "d__nulls": 1,
+      "d__sum": 8514248646,
+      "d__distinct": 5,
+      "ts__nulls": 1,
+      "ts__sum": 10624915951,
+      "ts__distinct": 5,
+      "s__nulls": 1,
+      "s__sum": 11063112075,
+      "s__distinct": 5,
+      "dec__nulls": 1,
+      "dec__sum": 13086183991,
+      "dec__distinct": 5,
+      "arr__nulls": 1,
+      "arr__sum": 10119176120,
+      "arr__distinct": 5,
+      "st__nulls": 1,
+      "st__sum": 12187830206,
+      "st__distinct": 6
+    },
+    "bigquery": {
+      "__rows": 6,
+      "i__nulls": 1,
+      "i__sum": 17298272059,
+      "i__distinct": 5,
+      "f__nulls": 1,
+      "f__sum": 9536711546,
+      "f__distinct": 5,
+      "b__nulls": 1,
+      "b__sum": 12525941646,
+      "b__distinct": 2,
+      "d__nulls": 1,
+      "d__sum": 8514248646,
+      "d__distinct": 5,
+      "ts__nulls": 1,
+      "ts__sum": 10624915951,
+      "ts__distinct": 5,
+      "s__nulls": 1,
+      "s__sum": 11063112075,
+      "s__distinct": 5,
+      "dec__nulls": 1,
+      "dec__sum": 13086183991,
+      "dec__distinct": 5,
+      "arr__nulls": 1,
+      "arr__sum": 13677882513,
+      "arr__distinct": 5,
+      "st__nulls": 1,
+      "st__sum": 12187830206,
+      "st__distinct": 6
+    },
+    "kinds": {
+      "spark": {
+        "i": "int64",
+        "f": "float64",
+        "b": "bool",
+        "d": "date",
+        "ts": "timestamp",
+        "s": "string",
+        "dec": "decimal",
+        "arr": "array<int64>",
+        "st": "struct<a:int64,b:string>"
+      },
+      "bigquery": {
+        "i": "int64",
+        "f": "float64",
+        "b": "bool",
+        "d": "date",
+        "ts": "timestamp",
+        "s": "string",
+        "dec": "decimal",
+        "arr": "array<int64>",
+        "st": "struct<a:int64,b:string>"
+      }
+    },
+    "raw_types": {
+      "spark": {
+        "i": "bigint",
+        "f": "double",
+        "b": "boolean",
+        "d": "date",
+        "ts": "timestamp",
+        "s": "string",
+        "dec": "decimal(18,2)",
+        "arr": "array<bigint>",
+        "st": "struct<a:bigint,b:string>"
+      },
+      "bigquery": {
+        "i": "INTEGER",
+        "f": "FLOAT",
+        "b": "BOOLEAN",
+        "d": "DATE",
+        "ts": "TIMESTAMP",
+        "s": "STRING",
+        "dec": "NUMERIC",
+        "arr": "ARRAY<INTEGER>",
+        "st": "STRUCT<a INTEGER, b STRING>"
+      }
+    },
+    "spark_session_time_zone": "UTC",
+    "match": false,
+    "sql": {
+      "spark": "SELECT COUNT(*) AS __rows,\n  SUM(CASE WHEN `i` IS NULL THEN 1 ELSE 0 END) AS m0__nulls,\n  SUM(CAST(conv(substr(md5(CAST(`i` AS STRING)), 1, 8), 16, 10) AS BIGINT)) AS m0__sum,\n  COUNT(DISTINCT CAST(`i` AS STRING)) AS m0__distinct,\n  SUM(CASE WHEN `f` IS NULL THEN 1 ELSE 0 END) AS m1__nulls,\n  SUM(CAST(conv(substr(md5(CAST(CAST(round(CAST(`f` AS DOUBLE) * 1000000) AS BIGINT) AS STRING)), 1, 8), 16, 10) AS BIGINT)) AS m1__sum,\n  COUNT(DISTINCT CAST(CAST(round(CAST(`f` AS DOUBLE) * 1000000) AS BIGINT) AS STRING)) AS m1__distinct,\n  SUM(CASE WHEN `b` IS NULL THEN 1 ELSE 0 END) AS m2__nulls,\n  SUM(CAST(conv(substr(md5(CAST(`b` AS STRING)), 1, 8), 16, 10) AS BIGINT)) AS m2__sum,\n  COUNT(DISTINCT CAST(`b` AS STRING)) AS m2__distinct,\n  SUM(CASE WHEN `d` IS NULL THEN 1 ELSE 0 END) AS m3__nulls,\n  SUM(CAST(conv(substr(md5(CAST(`d` AS STRING)), 1, 8), 16, 10) AS BIGINT)) AS m3__sum,\n  COUNT(DISTINCT CAST(`d` AS STRING)) AS m3__distinct,\n  SUM(CASE WHEN `ts` IS NULL THEN 1 ELSE 0 END) AS m4__nulls,\n  SUM(CAST(conv(substr(md5(CAST(unix_micros(`ts`) AS STRING)), 1, 8), 16, 10) AS BIGINT)) AS m4__sum,\n  COUNT(DISTINCT CAST(unix_micros(`ts`) AS STRING)) AS m4__distinct,\n  SUM(CASE WHEN `s` IS NULL THEN 1 ELSE 0 END) AS m5__nulls,\n  SUM(CAST(conv(substr(md5(`s`), 1, 8), 16, 10) AS BIGINT)) AS m5__sum,\n  COUNT(DISTINCT `s`) AS m5__distinct,\n  SUM(CASE WHEN `dec` IS NULL THEN 1 ELSE 0 END) AS m6__nulls,\n  SUM(CAST(conv(substr(md5(regexp_replace(CAST(`dec` AS STRING), '([.][0-9]*[1-9])0+$|[.]0+$', '$1')), 1, 8), 16, 10) AS BIGINT)) AS m6__sum,\n  COUNT(DISTINCT regexp_replace(CAST(`dec` AS STRING), '([.][0-9]*[1-9])0+$|[.]0+$', '$1')) AS m6__distinct,\n  SUM(CASE WHEN `arr` IS NULL THEN 1 ELSE 0 END) AS m7__nulls,\n  SUM(CAST(conv(substr(md5(array_join(array_sort(transform(`arr`, __e0 -> CAST(__e0 AS STRING))), '|')), 1, 8), 16, 10) AS BIGINT)) AS m7__sum,\n  COUNT(DISTINCT array_join(array_sort(transform(`arr`, __e0 -> CAST(__e0 AS STRING))), '|')) AS m7__distinct,\n  SUM(CASE WHEN `st` IS NULL THEN 1 ELSE 0 END) AS m8__nulls,\n  SUM(CAST(conv(substr(md5(concat_ws('|', COALESCE(CAST(`st`.`a` AS STRING), '<null>'), COALESCE(`st`.`b`, '<null>'))), 1, 8), 16, 10) AS BIGINT)) AS m8__sum,\n  COUNT(DISTINCT concat_ws('|', COALESCE(CAST(`st`.`a` AS STRING), '<null>'), COALESCE(`st`.`b`, '<null>'))) AS m8__distinct\nFROM (\nSELECT CAST(1 AS BIGINT) AS i, CAST(1.5 AS DOUBLE) AS f, true AS b, DATE '2024-03-15' AS d, TIMESTAMP '2024-03-15 13:45:12.123456' AS ts, 'abc' AS s, CAST(12.34 AS DECIMAL(18,2)) AS dec, array(CAST(3 AS BIGINT), CAST(1 AS BIGINT), CAST(2 AS BIGINT)) AS arr, named_struct('a', CAST(1 AS BIGINT), 'b', 'x') AS st\n  UNION ALL SELECT CAST(2 AS BIGINT) AS i, CAST(-2.25 AS DOUBLE) AS f, false AS b, DATE '2023-01-01' AS d, TIMESTAMP '2023-01-01 00:00:00' AS ts, 'ABC' AS s, CAST(-0.05 AS DECIMAL(18,2)) AS dec, array(CAST(10 AS BIGINT), CAST(9 AS BIGINT)) AS arr, named_struct('a', CAST(2 AS BIGINT), 'b', '') AS st\n  UNION ALL SELECT CAST(3 AS BIGINT) AS i, CAST(0.30000000000000004 AS DOUBLE) AS f, true AS b, DATE '2024-02-29' AS d, TIMESTAMP '2024-02-29 23:59:59.999999' AS ts, 'Z\u00fcrich' AS s, CAST(12.30 AS DECIMAL(18,2)) AS dec, CAST(array() AS ARRAY<BIGINT>) AS arr, named_struct('a', CAST(3 AS BIGINT), 'b', 'z') AS st\n  UNION ALL SELECT CAST(4 AS BIGINT) AS i, CAST(100.0 AS DOUBLE) AS f, false AS b, DATE '1999-12-31' AS d, TIMESTAMP '1999-12-31 12:00:00' AS ts, '' AS s, CAST(12.00 AS DECIMAL(18,2)) AS dec, array(CAST(7 AS BIGINT)) AS arr, named_struct('a', CAST(4 AS BIGINT), 'b', 'y') AS st\n  UNION ALL SELECT CAST(5 AS BIGINT) AS i, CAST(0.0000001 AS DOUBLE) AS f, true AS b, DATE '1970-01-01' AS d, TIMESTAMP '1970-01-01 00:00:00' AS ts, 'x|y' AS s, CAST(0.00 AS DECIMAL(18,2)) AS dec, array(CAST(1 AS BIGINT), CAST(1 AS BIGINT)) AS arr, named_struct('a', CAST(5 AS BIGINT), 'b', 'w') AS st\n  UNION ALL SELECT CAST(NULL AS BIGINT) AS i, CAST(NULL AS DOUBLE) AS f, CAST(NULL AS BOOLEAN) AS b, CAST(NULL AS DATE) AS d, CAST(NULL AS TIMESTAMP) AS ts, CAST(NULL AS STRING) AS s, CAST(NULL AS DECIMAL(18,2)) AS dec, CAST(NULL AS ARRAY<BIGINT>) AS arr, CAST(NULL AS STRUCT<a: BIGINT, b: STRING>) AS st\n) AS _fixture",
+      "bigquery": "SELECT COUNT(*) AS __rows,\n  SUM(CASE WHEN `i` IS NULL THEN 1 ELSE 0 END) AS m0__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(`i` AS STRING))), 1, 8)) AS INT64)) AS m0__sum,\n  COUNT(DISTINCT CAST(`i` AS STRING)) AS m0__distinct,\n  SUM(CASE WHEN `f` IS NULL THEN 1 ELSE 0 END) AS m1__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(CAST(ROUND(CAST(`f` AS FLOAT64) * 1000000) AS INT64) AS STRING))), 1, 8)) AS INT64)) AS m1__sum,\n  COUNT(DISTINCT CAST(CAST(ROUND(CAST(`f` AS FLOAT64) * 1000000) AS INT64) AS STRING)) AS m1__distinct,\n  SUM(CASE WHEN `b` IS NULL THEN 1 ELSE 0 END) AS m2__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(`b` AS STRING))), 1, 8)) AS INT64)) AS m2__sum,\n  COUNT(DISTINCT CAST(`b` AS STRING)) AS m2__distinct,\n  SUM(CASE WHEN `d` IS NULL THEN 1 ELSE 0 END) AS m3__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(`d` AS STRING))), 1, 8)) AS INT64)) AS m3__sum,\n  COUNT(DISTINCT CAST(`d` AS STRING)) AS m3__distinct,\n  SUM(CASE WHEN `ts` IS NULL THEN 1 ELSE 0 END) AS m4__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(UNIX_MICROS(`ts`) AS STRING))), 1, 8)) AS INT64)) AS m4__sum,\n  COUNT(DISTINCT CAST(UNIX_MICROS(`ts`) AS STRING)) AS m4__distinct,\n  SUM(CASE WHEN `s` IS NULL THEN 1 ELSE 0 END) AS m5__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(`s` AS STRING))), 1, 8)) AS INT64)) AS m5__sum,\n  COUNT(DISTINCT CAST(`s` AS STRING)) AS m5__distinct,\n  SUM(CASE WHEN `dec` IS NULL THEN 1 ELSE 0 END) AS m6__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(REGEXP_REPLACE(CAST(`dec` AS STRING), r'([.][0-9]*[1-9])0+$|[.]0+$', r'\\1'))), 1, 8)) AS INT64)) AS m6__sum,\n  COUNT(DISTINCT REGEXP_REPLACE(CAST(`dec` AS STRING), r'([.][0-9]*[1-9])0+$|[.]0+$', r'\\1')) AS m6__distinct,\n  SUM(CASE WHEN `arr` IS NULL THEN 1 ELSE 0 END) AS m7__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(ARRAY_TO_STRING(ARRAY(SELECT CAST(__e0 AS STRING) AS c FROM UNNEST(`arr`) AS __e0 ORDER BY c), '|'))), 1, 8)) AS INT64)) AS m7__sum,\n  COUNT(DISTINCT ARRAY_TO_STRING(ARRAY(SELECT CAST(__e0 AS STRING) AS c FROM UNNEST(`arr`) AS __e0 ORDER BY c), '|')) AS m7__distinct,\n  SUM(CASE WHEN `st` IS NULL THEN 1 ELSE 0 END) AS m8__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(COALESCE(CAST(`st`.`a` AS STRING), '<null>') || '|' || COALESCE(CAST(`st`.`b` AS STRING), '<null>'))), 1, 8)) AS INT64)) AS m8__sum,\n  COUNT(DISTINCT COALESCE(CAST(`st`.`a` AS STRING), '<null>') || '|' || COALESCE(CAST(`st`.`b` AS STRING), '<null>')) AS m8__distinct\nFROM (\nSELECT CAST(1 AS INT64) AS i, CAST(1.5 AS FLOAT64) AS f, true AS b, DATE '2024-03-15' AS d, TIMESTAMP '2024-03-15 13:45:12.123456' AS ts, 'abc' AS s, NUMERIC '12.34' AS dec, [CAST(3 AS INT64), CAST(1 AS INT64), CAST(2 AS INT64)] AS arr, STRUCT(CAST(1 AS INT64) AS a, 'x' AS b) AS st\n  UNION ALL SELECT CAST(2 AS INT64) AS i, CAST(-2.25 AS FLOAT64) AS f, false AS b, DATE '2023-01-01' AS d, TIMESTAMP '2023-01-01 00:00:00' AS ts, 'ABC' AS s, NUMERIC '-0.05' AS dec, [CAST(10 AS INT64), CAST(9 AS INT64)] AS arr, STRUCT(CAST(2 AS INT64) AS a, '' AS b) AS st\n  UNION ALL SELECT CAST(3 AS INT64) AS i, CAST(0.30000000000000004 AS FLOAT64) AS f, true AS b, DATE '2024-02-29' AS d, TIMESTAMP '2024-02-29 23:59:59.999999' AS ts, 'Z\u00fcrich' AS s, NUMERIC '12.30' AS dec, CAST([] AS ARRAY<INT64>) AS arr, STRUCT(CAST(3 AS INT64) AS a, 'z' AS b) AS st\n  UNION ALL SELECT CAST(4 AS INT64) AS i, CAST(100.0 AS FLOAT64) AS f, false AS b, DATE '1999-12-31' AS d, TIMESTAMP '1999-12-31 12:00:00' AS ts, '' AS s, NUMERIC '12.00' AS dec, [CAST(7 AS INT64)] AS arr, STRUCT(CAST(4 AS INT64) AS a, 'y' AS b) AS st\n  UNION ALL SELECT CAST(5 AS INT64) AS i, CAST(0.0000001 AS FLOAT64) AS f, true AS b, DATE '1970-01-01' AS d, TIMESTAMP '1970-01-01 00:00:00' AS ts, 'x|y' AS s, NUMERIC '0.00' AS dec, [CAST(1 AS INT64), CAST(1 AS INT64)] AS arr, STRUCT(CAST(5 AS INT64) AS a, 'w' AS b) AS st\n  UNION ALL SELECT CAST(NULL AS INT64) AS i, CAST(NULL AS FLOAT64) AS f, CAST(NULL AS BOOL) AS b, CAST(NULL AS DATE) AS d, CAST(NULL AS TIMESTAMP) AS ts, CAST(NULL AS STRING) AS s, CAST(NULL AS NUMERIC) AS dec, CAST(NULL AS ARRAY<INT64>) AS arr, CAST(NULL AS STRUCT<a INT64, b STRING>) AS st\n) AS _fixture"
+    }
+  },
   "sources": [],
   "models": [],
   "money": {},
   "verdict": {
-    "exit": 2,
-    "reason": "Spark or BigQuery: the self-check query failed: list index out of range"
+    "exit": 1,
+    "reason": "digest self-check FAILED"
   }
 }

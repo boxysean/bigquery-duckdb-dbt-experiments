@@ -240,3 +240,105 @@ comparing, and compare row counts first.
 
 The root project is untouched: only `bigquery_spark/` was added, and `git -C .. status` shows
 no modification to the root project's tracked files.
+
+## 9. Run 2026-10-06 21:32–23:4x CEST: endpoint restarted, every gate re-measured
+
+Status of this run: **the endpoint is back, the sources are loaded, both builds and every
+two-target gate pass; the parity harness's own self-check fails on one line and Claude Code
+is out of its session window, so the fix and the docs are the next run's work.** Nothing was
+merged; `main` is untouched.
+
+### What ran, with the real output
+
+```
+$ make check-env                                        -> exit 0, 9 checks ok
+    (dbt-oss 2.0.5, DBT_ALLOW_EXPERIMENTAL_ADAPTERS, JDK 21, pyspark 4.2.0,
+     google-cloud-bigquery 3.46.1 + pyarrow 25.0.1, endpoint reachable, both ymls,
+     BigQuery credential: service-account key file)
+
+$ make load-sources                                     -> exit 0, 87.4s
+ table                   BigQuery numRows  rows written  Spark count  status
+ distribution_centers                  10            10           10  ok
+ products                          29,120        29,120       29,120  ok
+ users                            100,000       100,000      100,000  ok
+ inventory_items                  487,799       487,799      487,799  ok
+ orders                           124,650       124,650      124,650  ok
+ order_items                      180,778       180,778      180,778  ok
+ events                         2,421,086     2,421,086    2,421,086  ok
+ instants moved by the load: none (12 timestamp column(s) checked; Spark session time zone UTC)
+
+$ dbt build --target spark                              -> exit 0  [3m 12s]
+    Processed: 29 models | 167 tests
+    Summary: 196 total | 195 success | 1 warn
+    the one warn is tests/assert_order_item_created_at_is_plausible, severity: warn BY
+    DESIGN (the published dataset's jitter, documented in the test's header)
+
+$ dbt build --target bigquery                           -> exit 0  [2m 43s]
+    Processed: 29 models | 167 tests
+    Summary: 196 total | 195 success | 1 warn   (the same by-design test)
+
+$ python3 scripts/check_portability.py                  -> exit 0
+    compiled files checked: 30 (models: 29, analyses: 1)
+    BigQuery-only tokens in the Spark render: 0/13
+    Spark-only tokens in the BigQuery render: 0/12
+    target-branch findings: 0
+    PORTABLE
+
+$ python3 scripts/check_portability.py --demo           -> exit 0
+    demo: guardrail failed as designed (1 dialect finding(s), 1 target-branch finding(s)
+          in _portability_demo.sql) -> NOT PORTABLE: 2 finding(s), then PORTABLE again
+
+$ dbt run-operation polyglot_selfcheck --target spark   -> exit 0  [5.6s]
+    selfcheck: 54 ok, 1 skipped by name, 0 failed, of 55 cases on spark
+        (skipped: decimal ceiling: decimal_type(77, 38))
+
+$ dbt run-operation polyglot_selfcheck --target bigquery -> exit 0  [1m 21s]
+    selfcheck: 34 ok, 21 skipped by name, 0 failed, of 55 cases on bigquery
+
+$ dbt run-operation polyglot_render --args '{include_bignumeric: true}' --target spark
+                                                        -> exit 1, as designed:
+    [error] [JinjaError (dbt1501)]: decimal_type(77, 38): Spark DECIMAL is capped at
+    precision 38 (DECIMAL_PRECISION_EXCEEDS_MAX_PRECISION above it), while BigQuery reaches
+    BIGNUMERIC at 76.76 digits of precision (scale 38), which has no Spark equivalent.
+
+$ python3 scripts/parity.py                             -> exit 1  DIGEST SELF-CHECK FAILED
+```
+
+Raw logs (untracked by design, in the worktree): `target_load.log`, `target_build_spark.log`,
+`target_build_bq.log`, `target_gates.log`, `target_parity.log`.
+
+### The parity self-check bug, fully diagnosed
+
+```
+  arr__sum         spark      10119176120   bigquery      13677882513   MISMATCH
+```
+
+Every other metric and every type kind matches. Cause, measured with a probe that printed the
+per-row canonical text and the per-row md5 on both engines: in `scripts/parity.py`,
+`Engine.canon` renders an **array** on BigQuery as
+`ARRAY_TO_STRING(ARRAY(SELECT ... FROM UNNEST(<expr>) ...), '|')`. `UNNEST(NULL)` yields zero
+rows, so the subquery returns an **empty array** and the value is `''` — indistinguishable from
+a genuinely empty array. Spark's `array_join(NULL, '|')` is `NULL`, so `SUM` skips it. The
+all-NULL fixture row therefore contributes `md5('') = 3558706393` on BigQuery only, which is
+exactly the delta (`13677882513 - 10119176120`). The five non-NULL fixture rows are
+byte-identical on both engines.
+
+The harness is right to refuse: the canonicalisation, not the engines, is wrong. The models
+are unaffected (no model returns an array to the client). The fix spec is at
+`../.spec-parity-null-fix.md`: a NULL guard around the array (and struct) rendering on both
+engines, plus one fixture row with a NULL array element.
+
+### Blocked on
+
+Claude Code, the only permitted writer of this project's code, is out of its account-wide
+session window (measured twice, 21:54 and 22:12 CEST):
+
+```
+claude -p "Reply with exactly: PROBE-OK" --model opus --max-turns 1 --output-format json
+  -> is_error: true, api_error_status: 429, terminal_reason: api_error
+  -> "You've hit your session limit · resets 11:50pm (Europe/Vienna)"
+--fallback-model haiku -> identical 429
+```
+
+So this run stops at verified infrastructure + diagnosis; the fix, the value-parity run, the
+catalogue and the decision-maker conclusion are the next run's (see `../CHECKPOINT.md`).
