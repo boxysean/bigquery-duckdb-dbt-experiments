@@ -80,8 +80,9 @@ TRAPS (each one is a decision, not a shrug)
      on one side and a wall-clock on the other is a gating type difference.
   5. Arrays and structs. Compared structurally, not textually: an array is sorted
      and joined with '|', a struct is rendered field by field through the same
-     canonical rules, recursively. dbt-oss 2.0.5's spark adapter cannot even fetch an
-     ARRAY column, and this harness never asks for one: every value is canonicalised
+     canonical rules, recursively. A NULL array or struct renders as NULL on both
+     engines, so it is never conflated with an empty one. dbt-oss 2.0.5's spark
+     adapter cannot even fetch an ARRAY column, and this harness never asks for one: every value is canonicalised
      to a scalar in SQL and only aggregates leave the engine.
   6. NULLS ordering / row order. Nothing depends on row order: every metric is an
      aggregate, the checksum is a SUM of per-row hashes over a canonicalised value,
@@ -347,18 +348,26 @@ class Engine:
         if k == "bytes":
             return f"TO_HEX({expr})" if self.bq else f"lower(hex({expr}))"
         if k == "array":
+            # A NULL array renders as NULL on both engines, never as '' (BigQuery's
+            # UNNEST(NULL) yields zero rows, which would conflate it with an empty
+            # array); the explicit guard keeps the two engines the same shape.
             var = f"__e{depth}"
             rendered = self.canon(var, kind[1], depth + 1)
             if self.bq:
-                return (f"ARRAY_TO_STRING(ARRAY(SELECT {rendered} AS c "
-                        f"FROM UNNEST({expr}) AS {var} ORDER BY c), '|')")
-            return (f"array_join(array_sort(transform({expr}, {var} -> {rendered})), '|')")
+                return (f"CASE WHEN {expr} IS NULL THEN NULL ELSE "
+                        f"ARRAY_TO_STRING(ARRAY(SELECT {rendered} AS c "
+                        f"FROM UNNEST({expr}) AS {var} ORDER BY c), '|') END")
+            return (f"CASE WHEN {expr} IS NULL THEN NULL ELSE "
+                    f"array_join(array_sort(transform({expr}, {var} -> {rendered})), '|') END")
         if k == "struct":
+            # a NULL struct renders as NULL, not as a struct of NULLs
             parts = [f"COALESCE({self.canon(f'{expr}.{self.quote(n)}', t, depth + 1)}, '<null>')"
                      for n, t in kind[1]]
             if self.bq:
-                return " || '|' || ".join(parts) or "''"
-            return "concat_ws('|', " + ", ".join(parts) + ")"
+                return (f"CASE WHEN {expr} IS NULL THEN NULL ELSE "
+                        + (" || '|' || ".join(parts) or "''") + " END")
+            return (f"CASE WHEN {expr} IS NULL THEN NULL ELSE "
+                    "concat_ws('|', " + ", ".join(parts) + ") END")
         return self.to_text(expr)
 
 
@@ -637,6 +646,8 @@ _FIXTURE = [
     ("4", "100.0", "false", "1999-12-31", "1999-12-31 12:00:00", "", "12.00", ["7"], ("4", "y")),
     ("5", "0.0000001", "true", "1970-01-01", "1970-01-01 00:00:00", "x|y", "0.00",
      ["1", "1"], ("5", "w")),
+    ("6", "2.0", "true", "2020-06-01", "2020-06-01 00:00:00", "n", "1.00",
+     ["9", "NULL"], ("6", "v")),   # an array with a NULL element
     None,   # every column NULL
 ]
 
@@ -1363,8 +1374,10 @@ def render_markdown(report):
     A("   (BigQuery DATETIME) is its own kind, so instant-vs-wall-clock gates. The Spark")
     A("   session must be UTC (checked by the self-check).")
     A("5. **Arrays and structs** compare structurally: arrays sorted and joined with")
-    A("   `|`, structs field by field, recursively. The Spark adapter cannot fetch an")
-    A("   ARRAY column at all; nothing here returns one - only aggregates leave the engine.")
+    A("   `|`, structs field by field, recursively. A NULL array or struct renders as")
+    A("   NULL on both engines, so it is never conflated with an empty one. The Spark")
+    A("   adapter cannot fetch an ARRAY column at all; nothing here returns one - only")
+    A("   aggregates leave the engine.")
     A("6. **Row order and NULLS ordering**: every metric is an aggregate; the only sort")
     A("   is of an array's own values, the same on both engines.")
     A("7. **NULLs**: explicit null and distinct counts per column, so an all-NULL column")
