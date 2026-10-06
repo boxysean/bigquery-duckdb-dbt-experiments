@@ -1,0 +1,433 @@
+version: 2
+
+# Intermediate: the joins and aggregates that make the marts readable (SPEC
+# sections 4 and 5). Views; no `select *` in the final select.
+#
+# Conventions for every model below:
+#   * money is money_type() (decimal(18,2) on Spark, numeric on BigQuery), in USD.
+#   * every *_at column is a NAIVE UTC timestamp (from staging's to_utc_timestamp());
+#     dates and months are UTC calendar dates and months.
+#   * "gross" means before returns and cancellations: every order item counts,
+#     whatever its status. Returns are reported in separate columns.
+#   * surrogate keys are generate_surrogate_key(): md5 of the parts joined with
+#     '||', built from integers only so the value is the same on both targets.
+
+models:
+  - name: int_order_items__enriched
+    description: >
+      Grain: one row per order item (one unit ordered), keyed by order_item_id.
+      The order item joined to its order (status, created_at), its inventory unit
+      (cost, distribution center), its product (category, department, brand) and
+      its user (traffic source). Left joins on primary keys, so the row count
+      equals stg_thelook__order_items. Money in USD; timestamps naive UTC.
+    columns:
+      - name: order_item_id
+        description: Order item identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: The order the item belongs to (stg_thelook__orders.order_id).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_orders__item_rollup')
+                field: order_id
+      - name: user_id
+        description: The customer who ordered the item (stg_thelook__users.user_id).
+        data_tests:
+          - not_null
+      - name: product_id
+        description: The product ordered (stg_thelook__products.product_id).
+        data_tests:
+          - not_null
+      - name: inventory_item_id
+        description: >
+          The physical inventory unit that fulfilled the item
+          (stg_thelook__inventory_items.inventory_item_id). A unit is sold at most
+          once, so this is unique too.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_inventory_items__enriched')
+                field: inventory_item_id
+      - name: distribution_center_id
+        description: >
+          Distribution center the unit shipped from, taken from the inventory unit
+          (inventory_items.product_distribution_center_id).
+        data_tests:
+          - not_null
+      - name: order_item_status
+        description: Status of this item (order_items.status).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Complete', 'Shipped', 'Processing', 'Returned', 'Cancelled']
+      - name: order_status
+        description: Status of the parent order (orders.status).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Complete', 'Shipped', 'Processing', 'Returned', 'Cancelled']
+      - name: sale_price
+        description: Price the item sold for, USD.
+        data_tests:
+          - not_null
+      - name: product_cost
+        description: Cost of the inventory unit (inventory_items.cost), USD.
+        data_tests:
+          - not_null
+      - name: gross_margin
+        description: sale_price - product_cost, USD. Before returns.
+      - name: is_returned
+        description: True when order_item_status is 'Returned'.
+      - name: order_item_created_at
+        description: When the item was added to the order; naive UTC timestamp.
+      - name: order_created_at
+        description: When the parent order was placed; naive UTC timestamp.
+      - name: order_date
+        description: UTC calendar date of order_created_at.
+      - name: shipped_at
+        description: When the item shipped; naive UTC timestamp, null until shipped.
+      - name: delivered_at
+        description: When the item was delivered; naive UTC timestamp, null until delivered.
+      - name: returned_at
+        description: When the item was returned; naive UTC timestamp, null unless returned.
+      - name: product_category
+        description: Product category (products.category).
+      - name: product_department
+        description: Product department, Men or Women (products.department).
+      - name: product_brand
+        description: Product brand (products.brand).
+      - name: user_traffic_source
+        description: The customer's acquisition channel (users.traffic_source).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Search', 'Organic', 'Facebook', 'Email', 'Display']
+
+  - name: int_orders__item_rollup
+    description: >
+      Grain: one row per order, keyed by order_id. The order's own status and
+      timestamp plus its items rolled up from int_order_items__enriched: counts,
+      gross revenue, cost and margin (USD, before returns and cancellations) and
+      returned items. Every order in stg_thelook__orders appears.
+    columns:
+      - name: order_id
+        description: Order identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: The customer who placed the order (stg_thelook__users.user_id).
+        data_tests:
+          - not_null
+      - name: order_status
+        description: Order status (orders.status).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Complete', 'Shipped', 'Processing', 'Returned', 'Cancelled']
+      - name: order_created_at
+        description: When the order was placed; naive UTC timestamp.
+        data_tests:
+          - not_null
+      - name: order_date
+        description: UTC calendar date of order_created_at.
+        data_tests:
+          - not_null
+      - name: item_count
+        description: Number of order items in the order (counted, not the source's num_of_item).
+      - name: returned_item_count
+        description: Number of the order's items with status 'Returned'.
+      - name: gross_revenue
+        description: Sum of the items' sale_price, USD, before returns and cancellations.
+      - name: total_cost
+        description: Sum of the items' product_cost, USD.
+      - name: gross_margin
+        description: gross_revenue - total_cost, USD.
+      - name: is_fully_returned
+        description: True when the order has items and every one of them was returned.
+
+  - name: int_orders__daily
+    description: >
+      Grain: one row per UTC calendar date with at least one order, keyed by
+      order_date (dates without orders are absent). Orders, items, distinct
+      customers, gross revenue/cost/margin (USD) and returned items, aggregated
+      from int_orders__item_rollup by the order's date.
+    columns:
+      - name: order_date
+        description: UTC calendar date the orders were placed; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: order_count
+        description: Orders placed that day.
+      - name: order_item_count
+        description: Order items in those orders.
+      - name: customer_count
+        description: Distinct users who placed an order that day.
+      - name: gross_revenue
+        description: Sum of sale_price of those orders' items, USD, before returns and cancellations.
+      - name: total_cost
+        description: Sum of product_cost of those orders' items, USD.
+      - name: gross_margin
+        description: gross_revenue - total_cost, USD.
+      - name: returned_item_count
+        description: Items of that day's orders that were returned (attributed to the order date, not the return date).
+
+  - name: int_users__lifetime_orders
+    description: >
+      Grain: one row per user, keyed by user_id. Lifetime order totals from
+      int_orders__item_rollup. Every user in stg_thelook__users appears; users
+      with no orders have zero totals and null first/last order timestamps.
+      Money in USD, before returns and cancellations.
+    columns:
+      - name: user_id
+        description: User identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: first_order_at
+        description: When the user placed their first order; naive UTC timestamp, null if none.
+      - name: last_order_at
+        description: When the user placed their latest order; naive UTC timestamp, null if none.
+      - name: lifetime_orders
+        description: Orders placed by the user (all statuses).
+      - name: lifetime_items
+        description: Order items across those orders.
+      - name: lifetime_gross_revenue
+        description: Sum of sale_price over the user's items, USD, before returns and cancellations.
+      - name: lifetime_total_cost
+        description: Sum of product_cost over the user's items, USD.
+      - name: lifetime_gross_margin
+        description: lifetime_gross_revenue - lifetime_total_cost, USD.
+      - name: lifetime_returned_items
+        description: The user's items with status 'Returned'.
+
+  - name: int_users__first_order_cohort
+    description: >
+      Grain: one row per user, keyed by user_id. The user's signup, first order
+      and acquisition cohort (the UTC month of the first order). Users who never
+      ordered have null first_order_at and cohort_month.
+    columns:
+      - name: user_id
+        description: User identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: signup_at
+        description: When the user signed up (users.created_at); naive UTC timestamp.
+        data_tests:
+          - not_null
+      - name: first_order_at
+        description: When the user placed their first order (min orders.created_at); naive UTC timestamp.
+      - name: cohort_month
+        description: >
+          First instant (00:00:00) of the UTC calendar month of first_order_at, as a
+          naive timestamp (timestamp_type()). Null for users without orders.
+
+  - name: int_cohorts__user_months
+    description: >
+      Grain: one row per user x UTC calendar month in which the user placed at
+      least one order, keyed by the surrogate user_month_key (user_id and the
+      month as yyyymm). The month is the order's created_at month. Revenue in USD,
+      before returns and cancellations.
+    columns:
+      - name: user_month_key
+        description: >
+          Surrogate primary key: generate_surrogate_key(user_id, yyyymm of
+          activity_month), an md5 hex string.
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: The customer (stg_thelook__users.user_id).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_users__first_order_cohort')
+                field: user_id
+      - name: cohort_month
+        description: The user's cohort (month of first order), naive UTC timestamp at the month start.
+        data_tests:
+          - not_null
+      - name: activity_month
+        description: The month of activity, naive UTC timestamp at the month start (timestamp_type()).
+        data_tests:
+          - not_null
+      - name: orders
+        description: Orders the user placed in activity_month.
+      - name: items
+        description: Order items in those orders.
+      - name: revenue
+        description: Gross revenue of those orders, USD, before returns and cancellations.
+
+  - name: int_products__sales
+    description: >
+      Grain: one row per product, keyed by product_id. Sales totals from
+      int_order_items__enriched; a unit sold is one order item, whatever its
+      status. Every product appears; unsold products have zero totals and null
+      first/last sale. Money in USD, before returns and cancellations.
+    columns:
+      - name: product_id
+        description: Product identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: units_sold
+        description: Order items for the product.
+      - name: orders_with_product
+        description: Distinct orders containing the product.
+      - name: gross_revenue
+        description: Sum of sale_price, USD.
+      - name: total_cost
+        description: Sum of product_cost (the sold units' inventory cost), USD.
+      - name: gross_margin
+        description: gross_revenue - total_cost, USD.
+      - name: first_sold_at
+        description: Earliest order_item_created_at for the product; naive UTC timestamp.
+      - name: last_sold_at
+        description: Latest order_item_created_at for the product; naive UTC timestamp.
+
+  - name: int_products__returns
+    description: >
+      Grain: one row per product, keyed by product_id. Units sold, units returned
+      and the return rate. Every product appears; return_rate is null for a
+      product never sold.
+    columns:
+      - name: product_id
+        description: Product identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: units_sold
+        description: Order items for the product, whatever their status.
+      - name: returned_units
+        description: Those order items with status 'Returned'.
+      - name: return_rate
+        description: returned_units / units_sold as a float in [0, 1]; null when units_sold is 0.
+
+  - name: int_inventory_items__enriched
+    description: >
+      Grain: one row per inventory item (one physical unit), keyed by
+      inventory_item_id. The product_* columns are the source's denormalised
+      copies on inventory_items (no join to products). unit_cost and
+      product_retail_price are USD; timestamps are naive UTC.
+    columns:
+      - name: inventory_item_id
+        description: Inventory unit identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: product_id
+        description: The product this unit is (stg_thelook__products.product_id).
+        data_tests:
+          - not_null
+      - name: distribution_center_id
+        description: Distribution center holding the unit (source product_distribution_center_id).
+        data_tests:
+          - not_null
+      - name: product_category
+        description: Product category, as denormalised on the unit.
+      - name: product_department
+        description: Product department (Men or Women), as denormalised on the unit.
+      - name: product_brand
+        description: Product brand, as denormalised on the unit.
+      - name: product_name
+        description: Product name, as denormalised on the unit.
+      - name: product_sku
+        description: Product SKU, as denormalised on the unit.
+      - name: unit_cost
+        description: Cost of the unit (inventory_items.cost), USD.
+      - name: product_retail_price
+        description: Product retail price, as denormalised on the unit, USD.
+      - name: created_at
+        description: When the unit entered inventory; naive UTC timestamp.
+      - name: sold_at
+        description: When the unit was sold; naive UTC timestamp, null while unsold.
+      - name: is_sold
+        description: True when sold_at is not null.
+      - name: days_to_sell
+        description: (sold_at - created_at) in days, as a float; null when unsold.
+
+  - name: int_inventory__by_product_center
+    description: >
+      Grain: one row per product x distribution center holding at least one unit
+      of it, keyed by the surrogate product_center_key. Unit counts and the value
+      of open (unsold) stock, at cost and at retail, USD.
+    columns:
+      - name: product_center_key
+        description: Surrogate primary key, generate_surrogate_key(product_id, distribution_center_id).
+        data_tests:
+          - unique
+          - not_null
+      - name: product_id
+        description: The product (stg_thelook__products.product_id).
+        data_tests:
+          - not_null
+      - name: distribution_center_id
+        description: The distribution center (stg_thelook__distribution_centers.distribution_center_id).
+        data_tests:
+          - not_null
+      - name: inventory_units
+        description: Units of the product ever stocked at the center.
+      - name: open_units
+        description: Of those, units not yet sold.
+      - name: sold_units
+        description: Of those, units sold. open_units + sold_units = inventory_units.
+      - name: open_inventory_value
+        description: Sum of unit_cost over open units, USD.
+      - name: open_retail_value
+        description: Sum of product_retail_price over open units, USD.
+
+  - name: int_events__sessions
+    description: >
+      Grain: one row per web session, keyed by session_id. Timing, size and
+      conversion of the session, from stg_thelook__events. traffic_source and
+      browser are those of the session's first event; timestamps are naive UTC.
+    columns:
+      - name: session_id
+        description: Session identifier (events.session_id); primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: >
+          The session's user (max non-null events.user_id in the session). Null
+          for a fully anonymous session: measured on 2026-09-27, 500,000 of the
+          real dataset's 681,313 sessions have no user on any of their events, so
+          this model does not test the column `not_null` (a SPEC section 4
+          deviation, see NOTES.md > "Measured against the real dataset"). Every
+          non-null value resolves to a user by construction, because it is one of
+          stg_thelook__events.user_id, which carries a `relationships` test.
+      - name: first_event_at
+        description: Earliest event in the session; naive UTC timestamp.
+      - name: last_event_at
+        description: Latest event in the session; naive UTC timestamp.
+      - name: session_seconds
+        description: last_event_at - first_event_at in seconds, as a float.
+      - name: event_count
+        description: Events in the session.
+      - name: max_sequence_number
+        description: Highest sequence_number in the session.
+      - name: traffic_source
+        description: >
+          Traffic source of the session's first event, so this carries the events
+          vocabulary (Email, Adwords, Facebook, YouTube, Organic), not the users
+          one. See the column of the same name on stg_thelook__events.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Email', 'Adwords', 'Facebook', 'YouTube', 'Organic']
+      - name: browser
+        description: Browser of the session's first event.
+      - name: has_purchase
+        description: True when the session contains a 'purchase' event.

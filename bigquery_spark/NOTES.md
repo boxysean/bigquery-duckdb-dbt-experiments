@@ -117,7 +117,126 @@ leg is real, not compile-only. **Never fake a BigQuery run.**
    the portability gate output, and the value-parity result — including whether the predicted
    Spark-vs-BigQuery **money** difference appears.
 
-## 6. Workspace hygiene
+## 6. Phase 1 done (2026-10-06): skeleton + macros + models (SPEC sections 1, 2, 3)
+
+Written: `dbt_project.yml`, `profiles.yml` (spark default + bigquery), `packages.yml`,
+`macros/polyglot/` (10 files), `models/`, `tests/`, `analyses/polyglot_showcase.sql`.
+Verified: `dbt compile --target spark` exit 0 and `--target bigquery` exit 0 (29 models, 167
+tests, 1 analysis); `dbt run-operation polyglot_selfcheck --target spark` exit 0:
+**54 ok, 1 skipped by name, 0 failed of 55**. Models NOT built yet (next phase).
+
+### Model files changed, and why
+
+| file | change | kind |
+|---|---|---|
+| `models/marts/dim_date.sql` | `cross join unnest(...) as {{ unnest_alias('date_day') }}` -> `{{ explode_array_rows(generate_date_series('first_date', 'last_date'), 'date_day') }}` | **SQL: the one required divergence** (Spark has no `unnest`) |
+| `models/intermediate/int_orders__item_rollup.sql` | header comment: dropped "(none in the fixture)" | comment only |
+| `models/staging/_thelook__sources.yml` | header comment + source description: DuckDB/fixture wording -> Spark | docs only; the `database:` expression is unchanged |
+| `models/staging/_thelook__models.yml`, `models/intermediate/_int__models.yml`, `models/marts/_marts__models.yml` | "decimal(18,2) on DuckDB" -> "on Spark" (marts also "double on ...") | comment only |
+| `models/marts/.gitkeep` | "BigQuery and DuckDB" -> "BigQuery and Spark" | comment only |
+| `tests/assert_order_item_created_at_is_plausible.sql` | trailing comment about the DuckDB fixture -> both legs read the same real rows | comment only |
+
+The comment-only edits exist because the card forbids the word DuckDB anywhere in this tree;
+none of them changes rendered SQL.
+
+**Counts:** 29 model `.sql` files: **28 have SQL identical to the root project**; 27 are
+byte-for-byte identical, 1 differs only in a comment, 1 (`dim_date.sql`) needed a SQL change.
+Of all 36 files under `models/`, 29 are byte-for-byte identical. All 4 tests have identical SQL
+(1 comment edit).
+
+`analyses/polyglot_showcase.sql`: the one `(select count(*) from unnest(...) as n)` became
+`(select count(*) from (select 1 as one) as base {{ explode_array_rows(generate_series(1, 5), 'n') }})`
+(measured: the `unnest` form fails on Spark, the lateral-view form returns 5).
+
+### New measurements this phase (Spark 4.2.0, via beeline against 127.0.0.1:10000)
+
+| construct | result | consequence |
+|---|---|---|
+| `interval 1 quarter` | **PARSE_SYNTAX_ERROR** | Spark branch of `generate_date_series` renders a quarter step as `interval 3n month` |
+| `sequence(date '2024-01-31', date '2024-04-30', interval 1 month)` | `[01-31, 02-29, 03-31, 04-30]` | steps from the start, no month-end drift |
+| `sequence(1, 0)` / `sequence(5, 1)` | `[1, 0]` / `[5, 4, 3, 2, 1]` (counts down) | BigQuery `generate_array(1, 0)` is empty: start > stop diverges; documented on the macro |
+| `sequence(1, 0, 1)`, date sequence with start > stop | raises `Illegal sequence boundaries` | same |
+| `explode(array())` in a lateral view | 0 rows | same outer-row-dropping as BigQuery `cross join unnest([])` |
+| `md5(concat_ws('\|\|', 1, 'x'))` (integer arg) | `df6729...e5cc` | Spark surrogate key needs no cast; `[month_number(ts), 7]` = md5('202403\|\|7') = `a480dd56...fc0a` (matches Python) |
+| `md5(concat_ws('\|\|', 1, null))` | = md5('1') | concat_ws SKIPS null; BigQuery concat returns NULL |
+| `cast(x as decimal)` | `decimal(10,0)` | why money is pinned to decimal(18,2) |
+| `cast(1.005 as decimal(18,2))` | `1.01` | exact-to-scale rounding (the money prediction's mechanism) |
+| `cast(<array> as string)` | `[1, 4, 7]` | the self-check casts every value to STRING in SQL, so array cases run even though the adapter cannot fetch ARRAY |
+| `date_trunc('month', date '...')` | typeof `timestamp` | `month_start` needs no cast on Spark |
+
+**Non-UTC session (the timezone gotcha), measured** in a separate beeline session with
+`set spark.sql.session.timeZone=Europe/Vienna` (the SET did not leak: a new session read back `UTC`):
+
+| expression | UTC session | Vienna session |
+|---|---|---|
+| `cast(timestamp '2024-03-15 13:45:00+02:00' as string)` | `2024-03-15 11:45:00` | `2024-03-15 12:45:00` |
+| `unix_micros(timestamp '2024-03-15 13:45:00')` (naive literal) | `1710510300000000` | `1710506700000000` (read as Vienna time, 1 h off) |
+| `cast(timestamp '2024-03-15 23:30:00+00:00' as date)` | 2024-03-15 | **2024-03-16** |
+| `date_format(timestamp '2024-03-31 23:30:00+00:00', 'yyyy-MM')` | 2024-03 | **2024-04** |
+
+Instants are preserved, but every day/month boundary moves: a non-UTC session would silently
+change `order_date`, `dim_date`, the cohort months and the monthly marts. The self-check case
+`session time zone is UTC` guards this on every run.
+
+### SPEC deviations / additions
+
+* SPEC 3.3 says Spark `sequence(start, stop, interval n part)` covers the date generator; true
+  except for **quarter**, which Spark cannot spell (above). Handled in the macro, not the model.
+* The self-check casts values to STRING in SQL, so only ONE Spark case is skipped (the p > 38
+  decimal, a compiler error by design). Its failure is captured with
+  `dbt run-operation polyglot_render --args '{include_bignumeric: true}' --target spark` -> exit 1
+  with the decimal_type message.
+* The BigQuery expectations in `polyglot_selfcheck` are written but **not executed in this
+  phase** (the BigQuery leg is the next phase's). Typeof cases and array-text cases are skipped
+  by name on BigQuery (no `typeof()`; no CAST ARRAY AS STRING); length/element cases through
+  `explode_array_rows` cover arrays on both.
+* `SPEC.md` and this file still mention DuckDB, as the orchestrator's reference to the root
+  project; nothing else in the tree does (generated `logs/` aside).
+
+## 7. Phase 2 done (2026-10-06): scripts + Makefile (SPEC sections 2, 4, 5)
+
+Written: `scripts/{install_prereqs.sh, start_spark.sh, stop_spark.sh, check_env.sh,
+load_spark_sources.py, check_portability.py}`, `Makefile`. Not yet: `parity.py`,
+`spark_check.sh`, `pre_pr.sh` (the Makefile already references `parity.py` / `pre_pr.sh`).
+
+Verified: `check_env.sh` exit 0 (exit 1 without `DBT_ALLOW_EXPERIMENTAL_ADAPTERS`);
+`check_portability.py` exit 0 (30 files, 0/13, 0/12, 0 target-branch, PORTABLE); `--demo`
+exit 0; loader `--tables distribution_centers,orders` exit 0 (10 and 124,650 rows = numRows =
+Spark count; 4 timestamp columns, no instant moved; session UTC); loader with no credential
+exit 2; `start_spark.sh` reports the running server (pid 637350) and starts nothing; a scratch
+server (`SPARK_PORT=10001 SPARK_STATE_DIR=/tmp/...`) started in 26 s, read back UTC/4.2.0, and
+`stop_spark.sh` stopped it. `make bq` with no credential exits 2. The heavy tables, `dbt build`
+and `install_prereqs.sh`'s download branch (everything was already installed) were NOT run.
+
+### SPEC deviations, all measured
+
+* **SPEC 5 `CREATE OR REPLACE TABLE ... USING PARQUET` fails on Spark 4.2.0's session catalog:**
+  `UNSUPPORTED_FEATURE.TABLE_OPERATION ... does not support REPLACE TABLE`. The loader uses
+  `DROP TABLE IF EXISTS` + `CREATE TABLE ... USING PARQUET LOCATION` (external: the drop
+  keeps the files, measured).
+* **SPEC 4 Spark-only token list: two seed tokens are valid BigQuery** (dry run, 0 bytes):
+  `unix_micros(` (BigQuery has `UNIX_MICROS`) and `array<bigint>` (`BIGINT` is an INT64
+  alias). Both dropped; the list has 12 tokens. All 13 BigQuery-only tokens were rejected by
+  Spark. Spark 4.2 does have its own `date_diff(end, start)` / `date_diff(unit, start, end)`
+  (both return 4); the BigQuery form `date_diff(a, b, day)` fails (`UNRESOLVED_COLUMN`), and
+  the Spark branch spells it `datediff`, so the token stays.
+* The Spark adapter renders sources **two-part** (`` `thelook_ecommerce`.`orders` ``), so
+  `spark_catalog` never appears in the Spark render either; the loader registers into the
+  `thelook_ecommerce` database of the session catalog to match.
+* The BigQuery client was not installed anywhere; `install_prereqs.sh` puts it (with the
+  Storage Read API client and pyarrow) in `~/.local/spark/venv`, beside pyspark.
+* SPEC 2 says `install_prereqs.sh` also starts the endpoint; it does not (`start_spark.sh`
+  does, and `make spark` runs it).
+
+### Risk for the parity phase: the public dataset changes over time
+
+`orders` read **124,650** rows on 2026-10-06 (BigQuery `numRows`), against 124,952 in the
+older loader log quoted in section 3, and the timestamps run into the future (max
+`returned_at` 2026-10-15). The BigQuery leg reads the live table and the Spark leg reads a
+snapshot, so same-data parity only holds if both are read close together. Re-load before
+comparing, and compare row counts first.
+
+## 8. Workspace hygiene
 
 The root project is untouched: only `bigquery_spark/` was added, and `git -C .. status` shows
 no modification to the root project's tracked files.
