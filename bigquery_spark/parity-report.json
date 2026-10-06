@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-10-06T19:53:28+0200",
+  "same_data": true,
+  "spark_source": "compiled",
+  "legs": {
+    "spark": "ok",
+    "bigquery": "ok"
+  },
+  "self_check": {},
+  "sources": [],
+  "models": [],
+  "money": {},
+  "verdict": {
+    "exit": 2,
+    "reason": "Spark or BigQuery: the self-check query failed: list index out of range"
+  }
+}
