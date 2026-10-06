@@ -342,3 +342,75 @@ claude -p "Reply with exactly: PROBE-OK" --model opus --max-turns 1 --output-for
 
 So this run stops at verified infrastructure + diagnosis; the fix, the value-parity run, the
 catalogue and the decision-maker conclusion are the next run's (see `../CHECKPOINT.md`).
+
+## 10. Construct reconnaissance for the catalogue (measured 2026-10-06 22:1x, read-only)
+
+Run by the orchestrator with one probe per construct against the live Spark 4.2.0 Thrift
+Server (one beeline session) and the BigQuery REST API (no table reads: 0 bytes billed).
+Probe: `/home/hermes/.hermes/profiles/bruno/cache/scratch/probe_constructs.py`.
+**Every cell below is what the engine actually answered or actually raised** — not a
+prediction. Where a probe could not be made equivalent, it says so.
+
+| construct | BigQuery (live) | Spark 4.2.0 (live) |
+|---|---|---|
+| `QUALIFY row_number() over (order by a) = 1` | `1 2` (works) | `1 2` — **works, unchanged** (Spark 4.2 accepts QUALIFY; a pleasant surprise, and the reason no model needed a branch here) |
+| `SELECT * EXCEPT (b)` | `1` | `1` — works, unchanged |
+| `SELECT * REPLACE (3 AS b)` | `1 3` | **PARSE_SYNTAX_ERROR** — no Spark spelling; would need the column list written out |
+| array `[OFFSET(0)]` | `10` | **PARSE_SYNTAX_ERROR** |
+| array `[ORDINAL(1)]` | `10` | **PARSE_SYNTAX_ERROR** |
+| array `[SAFE_OFFSET(5)]` | `None` (null, no error) | **PARSE_SYNTAX_ERROR** |
+| `element_at(arr, 1)` | **Function not found** | `10` — one-based; the off-by-one hazard is real and silent |
+| `GENERATE_DATE_ARRAY` | `array_length(...)` = 3 | `size(sequence(d, d, interval 1 day))` = 3 — equivalent via `sequence` |
+| `GENERATE_ARRAY` | `sum(unnest(generate_array(1,4)))` = 10 | `explode(sequence(1,4))` = 10 — equivalent |
+| `PARSE_DATE('%Y-%m-%d', ...)` | `2024-03-15` | `to_date(s, 'yyyy-MM-dd')` = `2024-03-15` |
+| `FORMAT_DATE('%Y/%m/%d', ...)` | `2024/03/15` | `date_format(d, 'yyyy/MM/dd')` = `2024/03/15` — **a different pattern language**, not just a different name |
+| `EXTRACT(year from date)` | `2024` | `2024` |
+| `EXTRACT(week from date '2024-03-15')` | **`10`** | **`11`** — a silent divergence: ISO week vs US week. The project never calls it (verified: `extract(week` appears in no model) |
+| `DATE_TRUNC(date, month)` | `2024-03-01` (a DATE) | `date_trunc('month', d)` = `2024-03-01 00:00:00.0` — **a TIMESTAMP**, so the canonical kind moves unless cast back |
+| `TIMESTAMP_TRUNC(ts, hour)` | `1.7105076E9` | **UNRESOLVED_ROUTINE** — no `timestamp_trunc`; `date_trunc('hour', ts)` is the Spark form |
+| `STRING_AGG(x, ',' ORDER BY x)` | `a,b,c` | `concat_ws(',', sort_array(collect_list(x)))` = `a,b,c` — equivalent, but the ordering clause is a rewrite |
+| `APPROX_COUNT_DISTINCT` | `3` | `3` — works, unchanged |
+| `ARRAY_AGG(x IGNORE NULLS)` | `2` | `2` — **the Spark probe is NOT an equivalent test** (it used `size(array_agg(x))`, a different semantic); a proper Spark spelling (`filter (where x is not null)`) is **unverified** |
+| `ARRAY_AGG(x ORDER BY x LIMIT 2)` | `2` | `2` — same caveat: the Spark probe limited ROWS, not the aggregate. **unverified** |
+| `PIVOT (sum(v) for k in (...))` | `1 2` | `1 2` — works, unchanged |
+| recursive CTE (`with recursive`) | `3` | `3` — works, unchanged on Spark 4.2 |
+| `'1' + 1` | **400: Could not cast literal "1" to type DATE** | `2` — diverge in opposite directions: BigQuery refuses, Spark coerces silently |
+| `7 / 2` | `3.5` | `3.5` — no integer division on either |
+| `1 + 1.5` | `2.5` | `2.5` |
+| `cast(1 as bigint) + cast(2 as numeric/decimal(38,9))` | `3` | `3.00000000` — **the money/scale difference, visible directly**: Spark prints the declared scale, BigQuery the shortest form |
+| `cast(datetime ... as timestamp)` vs `cast(ts as timestamp_ntz)` | `1.7105103E9` | `2024-03-15 13:45:00.0` — different types, as the design says |
+| `current_timestamp()` | `2026-10-06 20:10:50.209692+00` | `timestamp` (typeof) |
+| three-part `` `project.dataset.table` `` | `10` rows | **REQUIRES_SINGLE_PART_NAMESPACE** — Spark's session catalog takes two parts; the loader registers `thelook_ecommerce.<table>` to match |
+| `struct(1 AS a, 2 AS b).a` | `1` | `1` — identical |
+| `SAFE_CAST` vs `try_cast` | `42` | `42` |
+| `FARM_FINGERPRINT('x')` vs `xxhash64('x')` | `-4503883598042011646` | `-5636050478767222463` — **different algorithms**: why the harness hashes with `md5` on both instead |
+| `date_diff(later, earlier, day)` vs `datediff(later, earlier)` | `14` | `14` (the BigQuery spelling raises on Spark, measured in phase 1) |
+| `ORDER BY x NULLS LAST` | `1` | `1` — identical |
+
+### Which models actually use which seam (measured: a scan of every `models/**/*.sql`)
+
+Counted with `/home/hermes/.hermes/profiles/bruno/cache/scratch/macro_map.py` (every
+`{{ macro(` call in the tree). The model tree contains **no** literal `qualify`, `unnest`,
+`safe_cast`, `except_columns`, `generate_date_series`, `format_date_str`, `timestamp_trunc_to`,
+`month_number`, `regexp_contains`, `element_at`, `pivot`, `string_agg` or `array_agg`: the
+dialect seam is reached only through these macros.
+
+| macro | calls | files |
+|---|---|---|
+| `int_type(` | 51 | 19 files (every staging model + most intermediate/marts) |
+| `string_type(` | 34 | 8 files (the seven staging + dim_date) |
+| `money_type(` | 25 | 14 files: 3 staging (order_items, products, inventory_items), 7 intermediate, 4 marts |
+| `to_utc_timestamp(` | 12 | staging events, inventory_items, order_items, orders, users |
+| `float_type(` | 4 | staging distribution_centers, users |
+| `month_start(` | 4 | int_cohorts__user_months, int_users__first_order_cohort, dim_date, fct_orders |
+| `safe_divide(` | 3 | int_products__returns, mart_cohort_retention, mart_product_performance |
+| `generate_surrogate_key(` | 3 | int_cohorts__user_months, int_inventory__by_product_center, mart_cohort_retention |
+| `seconds_between(` | 2 | int_events__sessions, int_inventory_items__enriched |
+| `day_of_week_iso(` | 2 | dim_date |
+| `date_diff_days(`, `explode_array_rows(`, `format_month(` | 1 each | dim_date |
+| `ref(` / `source(` | 44 / 7 | dbt built-ins, not the seam |
+
+The type macros and the `*_at` handling are what make 28 of the 29 models portable unchanged:
+the seam is a **rename**, except for `dim_date.sql` (the `unnest` → `explode_array_rows` rewrite)
+and the `money_type` scale decision. `decimal_type(` appears in the yml `data_type:`
+declarations, not in model SQL; a precise count of that is the docs phase's job.
