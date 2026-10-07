@@ -116,6 +116,9 @@ HEX_DIGITS = 8          # 32 bits; 2^32 * 2^31 rows < 2^63, so a SUM cannot over
 MAX_BYTES = int(os.environ.get("BQ_MAXIMUM_BYTES_BILLED", "1000000000"))
 # Mirrors profiles.yml: schema: "experiments_{{ env_var('DBT_ENV', 'dev') }}"
 SCHEMA = f"experiments_{os.environ.get('DBT_ENV', 'dev')}"
+# The fixture's fixed users volume (scripts/fixtures/thelook_ecommerce.sql); the real
+# table has 100000. How real_sources_problem() tells the two loads apart.
+FIXTURE_USERS = 400
 
 
 # --------------------------------------------------------------------------- io
@@ -681,22 +684,24 @@ from unnest([
 def real_sources_problem(duck: DuckLeg):
     """None when dev.duckdb holds the real load of scripts/load_duckdb_real_sources.sh.
 
-    The real tables have a `users.user_geom` column the fixture lacks, and the loader
-    delivers timestamps as TIMESTAMPTZ (D2) where the extension alone gives TIMESTAMP;
-    together they tell the real load apart from the fixture and from a raw probe load.
+    The fixture's volumes are fixed (exactly 400 users, scripts/fixtures/thelook_ecommerce.sql;
+    the real table has 100000), and the loader delivers timestamps as TIMESTAMPTZ (D2)
+    where the extension alone gives TIMESTAMP; together they tell the real load apart
+    from the fixture and from a raw probe load. (This used to key on `users.user_geom`,
+    which only the real table had; the fixture now carries it too, t_153b4307.)
     """
     try:
+        users = duck.sql("select count(*) as n from thelook_ecommerce.users")[0]["n"]
         rows = duck.sql(
             "select table_name, column_name, data_type from information_schema.columns "
-            "where table_schema = 'thelook_ecommerce' and ("
-            "(table_name = 'users' and column_name = 'user_geom') or "
-            "(table_name = 'orders' and column_name = 'created_at'))")
+            "where table_schema = 'thelook_ecommerce' and "
+            "table_name = 'orders' and column_name = 'created_at'")
     except Exception as e:  # noqa: BLE001
         return f"cannot read {duck.db}: {e}"
     found = {(r["table_name"], r["column_name"]): r["data_type"] for r in rows}
-    if ("users", "user_geom") not in found:
-        return ("thelook_ecommerce.users has no user_geom column: dev.duckdb holds the"
-                " fixture, not the real dataset")
+    if int(users) == FIXTURE_USERS:
+        return (f"thelook_ecommerce.users has exactly {FIXTURE_USERS} rows: dev.duckdb holds"
+                " the fixture, not the real dataset")
     if found.get(("orders", "created_at")) != "TIMESTAMP WITH TIME ZONE":
         return (f"thelook_ecommerce.orders.created_at is"
                 f" {found.get(('orders', 'created_at'))}, not TIMESTAMP WITH TIME ZONE:"
@@ -834,7 +839,7 @@ def main():
                 " (scripts/load_duckdb_real_sources.sh) first.")
             return 1
         log("      dev.duckdb holds the real thelook_ecommerce rows"
-            " (users.user_geom present, timestamps TIMESTAMPTZ)")
+            f" (users is not the {FIXTURE_USERS}-row fixture, timestamps TIMESTAMPTZ)")
     if not args.skip_build and args.sources == "real":
         cmd = [str(DBT), "build", "--target", "duckdb"]
         log("[1/5] dbt build --target duckdb  (real sources; the fixture is NOT reloaded)")

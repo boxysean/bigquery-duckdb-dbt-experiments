@@ -5,7 +5,8 @@ version: 2
 #   target duckdb   -> dev.thelook_ecommerce.<table>  (the local fixture loaded by
 #                      scripts/load_duckdb_sources.sh; never `dbt seed`)
 # Types below are the real BigQuery types. On DuckDB they arrive as BIGINT, DOUBLE,
-# VARCHAR and TIMESTAMPTZ respectively.
+# VARCHAR, TIMESTAMPTZ and GEOMETRY respectively. scripts/check_source_schema.py
+# proves these lists equal the fixture's columns and the real tables' columns.
 sources:
   - name: thelook_ecommerce
     description: >
@@ -98,6 +99,8 @@ sources:
             description: "STRING. Acquisition channel: Search, Organic, Facebook, Email or Display."
           - name: created_at
             description: "TIMESTAMP. When the user signed up."
+          - name: user_geom
+            description: "GEOGRAPHY. The address as a point, WGS84 lon/lat (POINT(longitude latitude))."
 
       - name: products
         description: One row per product in the catalogue.
@@ -162,6 +165,8 @@ sources:
             description: "FLOAT64. Latitude."
           - name: longitude
             description: "FLOAT64. Longitude."
+          - name: distribution_center_geom
+            description: "GEOGRAPHY. The center as a point, WGS84 lon/lat (POINT(longitude latitude))."
 
       - name: events
         description: One row per website event (page view or action) within a session.

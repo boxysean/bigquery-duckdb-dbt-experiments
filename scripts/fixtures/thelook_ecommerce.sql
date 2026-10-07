@@ -5,7 +5,15 @@
 --
 -- * Columns, column order and types mirror the real BigQuery tables as DuckDB
 --   sees them: INT64 -> BIGINT, FLOAT64 -> DOUBLE, STRING -> VARCHAR,
---   TIMESTAMP -> TIMESTAMPTZ (what DuckDB's bigquery extension returns).
+--   TIMESTAMP -> TIMESTAMPTZ (what DuckDB's bigquery extension returns),
+--   GEOGRAPHY -> GEOMETRY. That includes the two geometry columns,
+--   users.user_geom and distribution_centers.distribution_center_geom (last in
+--   each table, as on BigQuery), built as WKT POINT(longitude latitude) from the
+--   row's own lat/lon and cast to DuckDB's native GEOMETRY type (no extension).
+--   The seam's spelling of that type is macros/polyglot/types.sql
+--   geography_type(); this file cannot call it, because it is plain SQL run by
+--   the duckdb CLI, not dbt, so it writes the DuckDB spelling directly.
+--   scripts/check_source_schema.py proves fixture == declared == real.
 -- * Deterministic. Every "random" draw is `hash(<row key>, '<salt>')`, a pure
 --   function of the row, so the output does not depend on thread scheduling
 --   (random() after setseed() is only reproducible single-threaded). setseed is
@@ -31,19 +39,27 @@ CREATE SCHEMA IF NOT EXISTS thelook_ecommerce;
 
 -- ---------------------------------------------------------------- distribution_centers (10)
 CREATE OR REPLACE TABLE thelook_ecommerce.distribution_centers AS
-SELECT id::BIGINT AS id, name::VARCHAR AS name, latitude::DOUBLE AS latitude, longitude::DOUBLE AS longitude
-FROM (VALUES
-    (1,  'Memphis TN',                                 35.1174, -89.9711),
-    (2,  'Chicago IL',                                 41.8369, -87.6847),
-    (3,  'Houston TX',                                 29.7604, -95.3698),
-    (4,  'Los Angeles CA',                             34.0500, -118.2500),
-    (5,  'New Orleans LA',                             29.9500, -90.0667),
-    (6,  'Port Authority of New York/New Jersey NY/NJ', 40.6340, -73.7834),
-    (7,  'Philadelphia PA',                            39.9500, -75.1667),
-    (8,  'Mobile AL',                                  30.6944, -88.0431),
-    (9,  'Charleston SC',                              32.7833, -79.9333),
-    (10, 'Savannah GA',                                32.0167, -81.1167)
-) AS t(id, name, latitude, longitude);
+WITH centers AS (
+    SELECT * FROM (VALUES
+        (1,  'Memphis TN',                                 35.1174, -89.9711),
+        (2,  'Chicago IL',                                 41.8369, -87.6847),
+        (3,  'Houston TX',                                 29.7604, -95.3698),
+        (4,  'Los Angeles CA',                             34.0500, -118.2500),
+        (5,  'New Orleans LA',                             29.9500, -90.0667),
+        (6,  'Port Authority of New York/New Jersey NY/NJ', 40.6340, -73.7834),
+        (7,  'Philadelphia PA',                            39.9500, -75.1667),
+        (8,  'Mobile AL',                                  30.6944, -88.0431),
+        (9,  'Charleston SC',                              32.7833, -79.9333),
+        (10, 'Savannah GA',                                32.0167, -81.1167)
+    ) AS t(id, name, latitude, longitude)
+)
+SELECT
+    id::BIGINT                                                                     AS id,
+    name::VARCHAR                                                                  AS name,
+    latitude::DOUBLE                                                               AS latitude,
+    longitude::DOUBLE                                                              AS longitude,
+    ('POINT(' || longitude::VARCHAR || ' ' || latitude::VARCHAR || ')')::GEOMETRY   AS distribution_center_geom
+FROM centers;
 
 -- ---------------------------------------------------------------- products (200)
 CREATE OR REPLACE TABLE thelook_ecommerce.products AS
@@ -125,26 +141,32 @@ named AS (
                        'Ashley', 'Mei', 'Ana', 'Ji-woo'], id, 'first_name')
         END AS first_name
     FROM base
+),
+located AS (
+    SELECT
+        id::BIGINT                                                                AS id,
+        first_name::VARCHAR                                                       AS first_name,
+        last_name::VARCHAR                                                        AS last_name,
+        lower(replace(first_name || last_name, '-', '')) || id::VARCHAR || '@example.com' AS email,
+        (12 + hash(id, 'age') % 59)::BIGINT                                       AS age,
+        gender::VARCHAR                                                           AS gender,
+        loc.state::VARCHAR                                                        AS state,
+        ((100 + hash(id, 'street_no') % 9900)::VARCHAR || ' '
+            || pick(['Oak', 'Maple', 'Cedar', 'Pine', 'Elm', 'Lake', 'Hill', 'Park'], id, 'street')
+            || ' ' || pick(['Street', 'Avenue', 'Road', 'Lane'], id, 'street_kind'))::VARCHAR AS street_address,
+        loc.postal_code::VARCHAR                                                  AS postal_code,
+        loc.city::VARCHAR                                                         AS city,
+        loc.country::VARCHAR                                                      AS country,
+        round(loc.lat + (rnd(id, 'lat') - 0.5) * 0.1, 6)::DOUBLE                  AS latitude,
+        round(loc.lon + (rnd(id, 'lon') - 0.5) * 0.1, 6)::DOUBLE                  AS longitude,
+        pick(['Search', 'Organic', 'Facebook', 'Email', 'Display'], id, 'traffic_source')::VARCHAR AS traffic_source,
+        to_timestamp(signup_epoch)                                                AS created_at
+    FROM named
 )
 SELECT
-    id::BIGINT                                                                AS id,
-    first_name::VARCHAR                                                       AS first_name,
-    last_name::VARCHAR                                                        AS last_name,
-    lower(replace(first_name || last_name, '-', '')) || id::VARCHAR || '@example.com' AS email,
-    (12 + hash(id, 'age') % 59)::BIGINT                                       AS age,
-    gender::VARCHAR                                                           AS gender,
-    loc.state::VARCHAR                                                        AS state,
-    ((100 + hash(id, 'street_no') % 9900)::VARCHAR || ' '
-        || pick(['Oak', 'Maple', 'Cedar', 'Pine', 'Elm', 'Lake', 'Hill', 'Park'], id, 'street')
-        || ' ' || pick(['Street', 'Avenue', 'Road', 'Lane'], id, 'street_kind'))::VARCHAR AS street_address,
-    loc.postal_code::VARCHAR                                                  AS postal_code,
-    loc.city::VARCHAR                                                         AS city,
-    loc.country::VARCHAR                                                      AS country,
-    round(loc.lat + (rnd(id, 'lat') - 0.5) * 0.1, 6)::DOUBLE                  AS latitude,
-    round(loc.lon + (rnd(id, 'lon') - 0.5) * 0.1, 6)::DOUBLE                  AS longitude,
-    pick(['Search', 'Organic', 'Facebook', 'Email', 'Display'], id, 'traffic_source')::VARCHAR AS traffic_source,
-    to_timestamp(signup_epoch)                                                AS created_at
-FROM named
+    *,
+    ('POINT(' || longitude::VARCHAR || ' ' || latitude::VARCHAR || ')')::GEOMETRY AS user_geom
+FROM located
 ORDER BY id;
 
 -- ---------------------------------------------------------------- orders (3000)
