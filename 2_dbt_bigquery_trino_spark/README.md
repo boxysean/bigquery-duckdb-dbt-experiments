@@ -23,7 +23,7 @@ adapter.
 | `dbt build --target trino` | **198 / 198 ok** (30 models, 168 data tests), ~65 s |
 | Model SQL shared with project 1 | **34 / 34 `.sql` files byte-identical**, 4 / 4 `.yml` files structurally equal (`../scripts/check_model_trees.py`) |
 | Portability guardrail | **PORTABLE**: 0 / 19 BigQuery-only tokens in the Trino render, 0 / 18 Trino-only tokens in the BigQuery render, 0 target branches in models |
-| Macros executed on Trino | **59 / 59** self-check cases ok (`make selfcheck`) |
+| Macros executed on Trino | **64 / 64** self-check cases ok (`make selfcheck`) |
 | Spark reads what dbt built | **12 / 12 tables read by Spark with identical per-column profiles**; 0 / 18 views readable (by design, see below) |
 | `bigquery` target | **197 pass, 1 warn, 0 error** on the real dataset, 152 s (`make bq`; the warning is the deliberate dirty-data test). Compiles with no credential in CI |
 | Trino on the **real** data | **197 pass, 1 warn, 0 error**, 47 s, on the 3.3M real rows landed by Spark (`make trino-real`) |
@@ -69,7 +69,7 @@ enforced by a check, not just written down.
 
 1. **Never name an engine in a model.** Every dialect difference goes through
    `macros/polyglot/`, which has a `bigquery__` and a `trino__` implementation for every
-   macro (29 each). Enforced by `scripts/check_portability.py`.
+   macro (30 each). Enforced by `scripts/check_portability.py`.
 2. **Never hard-code a catalog or schema.** Use `source()` and `ref()` only. The one
    target-dependent line in the project is the source `database:` in
    `models/staging/_thelook__sources.yml`, the same line as in project 1.
@@ -95,10 +95,12 @@ enforced by a check, not just written down.
 
 The full list of what was hit is in [`docs/challenges.md`](docs/challenges.md).
 
-## Money: the gap project 1 has, closed here by design
+## Money: exact, as BigQuery's NUMERIC
 
-Project 1's main measured value gap is money. DuckDB's `decimal(18,2)` rounds sub-cent
-source values that BigQuery's `NUMERIC` (decimal(38,9)) keeps. Trino, Iceberg and Spark
+Project 1's main measured value gap was money: DuckDB's `decimal(18,2)` rounded sub-cent
+source values that BigQuery's `NUMERIC` (decimal(38,9)) keeps. (Project 1 now uses
+`decimal(38,9)` and `money_quotient()` too, and is equal to BigQuery in every cell:
+[`../1_dbt_bigquery_duckdb/analyses/money_fix/README.md`](../1_dbt_bigquery_duckdb/analyses/money_fix/README.md).) Trino, Iceberg and Spark
 can all hold **exactly** `decimal(38,9)`, so `money_type()` renders `decimal(38,9)` on
 Trino. The self-check proves the sub-cent digits survive
 (`6.644999999552965` → `6.645000000`). Measured end to end on the real data, it **does

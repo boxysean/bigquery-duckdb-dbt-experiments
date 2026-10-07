@@ -1,0 +1,4446 @@
+{
+ "variant": "v18",
+ "bytes_billed": 2457862144,
+ "results": [
+  {
+   "relation": "dim_date",
+   "matched": 2824,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 0,
+   "columns": [
+    {
+     "column": "date_day",
+     "duckdb_type": "DATE",
+     "bigquery_type": "DATE",
+     "rule": "equal as stored",
+     "identical": 2824,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "date_month",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 2824,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "month_start_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 2824,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "year_number",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2824,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "month_of_year",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2824,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "day_of_month",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2824,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "day_of_week_iso",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2824,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "is_weekend",
+     "duckdb_type": "BOOLEAN",
+     "bigquery_type": "BOOL",
+     "rule": "equal as stored",
+     "identical": 2824,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "days_since_first_order",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2824,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "dim_distribution_centers",
+   "matched": 10,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 10,
+   "columns": [
+    {
+     "column": "distribution_center_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "latitude",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "longitude",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "inventory_units",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "open_units",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sold_units",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "open_inventory_value",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 0,
+     "equivalent": 0,
+     "different": 10,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"1136306.413842091\"",
+       "duckdb": "\"1136312.19\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"673206.126433319\"",
+       "duckdb": "\"673205.95\""
+      },
+      {
+       "key": "2",
+       "bigquery": "\"1065821.714514298\"",
+       "duckdb": "\"1065822.77\""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "relation": "dim_products",
+   "matched": 29120,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 89322,
+   "columns": [
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sku",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "category",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "department",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "brand",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "distribution_center_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "distribution_center_name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "unit_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 85,
+     "equivalent": 0,
+     "different": 29035,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"27.047999916\"",
+       "duckdb": "\"27.05\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"32.665499924\"",
+       "duckdb": "\"32.67\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"23.471980936\"",
+       "duckdb": "\"23.47\""
+      }
+     ]
+    },
+    {
+     "column": "retail_price",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 13445,
+     "equivalent": 0,
+     "different": 15675,
+     "examples": [
+      {
+       "key": "100",
+       "bigquery": "\"38.990001678\"",
+       "duckdb": "\"38.99\""
+      },
+      {
+       "key": "10002",
+       "bigquery": "\"11.989999771\"",
+       "duckdb": "\"11.99\""
+      },
+      {
+       "key": "10003",
+       "bigquery": "\"58.950000763\"",
+       "duckdb": "\"58.95\""
+      }
+     ]
+    },
+    {
+     "column": "units_sold",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "gross_revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 13479,
+     "equivalent": 0,
+     "different": 15641,
+     "examples": [
+      {
+       "key": "100",
+       "bigquery": "\"155.960006712\"",
+       "duckdb": "\"155.96\""
+      },
+      {
+       "key": "10002",
+       "bigquery": "\"95.919998168\"",
+       "duckdb": "\"95.92\""
+      },
+      {
+       "key": "10003",
+       "bigquery": "\"412.650005341\"",
+       "duckdb": "\"412.65\""
+      }
+     ]
+    },
+    {
+     "column": "gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 149,
+     "equivalent": 0,
+     "different": 28971,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"87.808000336\"",
+       "duckdb": "\"87.8\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"187.841500532\"",
+       "duckdb": "\"187.81\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"62.072082968\"",
+       "duckdb": "\"62.08\""
+      }
+     ]
+    },
+    {
+     "column": "returned_units",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "return_rate",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "dim_users",
+   "matched": 100000,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 137472,
+   "columns": [
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "first_name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "last_name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "email",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "age",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "gender",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "city",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "state",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "country",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "postal_code",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "traffic_source",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "signup_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 100000,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "cohort_month",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 20096,
+     "equivalent": 79904,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "first_order_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 20096,
+     "equivalent": 79904,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "last_order_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 20096,
+     "equivalent": 79904,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "lifetime_orders",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "lifetime_items",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "lifetime_gross_revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 42335,
+     "equivalent": 0,
+     "different": 57665,
+     "examples": [
+      {
+       "key": "10",
+       "bigquery": "\"29.989999771\"",
+       "duckdb": "\"29.99\""
+      },
+      {
+       "key": "100000",
+       "bigquery": "\"39.950000763\"",
+       "duckdb": "\"39.95\""
+      },
+      {
+       "key": "10003",
+       "bigquery": "\"474.870005607\"",
+       "duckdb": "\"474.87\""
+      }
+     ]
+    },
+    {
+     "column": "lifetime_gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 20193,
+     "equivalent": 0,
+     "different": 79807,
+     "examples": [
+      {
+       "key": "10",
+       "bigquery": "\"18.293899787\"",
+       "duckdb": "\"18.29\""
+      },
+      {
+       "key": "10000",
+       "bigquery": "\"62.068000046\"",
+       "duckdb": "\"62.07\""
+      },
+      {
+       "key": "100000",
+       "bigquery": "\"19.463600383\"",
+       "duckdb": "\"19.46\""
+      }
+     ]
+    },
+    {
+     "column": "lifetime_returned_items",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "fct_inventory_items",
+   "matched": 488895,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 749547,
+   "columns": [
+    {
+     "column": "inventory_item_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "distribution_center_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "unit_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 1409,
+     "equivalent": 0,
+     "different": 487486,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"16.981379741\"",
+       "duckdb": "\"16.98\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"152.489999612\"",
+       "duckdb": "\"152.49\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"74.438000336\"",
+       "duckdb": "\"74.44\""
+      }
+     ]
+    },
+    {
+     "column": "product_retail_price",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 226834,
+     "equivalent": 0,
+     "different": 262061,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"31.979999542\"",
+       "duckdb": "\"31.98\""
+      },
+      {
+       "key": "1000",
+       "bigquery": "\"34.979999542\"",
+       "duckdb": "\"34.98\""
+      },
+      {
+       "key": "100000",
+       "bigquery": "\"12.989999771\"",
+       "duckdb": "\"12.99\""
+      }
+     ]
+    },
+    {
+     "column": "created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 488895,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sold_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 307825,
+     "equivalent": 181070,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "is_sold",
+     "duckdb_type": "BOOLEAN",
+     "bigquery_type": "BOOL",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "days_to_sell",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_category",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_department",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_brand",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "fct_order_items",
+   "matched": 181070,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 555096,
+   "columns": [
+    {
+     "column": "order_item_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "inventory_item_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "distribution_center_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_item_status",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_status",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sale_price",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 84076,
+     "equivalent": 0,
+     "different": 96994,
+     "examples": [
+      {
+       "key": "100003",
+       "bigquery": "\"12.989999771\"",
+       "duckdb": "\"12.99\""
+      },
+      {
+       "key": "100007",
+       "bigquery": "\"85.989997864\"",
+       "duckdb": "\"85.99\""
+      },
+      {
+       "key": "100013",
+       "bigquery": "\"132.660003662\"",
+       "duckdb": "\"132.66\""
+      }
+     ]
+    },
+    {
+     "column": "product_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 516,
+     "equivalent": 0,
+     "different": 180554,
+     "examples": [
+      {
+       "key": "100",
+       "bigquery": "\"74.438000336\"",
+       "duckdb": "\"74.44\""
+      },
+      {
+       "key": "10000",
+       "bigquery": "\"6.588999994\"",
+       "duckdb": "\"6.59\""
+      },
+      {
+       "key": "100003",
+       "bigquery": "\"6.222209894\"",
+       "duckdb": "\"6.22\""
+      }
+     ]
+    },
+    {
+     "column": "gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 516,
+     "equivalent": 0,
+     "different": 180554,
+     "examples": [
+      {
+       "key": "100",
+       "bigquery": "\"107.561999664\"",
+       "duckdb": "\"107.56\""
+      },
+      {
+       "key": "10000",
+       "bigquery": "\"4.411000006\"",
+       "duckdb": "\"4.41\""
+      },
+      {
+       "key": "100003",
+       "bigquery": "\"6.767789877\"",
+       "duckdb": "\"6.77\""
+      }
+     ]
+    },
+    {
+     "column": "is_returned",
+     "duckdb_type": "BOOLEAN",
+     "bigquery_type": "BOOL",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_item_created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 181070,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_date",
+     "duckdb_type": "DATE",
+     "bigquery_type": "DATE",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_category",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_department",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_brand",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_retail_price",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 84076,
+     "equivalent": 0,
+     "different": 96994,
+     "examples": [
+      {
+       "key": "100003",
+       "bigquery": "\"12.989999771\"",
+       "duckdb": "\"12.99\""
+      },
+      {
+       "key": "100007",
+       "bigquery": "\"85.989997864\"",
+       "duckdb": "\"85.99\""
+      },
+      {
+       "key": "100013",
+       "bigquery": "\"132.660003662\"",
+       "duckdb": "\"132.66\""
+      }
+     ]
+    },
+    {
+     "column": "user_country",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_state",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "fct_orders",
+   "matched": 124885,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 327041,
+   "columns": [
+    {
+     "column": "order_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_status",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 124885,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_date",
+     "duckdb_type": "DATE",
+     "bigquery_type": "DATE",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_month",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 124885,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "item_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "returned_item_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "gross_revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 47114,
+     "equivalent": 0,
+     "different": 77771,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"31.979999542\"",
+       "duckdb": "\"31.98\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"9.949999809\"",
+       "duckdb": "\"9.95\""
+      },
+      {
+       "key": "100001",
+       "bigquery": "\"44.880001068\"",
+       "duckdb": "\"44.88\""
+      }
+     ]
+    },
+    {
+     "column": "total_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 250,
+     "equivalent": 0,
+     "different": 124635,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"16.981379741\"",
+       "duckdb": "\"16.98\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"9.107999984\"",
+       "duckdb": "\"9.11\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"6.318249895\"",
+       "duckdb": "\"6.32\""
+      }
+     ]
+    },
+    {
+     "column": "gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 250,
+     "equivalent": 0,
+     "different": 124635,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"14.998619801\"",
+       "duckdb": "15"
+      },
+      {
+       "key": "10",
+       "bigquery": "\"8.892000016\"",
+       "duckdb": "\"8.89\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"3.631749914\"",
+       "duckdb": "\"3.63\""
+      }
+     ]
+    },
+    {
+     "column": "is_fully_returned",
+     "duckdb_type": "BOOLEAN",
+     "bigquery_type": "BOOL",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_country",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_state",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_traffic_source",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "int_cohorts__user_months",
+   "matched": 120712,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 76002,
+   "columns": [
+    {
+     "column": "user_month_key",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 120712,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 120712,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "cohort_month",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 120712,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "activity_month",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 120712,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "orders",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 120712,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "items",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 120712,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 44710,
+     "equivalent": 0,
+     "different": 76002,
+     "examples": [
+      {
+       "key": "\"0001c4934fc2531cbdf6dea204ef5678\"",
+       "bigquery": "\"44.990001678\"",
+       "duckdb": "\"44.99\""
+      },
+      {
+       "key": "\"00022ec15a6e7568dc28bdb86eb02abc\"",
+       "bigquery": "\"27.989999771\"",
+       "duckdb": "\"27.99\""
+      },
+      {
+       "key": "\"0002e060dac9c8c1a7804bcc3549a47f\"",
+       "bigquery": "\"53.330001831\"",
+       "duckdb": "\"53.33\""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "relation": "int_events__sessions",
+   "matched": 681070,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 0,
+   "columns": [
+    {
+     "column": "session_id",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 681070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 681070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "first_event_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 681070,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "last_event_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 681070,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "session_seconds",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 681070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "event_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 681070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "max_sequence_number",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 681070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "traffic_source",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 681070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "browser",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 681070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "has_purchase",
+     "duckdb_type": "BOOLEAN",
+     "bigquery_type": "BOOL",
+     "rule": "equal as stored",
+     "identical": 681070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "int_inventory__by_product_center",
+   "matched": 29056,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 44612,
+   "columns": [
+    {
+     "column": "product_center_key",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29056,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29056,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "distribution_center_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29056,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "inventory_units",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29056,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "open_units",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29056,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sold_units",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29056,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "open_inventory_value",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 85,
+     "equivalent": 0,
+     "different": 28971,
+     "examples": [
+      {
+       "key": "\"00031a75eb3acff3634f6425dfc550e1\"",
+       "bigquery": "\"580.152658588\"",
+       "duckdb": "\"580.07\""
+      },
+      {
+       "key": "\"00037bc6fcd9f8170b02996c205889c4\"",
+       "bigquery": "\"32.425920054\"",
+       "duckdb": "\"32.4\""
+      },
+      {
+       "key": "\"0004e7e0778aaa0e008b712ca018219b\"",
+       "bigquery": "\"551.09375028\"",
+       "duckdb": "\"551.04\""
+      }
+     ]
+    },
+    {
+     "column": "open_retail_value",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 13415,
+     "equivalent": 0,
+     "different": 15641,
+     "examples": [
+      {
+       "key": "\"00031a75eb3acff3634f6425dfc550e1\"",
+       "bigquery": "\"1126.510017404\"",
+       "duckdb": "\"1126.51\""
+      },
+      {
+       "key": "\"00037bc6fcd9f8170b02996c205889c4\"",
+       "bigquery": "\"77.760000228\"",
+       "duckdb": "\"77.76\""
+      },
+      {
+       "key": "\"0004e7e0778aaa0e008b712ca018219b\"",
+       "bigquery": "\"1175.039978016\"",
+       "duckdb": "\"1175.04\""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "relation": "int_inventory_items__enriched",
+   "matched": 488895,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 749547,
+   "columns": [
+    {
+     "column": "inventory_item_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "distribution_center_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_category",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_department",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_brand",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_sku",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "unit_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 1409,
+     "equivalent": 0,
+     "different": 487486,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"16.981379741\"",
+       "duckdb": "\"16.98\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"152.489999612\"",
+       "duckdb": "\"152.49\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"74.438000336\"",
+       "duckdb": "\"74.44\""
+      }
+     ]
+    },
+    {
+     "column": "product_retail_price",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 226834,
+     "equivalent": 0,
+     "different": 262061,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"31.979999542\"",
+       "duckdb": "\"31.98\""
+      },
+      {
+       "key": "1000",
+       "bigquery": "\"34.979999542\"",
+       "duckdb": "\"34.98\""
+      },
+      {
+       "key": "100000",
+       "bigquery": "\"12.989999771\"",
+       "duckdb": "\"12.99\""
+      }
+     ]
+    },
+    {
+     "column": "created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 488895,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sold_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 307825,
+     "equivalent": 181070,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "is_sold",
+     "duckdb_type": "BOOLEAN",
+     "bigquery_type": "BOOL",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "days_to_sell",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "int_order_items__enriched",
+   "matched": 181070,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 458102,
+   "columns": [
+    {
+     "column": "order_item_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "inventory_item_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "distribution_center_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_item_status",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_status",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sale_price",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 84076,
+     "equivalent": 0,
+     "different": 96994,
+     "examples": [
+      {
+       "key": "100003",
+       "bigquery": "\"12.989999771\"",
+       "duckdb": "\"12.99\""
+      },
+      {
+       "key": "100007",
+       "bigquery": "\"85.989997864\"",
+       "duckdb": "\"85.99\""
+      },
+      {
+       "key": "100013",
+       "bigquery": "\"132.660003662\"",
+       "duckdb": "\"132.66\""
+      }
+     ]
+    },
+    {
+     "column": "product_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 516,
+     "equivalent": 0,
+     "different": 180554,
+     "examples": [
+      {
+       "key": "100",
+       "bigquery": "\"74.438000336\"",
+       "duckdb": "\"74.44\""
+      },
+      {
+       "key": "10000",
+       "bigquery": "\"6.588999994\"",
+       "duckdb": "\"6.59\""
+      },
+      {
+       "key": "100003",
+       "bigquery": "\"6.222209894\"",
+       "duckdb": "\"6.22\""
+      }
+     ]
+    },
+    {
+     "column": "gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 516,
+     "equivalent": 0,
+     "different": 180554,
+     "examples": [
+      {
+       "key": "100",
+       "bigquery": "\"107.561999664\"",
+       "duckdb": "\"107.56\""
+      },
+      {
+       "key": "10000",
+       "bigquery": "\"4.411000006\"",
+       "duckdb": "\"4.41\""
+      },
+      {
+       "key": "100003",
+       "bigquery": "\"6.767789877\"",
+       "duckdb": "\"6.77\""
+      }
+     ]
+    },
+    {
+     "column": "is_returned",
+     "duckdb_type": "BOOLEAN",
+     "bigquery_type": "BOOL",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_item_created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 181070,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 181070,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_date",
+     "duckdb_type": "DATE",
+     "bigquery_type": "DATE",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "shipped_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 63778,
+     "equivalent": 117292,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "delivered_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 118220,
+     "equivalent": 62850,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "returned_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 163195,
+     "equivalent": 17875,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_category",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_department",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_brand",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_traffic_source",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "int_orders__daily",
+   "matched": 2775,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 8273,
+   "columns": [
+    {
+     "column": "order_date",
+     "duckdb_type": "DATE",
+     "bigquery_type": "DATE",
+     "rule": "equal as stored",
+     "identical": 2775,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2775,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_item_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2775,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "customer_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2775,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "gross_revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 52,
+     "equivalent": 0,
+     "different": 2723,
+     "examples": [
+      {
+       "key": "\"2019-01-14\"",
+       "bigquery": "\"176.180000305\"",
+       "duckdb": "\"176.18\""
+      },
+      {
+       "key": "\"2019-01-17\"",
+       "bigquery": "\"24.120000839\"",
+       "duckdb": "\"24.12\""
+      },
+      {
+       "key": "\"2019-01-26\"",
+       "bigquery": "\"19.989999771\"",
+       "duckdb": "\"19.99\""
+      }
+     ]
+    },
+    {
+     "column": "total_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 0,
+     "equivalent": 0,
+     "different": 2775,
+     "examples": [
+      {
+       "key": "\"2019-01-14\"",
+       "bigquery": "\"77.929659912\"",
+       "duckdb": "\"77.93\""
+      },
+      {
+       "key": "\"2019-01-16\"",
+       "bigquery": "\"17.340499973\"",
+       "duckdb": "\"17.34\""
+      },
+      {
+       "key": "\"2019-01-17\"",
+       "bigquery": "\"13.434840434\"",
+       "duckdb": "\"13.43\""
+      }
+     ]
+    },
+    {
+     "column": "gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 0,
+     "equivalent": 0,
+     "different": 2775,
+     "examples": [
+      {
+       "key": "\"2019-01-14\"",
+       "bigquery": "\"98.250340393\"",
+       "duckdb": "\"98.25\""
+      },
+      {
+       "key": "\"2019-01-16\"",
+       "bigquery": "\"22.159500027\"",
+       "duckdb": "\"22.16\""
+      },
+      {
+       "key": "\"2019-01-17\"",
+       "bigquery": "\"10.685160405\"",
+       "duckdb": "\"10.69\""
+      }
+     ]
+    },
+    {
+     "column": "returned_item_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2775,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "int_orders__item_rollup",
+   "matched": 124885,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 327041,
+   "columns": [
+    {
+     "column": "order_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_status",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 124885,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_date",
+     "duckdb_type": "DATE",
+     "bigquery_type": "DATE",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "item_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "returned_item_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "gross_revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 47114,
+     "equivalent": 0,
+     "different": 77771,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"31.979999542\"",
+       "duckdb": "\"31.98\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"9.949999809\"",
+       "duckdb": "\"9.95\""
+      },
+      {
+       "key": "100001",
+       "bigquery": "\"44.880001068\"",
+       "duckdb": "\"44.88\""
+      }
+     ]
+    },
+    {
+     "column": "total_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 250,
+     "equivalent": 0,
+     "different": 124635,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"16.981379741\"",
+       "duckdb": "\"16.98\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"9.107999984\"",
+       "duckdb": "\"9.11\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"6.318249895\"",
+       "duckdb": "\"6.32\""
+      }
+     ]
+    },
+    {
+     "column": "gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 250,
+     "equivalent": 0,
+     "different": 124635,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"14.998619801\"",
+       "duckdb": "15"
+      },
+      {
+       "key": "10",
+       "bigquery": "\"8.892000016\"",
+       "duckdb": "\"8.89\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"3.631749914\"",
+       "duckdb": "\"3.63\""
+      }
+     ]
+    },
+    {
+     "column": "is_fully_returned",
+     "duckdb_type": "BOOLEAN",
+     "bigquery_type": "BOOL",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "int_products__returns",
+   "matched": 29120,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 0,
+   "columns": [
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "units_sold",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "returned_units",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "return_rate",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "int_products__sales",
+   "matched": 29120,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 73583,
+   "columns": [
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "units_sold",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "orders_with_product",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "gross_revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 13479,
+     "equivalent": 0,
+     "different": 15641,
+     "examples": [
+      {
+       "key": "100",
+       "bigquery": "\"155.960006712\"",
+       "duckdb": "\"155.96\""
+      },
+      {
+       "key": "10002",
+       "bigquery": "\"95.919998168\"",
+       "duckdb": "\"95.92\""
+      },
+      {
+       "key": "10003",
+       "bigquery": "\"412.650005341\"",
+       "duckdb": "\"412.65\""
+      }
+     ]
+    },
+    {
+     "column": "total_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 149,
+     "equivalent": 0,
+     "different": 28971,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"108.191999664\"",
+       "duckdb": "\"108.2\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"228.658499468\"",
+       "duckdb": "\"228.69\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"93.887923744\"",
+       "duckdb": "\"93.88\""
+      }
+     ]
+    },
+    {
+     "column": "gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 149,
+     "equivalent": 0,
+     "different": 28971,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"87.808000336\"",
+       "duckdb": "\"87.8\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"187.841500532\"",
+       "duckdb": "\"187.81\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"62.072082968\"",
+       "duckdb": "\"62.08\""
+      }
+     ]
+    },
+    {
+     "column": "first_sold_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 64,
+     "equivalent": 29056,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "last_sold_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 64,
+     "equivalent": 29056,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "int_users__first_order_cohort",
+   "matched": 100000,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 0,
+   "columns": [
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "signup_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 100000,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "first_order_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 20096,
+     "equivalent": 79904,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "cohort_month",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 20096,
+     "equivalent": 79904,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "int_users__lifetime_orders",
+   "matched": 100000,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 217279,
+   "columns": [
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "first_order_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 20096,
+     "equivalent": 79904,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "last_order_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 20096,
+     "equivalent": 79904,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "lifetime_orders",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "lifetime_items",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "lifetime_gross_revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 42335,
+     "equivalent": 0,
+     "different": 57665,
+     "examples": [
+      {
+       "key": "10",
+       "bigquery": "\"29.989999771\"",
+       "duckdb": "\"29.99\""
+      },
+      {
+       "key": "100000",
+       "bigquery": "\"39.950000763\"",
+       "duckdb": "\"39.95\""
+      },
+      {
+       "key": "10003",
+       "bigquery": "\"474.870005607\"",
+       "duckdb": "\"474.87\""
+      }
+     ]
+    },
+    {
+     "column": "lifetime_total_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 20193,
+     "equivalent": 0,
+     "different": 79807,
+     "examples": [
+      {
+       "key": "10",
+       "bigquery": "\"11.696099984\"",
+       "duckdb": "\"11.7\""
+      },
+      {
+       "key": "10000",
+       "bigquery": "\"54.431999954\"",
+       "duckdb": "\"54.43\""
+      },
+      {
+       "key": "100000",
+       "bigquery": "\"20.48640038\"",
+       "duckdb": "\"20.49\""
+      }
+     ]
+    },
+    {
+     "column": "lifetime_gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 20193,
+     "equivalent": 0,
+     "different": 79807,
+     "examples": [
+      {
+       "key": "10",
+       "bigquery": "\"18.293899787\"",
+       "duckdb": "\"18.29\""
+      },
+      {
+       "key": "10000",
+       "bigquery": "\"62.068000046\"",
+       "duckdb": "\"62.07\""
+      },
+      {
+       "key": "100000",
+       "bigquery": "\"19.463600383\"",
+       "duckdb": "\"19.46\""
+      }
+     ]
+    },
+    {
+     "column": "lifetime_returned_items",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "mart_cohort_retention",
+   "matched": 3887,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 3613,
+   "columns": [
+    {
+     "column": "cohort_activity_key",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 3887,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "cohort_month",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 3887,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "activity_month",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 3887,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "months_since_cohort",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 3887,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "customers",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 3887,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "orders",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 3887,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 274,
+     "equivalent": 0,
+     "different": 3613,
+     "examples": [
+      {
+       "key": "\"0000765532832799627eff063d60218d\"",
+       "bigquery": "\"2573.189998622\"",
+       "duckdb": "\"2573.19\""
+      },
+      {
+       "key": "\"0001133d6fe5852a60dcbcc7a431ad59\"",
+       "bigquery": "\"1212.310003279\"",
+       "duckdb": "\"1212.31\""
+      },
+      {
+       "key": "\"002c1ccb6b8e260da7d0cfd66a55c363\"",
+       "bigquery": "\"224.050003051\"",
+       "duckdb": "\"224.05\""
+      }
+     ]
+    },
+    {
+     "column": "retention_rate",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 3887,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "mart_customer_summary",
+   "matched": 100000,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 142814,
+   "columns": [
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "cohort_month",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 20096,
+     "equivalent": 79904,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "signup_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 100000,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "first_order_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 20096,
+     "equivalent": 79904,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "last_order_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 20096,
+     "equivalent": 79904,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "months_active",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "lifetime_orders",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "lifetime_items",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "lifetime_gross_revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 42335,
+     "equivalent": 0,
+     "different": 57665,
+     "examples": [
+      {
+       "key": "10",
+       "bigquery": "\"29.989999771\"",
+       "duckdb": "\"29.99\""
+      },
+      {
+       "key": "100000",
+       "bigquery": "\"39.950000763\"",
+       "duckdb": "\"39.95\""
+      },
+      {
+       "key": "10003",
+       "bigquery": "\"474.870005607\"",
+       "duckdb": "\"474.87\""
+      }
+     ]
+    },
+    {
+     "column": "lifetime_gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 20193,
+     "equivalent": 0,
+     "different": 79807,
+     "examples": [
+      {
+       "key": "10",
+       "bigquery": "\"18.293899787\"",
+       "duckdb": "\"18.29\""
+      },
+      {
+       "key": "10000",
+       "bigquery": "\"62.068000046\"",
+       "duckdb": "\"62.07\""
+      },
+      {
+       "key": "100000",
+       "bigquery": "\"19.463600383\"",
+       "duckdb": "\"19.46\""
+      }
+     ]
+    },
+    {
+     "column": "average_order_value",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 94658,
+     "equivalent": 0,
+     "different": 5342,
+     "examples": [
+      {
+       "key": "10004",
+       "bigquery": "\"122.52\"",
+       "duckdb": "\"122.53\""
+      },
+      {
+       "key": "10019",
+       "bigquery": "\"116.85\"",
+       "duckdb": "\"116.86\""
+      },
+      {
+       "key": "10029",
+       "bigquery": "\"61.49\"",
+       "duckdb": "\"61.5\""
+      }
+     ]
+    },
+    {
+     "column": "returned_item_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "is_repeat_customer",
+     "duckdb_type": "BOOLEAN",
+     "bigquery_type": "BOOL",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "mart_daily_revenue",
+   "matched": 2775,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 8316,
+   "columns": [
+    {
+     "column": "revenue_date",
+     "duckdb_type": "DATE",
+     "bigquery_type": "DATE",
+     "rule": "equal as stored",
+     "identical": 2775,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2775,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_item_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2775,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "customer_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2775,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "gross_revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 52,
+     "equivalent": 0,
+     "different": 2723,
+     "examples": [
+      {
+       "key": "\"2019-01-14\"",
+       "bigquery": "\"176.180000305\"",
+       "duckdb": "\"176.18\""
+      },
+      {
+       "key": "\"2019-01-17\"",
+       "bigquery": "\"24.120000839\"",
+       "duckdb": "\"24.12\""
+      },
+      {
+       "key": "\"2019-01-26\"",
+       "bigquery": "\"19.989999771\"",
+       "duckdb": "\"19.99\""
+      }
+     ]
+    },
+    {
+     "column": "total_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 0,
+     "equivalent": 0,
+     "different": 2775,
+     "examples": [
+      {
+       "key": "\"2019-01-14\"",
+       "bigquery": "\"77.929659912\"",
+       "duckdb": "\"77.93\""
+      },
+      {
+       "key": "\"2019-01-16\"",
+       "bigquery": "\"17.340499973\"",
+       "duckdb": "\"17.34\""
+      },
+      {
+       "key": "\"2019-01-17\"",
+       "bigquery": "\"13.434840434\"",
+       "duckdb": "\"13.43\""
+      }
+     ]
+    },
+    {
+     "column": "gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 0,
+     "equivalent": 0,
+     "different": 2775,
+     "examples": [
+      {
+       "key": "\"2019-01-14\"",
+       "bigquery": "\"98.250340393\"",
+       "duckdb": "\"98.25\""
+      },
+      {
+       "key": "\"2019-01-16\"",
+       "bigquery": "\"22.159500027\"",
+       "duckdb": "\"22.16\""
+      },
+      {
+       "key": "\"2019-01-17\"",
+       "bigquery": "\"10.685160405\"",
+       "duckdb": "\"10.69\""
+      }
+     ]
+    },
+    {
+     "column": "average_order_value",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 2732,
+     "equivalent": 0,
+     "different": 43,
+     "examples": [
+      {
+       "key": "\"2019-02-01\"",
+       "bigquery": "\"46.99\"",
+       "duckdb": "47"
+      },
+      {
+       "key": "\"2019-03-01\"",
+       "bigquery": "\"94.99\"",
+       "duckdb": "95"
+      },
+      {
+       "key": "\"2019-03-03\"",
+       "bigquery": "\"26.48\"",
+       "duckdb": "\"26.49\""
+      }
+     ]
+    },
+    {
+     "column": "returned_item_count",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2775,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "mart_polyglot_types",
+   "matched": 1,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 0,
+   "columns": [
+    {
+     "column": "id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 1,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "int_array",
+     "duckdb_type": "BIGINT[]",
+     "bigquery_type": "ARRAY<INT64>",
+     "rule": "nested, compared element by element",
+     "identical": 1,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "date_array",
+     "duckdb_type": "DATE[]",
+     "bigquery_type": "ARRAY<DATE>",
+     "rule": "nested, compared element by element",
+     "identical": 1,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "pair_struct",
+     "duckdb_type": "STRUCT(id INTEGER, channel VARCHAR)",
+     "bigquery_type": "STRUCT<id INT64, channel STRING>",
+     "rule": "nested, compared element by element",
+     "identical": 1,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "pair_json",
+     "duckdb_type": "JSON",
+     "bigquery_type": "JSON",
+     "rule": "BigQuery JSON vs Trino varchar holding JSON text, compared parsed",
+     "identical": 0,
+     "equivalent": 1,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "mart_product_performance",
+   "matched": 29120,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 147258,
+   "columns": [
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "category",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "department",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "brand",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "unit_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 85,
+     "equivalent": 0,
+     "different": 29035,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"27.047999916\"",
+       "duckdb": "\"27.05\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"32.665499924\"",
+       "duckdb": "\"32.67\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"23.471980936\"",
+       "duckdb": "\"23.47\""
+      }
+     ]
+    },
+    {
+     "column": "retail_price",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 13445,
+     "equivalent": 0,
+     "different": 15675,
+     "examples": [
+      {
+       "key": "100",
+       "bigquery": "\"38.990001678\"",
+       "duckdb": "\"38.99\""
+      },
+      {
+       "key": "10002",
+       "bigquery": "\"11.989999771\"",
+       "duckdb": "\"11.99\""
+      },
+      {
+       "key": "10003",
+       "bigquery": "\"58.950000763\"",
+       "duckdb": "\"58.95\""
+      }
+     ]
+    },
+    {
+     "column": "units_sold",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "gross_revenue",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 13479,
+     "equivalent": 0,
+     "different": 15641,
+     "examples": [
+      {
+       "key": "100",
+       "bigquery": "\"155.960006712\"",
+       "duckdb": "\"155.96\""
+      },
+      {
+       "key": "10002",
+       "bigquery": "\"95.919998168\"",
+       "duckdb": "\"95.92\""
+      },
+      {
+       "key": "10003",
+       "bigquery": "\"412.650005341\"",
+       "duckdb": "\"412.65\""
+      }
+     ]
+    },
+    {
+     "column": "total_cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 149,
+     "equivalent": 0,
+     "different": 28971,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"108.191999664\"",
+       "duckdb": "\"108.2\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"228.658499468\"",
+       "duckdb": "\"228.69\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"93.887923744\"",
+       "duckdb": "\"93.88\""
+      }
+     ]
+    },
+    {
+     "column": "gross_margin",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 149,
+     "equivalent": 0,
+     "different": 28971,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"87.808000336\"",
+       "duckdb": "\"87.8\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"187.841500532\"",
+       "duckdb": "\"187.81\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"62.072082968\"",
+       "duckdb": "\"62.08\""
+      }
+     ]
+    },
+    {
+     "column": "gross_margin_rate",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 155,
+     "equivalent": 0,
+     "different": 28965,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "0.44800000171428572",
+       "duckdb": "0.44795918367346937"
+      },
+      {
+       "key": "10",
+       "bigquery": "0.45100000127731094",
+       "duckdb": "0.45092436974789918"
+      },
+      {
+       "key": "100",
+       "bigquery": "0.39800000190192347",
+       "duckdb": "0.39805078225185941"
+      }
+     ]
+    },
+    {
+     "column": "returned_units",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "return_rate",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "first_sold_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 64,
+     "equivalent": 29056,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "last_sold_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 64,
+     "equivalent": 29056,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "stg_thelook__distribution_centers",
+   "matched": 10,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 0,
+   "columns": [
+    {
+     "column": "distribution_center_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "latitude",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "longitude",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 10,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "stg_thelook__events",
+   "matched": 2423614,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 0,
+   "columns": [
+    {
+     "column": "event_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sequence_number",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "session_id",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 2423614,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "ip_address",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "city",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "state",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "postal_code",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "browser",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "traffic_source",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "uri",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "event_type",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 2423614,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "stg_thelook__inventory_items",
+   "matched": 488895,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 749547,
+   "columns": [
+    {
+     "column": "inventory_item_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 488895,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sold_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 307825,
+     "equivalent": 181070,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 1409,
+     "equivalent": 0,
+     "different": 487486,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"16.981379741\"",
+       "duckdb": "\"16.98\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"152.489999612\"",
+       "duckdb": "\"152.49\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"74.438000336\"",
+       "duckdb": "\"74.44\""
+      }
+     ]
+    },
+    {
+     "column": "product_category",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_brand",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_retail_price",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 226834,
+     "equivalent": 0,
+     "different": 262061,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"31.979999542\"",
+       "duckdb": "\"31.98\""
+      },
+      {
+       "key": "1000",
+       "bigquery": "\"34.979999542\"",
+       "duckdb": "\"34.98\""
+      },
+      {
+       "key": "100000",
+       "bigquery": "\"12.989999771\"",
+       "duckdb": "\"12.99\""
+      }
+     ]
+    },
+    {
+     "column": "product_department",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_sku",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "distribution_center_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 488895,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "stg_thelook__order_items",
+   "matched": 181070,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 96994,
+   "columns": [
+    {
+     "column": "order_item_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "order_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "inventory_item_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "status",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 181070,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 181070,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "shipped_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 63778,
+     "equivalent": 117292,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "delivered_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 118220,
+     "equivalent": 62850,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "returned_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 163195,
+     "equivalent": 17875,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sale_price",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 84076,
+     "equivalent": 0,
+     "different": 96994,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"31.979999542\"",
+       "duckdb": "\"31.98\""
+      },
+      {
+       "key": "100002",
+       "bigquery": "\"11.989999771\"",
+       "duckdb": "\"11.99\""
+      },
+      {
+       "key": "100004",
+       "bigquery": "\"16.079999924\"",
+       "duckdb": "\"16.08\""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "relation": "stg_thelook__orders",
+   "matched": 124885,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 0,
+   "columns": [
+    {
+     "column": "order_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "status",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "gender",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 124885,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "returned_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 112575,
+     "equivalent": 12310,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "shipped_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 43714,
+     "equivalent": 81171,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "delivered_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 81393,
+     "equivalent": 43492,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "num_of_item",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 124885,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "stg_thelook__products",
+   "matched": 29120,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 44710,
+   "columns": [
+    {
+     "column": "product_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "cost",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 85,
+     "equivalent": 0,
+     "different": 29035,
+     "examples": [
+      {
+       "key": "1",
+       "bigquery": "\"27.047999916\"",
+       "duckdb": "\"27.05\""
+      },
+      {
+       "key": "10",
+       "bigquery": "\"32.665499924\"",
+       "duckdb": "\"32.67\""
+      },
+      {
+       "key": "100",
+       "bigquery": "\"23.471980936\"",
+       "duckdb": "\"23.47\""
+      }
+     ]
+    },
+    {
+     "column": "category",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "brand",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "retail_price",
+     "duckdb_type": "DECIMAL(18,2)",
+     "bigquery_type": "NUMERIC",
+     "rule": "equal as stored",
+     "identical": 13445,
+     "equivalent": 0,
+     "different": 15675,
+     "examples": [
+      {
+       "key": "100",
+       "bigquery": "\"38.990001678\"",
+       "duckdb": "\"38.99\""
+      },
+      {
+       "key": "10002",
+       "bigquery": "\"11.989999771\"",
+       "duckdb": "\"11.99\""
+      },
+      {
+       "key": "10003",
+       "bigquery": "\"58.950000763\"",
+       "duckdb": "\"58.95\""
+      }
+     ]
+    },
+    {
+     "column": "department",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "sku",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "distribution_center_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 29120,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  },
+  {
+   "relation": "stg_thelook__users",
+   "matched": 100000,
+   "only_bigquery": 0,
+   "only_duckdb": 0,
+   "different_cells": 0,
+   "columns": [
+    {
+     "column": "user_id",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "first_name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "last_name",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "email",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "age",
+     "duckdb_type": "BIGINT",
+     "bigquery_type": "INT64",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "gender",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "state",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "street_address",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "postal_code",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "city",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "country",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "latitude",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "longitude",
+     "duckdb_type": "DOUBLE",
+     "bigquery_type": "FLOAT64",
+     "rule": "double within 1e-12 relative",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "traffic_source",
+     "duckdb_type": "VARCHAR",
+     "bigquery_type": "STRING",
+     "rule": "equal as stored",
+     "identical": 100000,
+     "equivalent": 0,
+     "different": 0,
+     "examples": []
+    },
+    {
+     "column": "created_at",
+     "duckdb_type": "TIMESTAMP",
+     "bigquery_type": "TIMESTAMP",
+     "rule": "BigQuery TIMESTAMP (instant) vs Trino timestamp(6) (naive, UTC by convention)",
+     "identical": 0,
+     "equivalent": 100000,
+     "different": 0,
+     "examples": []
+    }
+   ]
+  }
+ ]
+}

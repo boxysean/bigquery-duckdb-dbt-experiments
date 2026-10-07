@@ -5,7 +5,7 @@ version: 2
 #
 # Conventions for every model below:
 #   * `id` is renamed `<entity>_id`; every id and integer is bigint.
-#   * money is money_type() (decimal(18,2) on DuckDB, numeric on BigQuery), USD.
+#   * money is money_type() (decimal(38,9) on DuckDB, numeric on BigQuery), USD.
 #   * every *_at column is a NAIVE UTC timestamp produced by to_utc_timestamp():
 #     the source's absolute instant, expressed as UTC wall-clock time with no
 #     time zone attached, independent of the session time zone.
