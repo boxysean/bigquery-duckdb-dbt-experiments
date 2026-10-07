@@ -352,4 +352,4 @@ jobs:
               grep -E '^  (ok|n/a|FAIL)  |^pre-pr:' "$RUNNER_TEMP/pre-pr.log" || true
               echo '```'
             fi
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
