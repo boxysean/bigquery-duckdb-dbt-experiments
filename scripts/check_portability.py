@@ -56,6 +56,16 @@ DUCKDB_ONLY = [  # must not appear in the BigQuery render
     "date_diff('", "dev.thelook_ecommerce",
 ]
 
+# --- positive type coverage (card t_68bfec9c) ----------------------------------
+# The token lists above only prove ABSENCE. The array/struct/JSON renderings must
+# also be PRESENT in each render of the one model that carries them, or a macro that
+# silently dropped its construct would pass as "portable".
+TYPE_SHOWCASE_MODEL = "mart_polyglot_types"
+TYPE_COVERAGE = {
+    "duckdb": ["generate_series(", "date[]", "'id':", "'channel':", "to_json("],
+    "bigquery": ["generate_array(", "generate_date_array(", "struct(", "to_json("],
+}
+
 # --- the purity check (SPEC 7.4 item 3) ----------------------------------------
 PURITY_TOKENS = ["target.type", "target.name", "target.database", "target.schema", "adapter.type"]
 PURITY_DIRS = ("models", "tests")
@@ -208,6 +218,25 @@ def scan_render(target, tokens):
     return findings, hit, {sub: len(files[sub]) for sub in SCANNED_DIRS}, dropped
 
 
+def scan_type_coverage(targets=TARGETS):
+    """Every TYPE_COVERAGE substring must be in the compiled TYPE_SHOWCASE_MODEL, per target."""
+    findings = []
+    for target in targets:
+        path = (ROOT / PORTABILITY_DIR / target / "compiled" / PROJECT / "models" / "marts"
+                / f"{TYPE_SHOWCASE_MODEL}.sql")
+        rel = path.relative_to(ROOT).as_posix()
+        if not path.is_file():
+            findings.append(f"{rel}: missing - the {target} render has no {TYPE_SHOWCASE_MODEL}, "
+                            f"so the array/struct/json rendering is not exercised on {target}")
+            continue
+        text = strip_sql_comments(path.read_text(encoding="utf-8")).lower()
+        for needle in TYPE_COVERAGE[target]:
+            if needle.lower() not in text:
+                findings.append(f"{rel}: required '{needle}' missing - the {target} render of "
+                                f"{TYPE_SHOWCASE_MODEL} dropped an array/struct/json construct")
+    return findings
+
+
 def scan_purity():
     findings = []
     for top in PURITY_DIRS:
@@ -242,10 +271,11 @@ def check(targets=TARGETS):
     duck_findings, duck_hit, counts, dropped = scan_render("duckdb", BIGQUERY_ONLY) if "duckdb" in targets else none
     bq_findings, bq_hit, bq_counts, bq_dropped = scan_render("bigquery", DUCKDB_ONLY) if "bigquery" in targets else none
     purity_findings = scan_purity()
+    coverage_findings = scan_type_coverage(targets)
     counts = counts or bq_counts
     dropped = dropped if "duckdb" in targets else bq_dropped
 
-    findings = duck_findings + bq_findings + purity_findings
+    findings = duck_findings + bq_findings + purity_findings + coverage_findings
     for line in findings:
         print(line)
     if findings:
@@ -262,6 +292,10 @@ def check(targets=TARGETS):
     print(f"DuckDB-only tokens in the BigQuery render: "
           + (f"{len(bq_hit)}/{len(DUCKDB_ONLY)}" if "bigquery" in targets else skipped))
     print(f"target-branch findings: {len(purity_findings)}")
+    covered = "both renders" if len(targets) == len(TARGETS) else f"the {targets[0]} render"
+    print(f"type coverage ({TYPE_SHOWCASE_MODEL}): "
+          + (f"{len(coverage_findings)} finding(s)" if coverage_findings
+             else f"array/struct/json present in {covered}"))
     if findings:
         print(f"NOT PORTABLE: {len(findings)} finding(s)")
         return EXIT_FINDINGS, findings
