@@ -13,13 +13,18 @@ every timestamp column is a Spark TIMESTAMP (an instant: Iceberg timestamptz, Tr
 timestamp(6) with time zone), never TIMESTAMP_NTZ.
 
     docker compose run --rm spark land_sources.py      # or: make land-sources
+
+SOURCE_DIR picks the Parquet directory: /data/fixture (default, the shared fixture) or
+/data/real (the real BigQuery rows from scripts/render_real.py; make land-real).
 """
+import os
 import sys
 
 from pyspark.sql import SparkSession
 from pyspark.sql.types import TimestampNTZType, TimestampType
 
 TABLES = ["distribution_centers", "products", "users", "inventory_items", "orders", "order_items", "events"]
+SOURCE_DIR = os.environ.get("SOURCE_DIR", "/data/fixture")
 
 spark = SparkSession.builder.appName("land_sources").getOrCreate()
 spark.sparkContext.setLogLevel("ERROR")
@@ -27,7 +32,7 @@ spark.sql("create namespace if not exists lake.thelook_ecommerce")
 
 failures = []
 for table in TABLES:
-    df = spark.read.parquet(f"/data/fixture/{table}.parquet")
+    df = spark.read.parquet(f"{SOURCE_DIR}/{table}.parquet")
     expected = df.count()
     ntz = [f.name for f in df.schema.fields if isinstance(f.dataType, TimestampNTZType)]
     if ntz:
@@ -38,11 +43,11 @@ for table in TABLES:
     status = "ok" if landed == expected else "FAIL"
     if landed != expected:
         failures.append(f"{table}: landed {landed} rows, the file holds {expected}")
-    print(f"  {status:<4} lake.thelook_ecommerce.{table:<22} {landed:>6} rows  timestamptz: {', '.join(ts) or '-'}")
+    print(f"  {status:<4} lake.thelook_ecommerce.{table:<22} {landed:>9} rows  timestamptz: {', '.join(ts) or '-'}")
 
 if failures:
     print("\nland_sources: FAILED")
     for f in failures:
         print(f"  {f}")
     sys.exit(1)
-print(f"\nland_sources: {len(TABLES)} tables landed by Spark {spark.version} in lake.thelook_ecommerce")
+print(f"\nland_sources: {len(TABLES)} tables landed by Spark {spark.version} in lake.thelook_ecommerce from {SOURCE_DIR}")

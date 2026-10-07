@@ -25,12 +25,14 @@ bq_trino_experiments:
     # As in project 1, but its own dataset, so the two projects never overwrite each
     # other's tables in the shared GCP project.
     #   * default            -> method: oauth (Application Default Credentials)
-    #   * BQ_KEYFILE=<path>  -> method: service-account with that key file
+    #   * BQ_KEYFILE=<path>  -> method: service-account with that key file (BQ_AUTH_METHOD
+    #                           overrides either default)
+    #   * BQ_PROJECT=<id>    -> the GCP project that runs the jobs and holds the dataset
     bigquery:
       type: bigquery
-      method: "{{ env_var('BQ_AUTH_METHOD', 'oauth') }}"
+      method: "{{ env_var('BQ_AUTH_METHOD', 'service-account' if env_var('BQ_KEYFILE', '') else 'oauth') }}"
       keyfile: "{{ env_var('BQ_KEYFILE', '') }}"
-      project: coreychimpbot
+      project: "{{ env_var('BQ_PROJECT', 'coreychimpbot') }}"
       dataset: "trino_experiments_{{ env_var('DBT_ENV', 'dev') }}"
       location: US
       threads: 4

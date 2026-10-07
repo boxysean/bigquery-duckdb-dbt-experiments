@@ -5,21 +5,33 @@ Two words are used deliberately, as in project 1:
 - **Unverified**: nothing was run that could fail. It does not mean broken.
 - **Blind spot**: something the current checks *cannot* see, even when they are green.
 
+## Closed on 2026-10-07
+
+These were open until a session with a BigQuery service-account key ran them. The evidence
+is in [`value_parity.md`](value_parity.md).
+
+| Was a gap | Result |
+|---|---|
+| The BigQuery build of project 2 | `make bq`: **197 pass, 1 warn, 0 error** (the deliberate dirty-data warning, as in project 1) |
+| Real data on the Trino leg | `make trino-real`: the 3,347,594 real rows, downloaded from BigQuery and landed by Spark. **197 pass, 1 warn, 0 error**, the same warning with the same 137,807 rows |
+| BigQuery-vs-Trino value parity | `make parity`: **30 / 30 relations identical, 887 / 887 metrics** |
+| Whether decimal(38,9) money closes project 1's money gap | **Yes.** Every money sum is equal to the ninth decimal place, including both `average_order_value` metrics |
+
+Also measured on real data: Spark reads all 12 tables with profiles identical to Trino's.
+
 ## 1. Unverified
 
 | Gap | Why | What closing it takes |
 |---|---|---|
-| **The BigQuery build of project 2** | No BigQuery credential was available in the session that built this project, so `dbt build --target bigquery` has **never run** for project 2. It compiles, and the BigQuery macro branches are copied from project 1, whose BigQuery leg is built and value-measured | `BQ_KEYFILE=... make bq`. Expect it to pass: the models are byte-identical to project 1's and the BigQuery branches are unchanged |
-| **BigQuery-vs-Trino value parity** | Needs the BigQuery build above, plus a harness like project 1's `scripts/parity.py` comparing the two targets on the same rows | Port `parity.py` (the Spark/Trino profile in `scripts/spark_interop.py` is a ready template) and run both legs on the real data |
-| **Whether decimal(38,9) money closes project 1's money gap** | Same dependency. Project 1's row-level study predicts the cent differences disappear and leaves 7 `average_order_value` rows where division semantics differ (`DECIMAL / BIGINT`). Trino's decimal division rules are a third variant | The parity run above |
-| **Real data on the Trino leg** | The Trino leg reads project 1's 41,610-row fixture, landed by Spark, not the 3.3M-row public dataset | Add Trino's BigQuery connector as a catalog and land the real tables ([`architecture.md`](architecture.md) §4) |
-| **Performance and cost at scale** | One machine, small data, single-node Trino, `local[2]` Spark. The ~65 s Trino build says nothing about a cluster | A sized environment and the real data |
+| **Performance and cost at scale** | One machine, single-node Trino, `local[2]` Spark. On the real 3.3M rows the Trino `dbt build` took 47 s and BigQuery's 152 s, which says nothing about a cluster or production volumes | A sized environment and production-scale data |
+| **Parity in CI** | The BigQuery build and `make parity` need a credential, so CI (credential-free) still builds only the fixture leg. Parity was measured once, by hand | A CI secret and a scheduled job running `make bq trino-real parity` |
 | **The cost of disabling Spark's vectorized reader** | The fix in [`challenges.md`](challenges.md) 4.1 makes Spark use its row-based Parquet reader on dbt's tables; the slowdown was not measured | A Spark read benchmark with and without the property, on real data |
 
 ## 2. Blind spots (green checks that would not notice)
 
 | Blind spot | Why the checks miss it |
 |---|---|
+| **Parity is per column, not per row** | `make parity` compares aggregates (exact sums, distinct counts, ranges). Two results that put the same values on different rows (a wrong join key that preserves the totals, say) would compare equal. Project 1 adds row-level joins (`scripts/row_join.py`) for that; project 2 does not have them yet |
 | **Spark and Trino writing the same table concurrently** | Iceberg uses optimistic concurrency, so a conflicting commit fails and retries. The round trip here is strictly sequential (Spark writes sources, then dbt, then Spark reads), so commit conflicts, retries and isolation are never exercised |
 | **Table maintenance** | Every `CREATE OR REPLACE` adds a snapshot, and nothing expires snapshots, removes orphan files or compacts small files. The local stack is reset often enough to hide this; a long-lived lakehouse needs scheduled maintenance (Trino `ALTER TABLE ... EXECUTE expire_snapshots / optimize`, or Spark procedures) |
 | **Catalog security and governance** | The REST fixture has no auth, and the S3 keys are static local ones. Real catalogs (Polaris, Glue, Unity, Lakekeeper) add credential vending, RBAC and multi-tenancy, which change the config and can change behaviour |

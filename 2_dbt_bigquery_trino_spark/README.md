@@ -25,7 +25,9 @@ adapter.
 | Portability guardrail | **PORTABLE**: 0 / 19 BigQuery-only tokens in the Trino render, 0 / 18 Trino-only tokens in the BigQuery render, 0 target branches in models |
 | Macros executed on Trino | **59 / 59** self-check cases ok (`make selfcheck`) |
 | Spark reads what dbt built | **12 / 12 tables read by Spark with identical per-column profiles**; 0 / 18 views readable (by design, see below) |
-| `bigquery` target | **Compiles** (no credential needed). **Not built in this session**: no BigQuery credential was available here. See [`docs/gaps.md`](docs/gaps.md) |
+| `bigquery` target | **197 pass, 1 warn, 0 error** on the real dataset, 152 s (`make bq`; the warning is the deliberate dirty-data test). Compiles with no credential in CI |
+| Trino on the **real** data | **197 pass, 1 warn, 0 error**, 47 s, on the 3.3M real rows landed by Spark (`make trino-real`) |
+| BigQuery vs Trino values | **30 / 30 relations identical** (887 / 887 per-column metrics), money exact to 9 decimals (`make parity`, [`docs/value_parity.md`](docs/value_parity.md)) |
 | CI | `.github/workflows/2_dbt_bigquery_trino_spark.yml` runs `make pre-pr` end to end on every PR: green on GitHub's runner in 3m30s (first run, PR #33) |
 
 ## The architecture, and why it looks like this
@@ -98,9 +100,9 @@ Project 1's main measured value gap is money. DuckDB's `decimal(18,2)` rounds su
 source values that BigQuery's `NUMERIC` (decimal(38,9)) keeps. Trino, Iceberg and Spark
 can all hold **exactly** `decimal(38,9)`, so `money_type()` renders `decimal(38,9)` on
 Trino. The self-check proves the sub-cent digits survive
-(`6.644999999552965` → `6.645000000`). Whether this closes the BigQuery-vs-Trino value
-gap end to end is **not measured yet**, because that needs the BigQuery build (see
-[`docs/gaps.md`](docs/gaps.md)).
+(`6.644999999552965` → `6.645000000`). Measured end to end on the real data, it **does
+close the gap**: every money sum is equal on BigQuery and Trino to the ninth decimal
+place, in all 30 relations ([`docs/value_parity.md`](docs/value_parity.md)).
 
 ## Quickstart
 
@@ -121,7 +123,9 @@ tables:
 `docker compose -f stack/compose.yml run --rm --entrypoint /opt/spark/bin/spark-sql spark`.
 
 For the BigQuery target: `BQ_KEYFILE=/path/to/key.json make bq` (it writes to the
-dataset `trino_experiments_${DBT_ENV:-dev}`, separate from project 1's).
+dataset `trino_experiments_${DBT_ENV:-dev}`, separate from project 1's). `BQ_PROJECT`
+picks the GCP project (default `coreychimpbot`). To compare the two targets on the same
+real rows: `make bq trino-real parity` ([`docs/value_parity.md`](docs/value_parity.md)).
 
 ## Repository map
 
@@ -142,3 +146,5 @@ dataset `trino_experiments_${DBT_ENV:-dev}`, separate from project 1's).
 | [`docs/architecture.md`](docs/architecture.md) | How Trino and Spark work together, options considered |
 | [`docs/challenges.md`](docs/challenges.md) | Everything that was hit, measured, and how it was resolved |
 | [`docs/gaps.md`](docs/gaps.md) | What is not verified yet, and blind spots |
+| [`docs/value_parity.md`](docs/value_parity.md) | BigQuery vs Trino on the same real rows: how it was run, and the result |
+| `scripts/render_real.py`, `scripts/bq_trino_parity.py` | Download the real sources for the Trino leg; compare the two targets |
