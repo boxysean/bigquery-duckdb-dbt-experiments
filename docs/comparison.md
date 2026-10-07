@@ -9,11 +9,10 @@ Every model `.sql` file is byte-identical across the two, enforced in CI by
 `scripts/check_model_trees.py`. So the differences below come from the platform, not
 from different models.
 
-Status of this assessment (2026-10-07): **preliminary.** Option 1's BigQuery leg is built
-and value-measured on real data. Option 2's BigQuery leg compiles but has not been built
-yet (no credential in the session that built it; see option 2's
-[`gaps.md`](../2_dbt_bigquery_trino_spark/docs/gaps.md)). Every number below is measured
-unless marked otherwise.
+Status of this assessment (2026-10-07): both BigQuery legs are built and value-measured on
+the real data. Option 2's was built and compared with Trino later the same day, on the same
+real rows ([`value_parity.md`](../2_dbt_bigquery_trino_spark/docs/value_parity.md)). Every
+number below is measured unless marked otherwise.
 
 ## Side by side
 
@@ -24,11 +23,12 @@ unless marked otherwise.
 | Macro seam | 29 macros × 2 implementations, 812 lines | 29 macros × 2 implementations, 812 lines. **The same size** |
 | Dialect strictness for model authors | BigQuery and DuckDB both infer struct field types; both have a star modifier | Trino needs **explicit types** for struct fields and has **no** `* EXCEPT`; Iceberg forbids JSON and geography column types |
 | Local engine | One DuckDB file, no services | **4 containers** (S3, Iceberg REST catalog, Trino, Spark), about 6 GB of images, plus 2 sha-pinned jars |
-| Local build time | DuckDB: 19.96 s of model time on the **3.3M-row real data** (option 1 README) | Trino: ~65 s wall time for `dbt build` (198 nodes) on the **41,610-row fixture**; full round trip from an empty stack: 287 s. *Not comparable to the DuckDB figure (different data, different measure); option 2 has no real-data timing yet* |
+| Local build time | DuckDB: 19.96 s of model time on the **3.3M-row real data** (option 1 README) | Trino: ~65 s wall time for `dbt build` (198 nodes) on the **41,610-row fixture**; full round trip from an empty stack: 287 s. *Not comparable to the DuckDB figure (different data, different measure); option 2 on the real data: Trino 47 s wall time for `dbt build`, BigQuery 152 s* |
 | BigQuery compile in CI without a secret | Works out of the box (dbt v2) | Needs a **workaround** (throwaway key + `--no-populate-cache --no-introspect`) |
 | CI (every PR) | Compile both targets + guardrail; DuckDB built and tested end to end (~30-51 s locally) | Model-tree check; compile both targets + guardrail; lakehouse up; **Spark** lands sources; Trino built and tested; macros executed; **Spark reads every table back** (~5 min) |
 | Macro self-check executed | 47 cases on DuckDB | 59 cases on Trino (including microsecond and sub-cent checks) |
-| Money vs BigQuery | `decimal(18,2)` vs `NUMERIC`: 21 of 29 models differ on money (measured, explained row by row) | `decimal(38,9)` = BigQuery `NUMERIC` exactly. Expected to close most of option 1's gap; **not yet measured** |
+| Money vs BigQuery | `decimal(18,2)` vs `NUMERIC`: 21 of 29 models differ on money (measured, explained row by row) | `decimal(38,9)` = BigQuery `NUMERIC` exactly. **Measured: 30 of 30 relations identical to BigQuery**, every money sum equal to 9 decimals, `average_order_value` included |
+| Row-level parity vs BigQuery | Money columns joined row by row (`row_join.py`): differences explained by scale | **30 / 30 relations equal row for row**, 0 of 79.8M cells different. Representation differs in 4 type pairs: naive vs instant timestamps, decimal text padding, double scientific notation, JSON text vs JSON ([`row_parity.md`](../2_dbt_bigquery_trino_spark/docs/row_parity.md)) |
 | A second consumer engine | None | **Spark**, through the shared Iceberg catalog: 12/12 tables read with identical profiles |
 | Failure modes that only appear at read time | None | Spark cannot read Trino's Parquet v2 encodings unless a table property is set (5 of 12 tables failed without it); Spark cannot read dbt-trino views at all |
 | Decisions that are not translations | Partitioning (BigQuery only) | Partitioning per engine (`day` on BigQuery, `month` on Iceberg: the daily layout **failed**); materialization decides who can read a model; table properties; three engines' time zones |
@@ -65,19 +65,17 @@ unless marked otherwise.
 **Reading so far:** option 2 costs about the same to make portable, and noticeably more
 to operate and keep correct. The extra cost is concentrated in one place, the
 Trino ↔ Spark boundary, and every failure there is caught by an automated check in CI. In
-return, option 2 gets exact `NUMERIC`-equivalent money (likely removing option 1's main
-value gap, still to be measured) and a second engine (Spark) on the same data. Option 1
-offers nothing comparable.
+return, option 2 gets exact `NUMERIC`-equivalent money and a second engine (Spark) on the
+same data. On the same real rows, option 2's Trino leg is identical to BigQuery on every
+measured column of all 30 relations, where option 1's DuckDB leg differs on money in 21 of
+29 models. Option 1 offers nothing comparable.
 
 ## What would change this assessment
 
-1. **Building option 2's BigQuery leg and running value parity** (BigQuery vs Trino on the
-   same real rows). If decimal(38,9) money does close the gap, option 2 has a correctness
-   advantage over option 1. If Trino's decimal division differs, that is a new gap.
-2. **Real data and a real cluster on option 2.** The ~65 s / 41,610-row fixture numbers
-   say nothing about Trino or Spark performance at 3.3M rows or production scale, or about
-   the cost of Spark's non-vectorized reader.
-3. **Concurrency and table maintenance** (option 2 blind spots): both engines writing,
+1. **A real cluster and production volumes on option 2.** The 3.3M-row numbers come from
+   one machine (single-node Trino, `local[2]` Spark). They say nothing about cluster
+   performance or about the cost of Spark's non-vectorized reader.
+2. **Concurrency and table maintenance** (option 2 blind spots): both engines writing,
    snapshot expiry, compaction. These are operational costs option 1 does not have, and
    they are not measured.
 
