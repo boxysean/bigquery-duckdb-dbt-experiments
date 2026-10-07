@@ -3,7 +3,7 @@
 # Installs the four prerequisites `uv sync` cannot install for you:
 #
 #   1. dbc                        (the ADBC driver manager)
-#   2. the DuckDB ADBC driver     (dbc install duckdb — pins the engine version)
+#   2. the DuckDB ADBC driver     (dbc install "duckdb=$DUCKDB_VERSION" — pins the engine version)
 #   3. the DuckDB CLI             (the 1.5.x engine this project is pinned to)
 #   4. the community `bigquery`
 #      DuckDB extension           (dbt-oss cannot declare a community repo in
@@ -67,8 +67,15 @@ else
     printf '      installed %s/dbc (%s)\n' "$PREFIX" "$("$PREFIX/dbc" --version)"
 fi
 
-printf '[2/4] installing the DuckDB ADBC driver (this is what pins the DuckDB engine version)\n'
-dbc install duckdb
+# The driver is pinned to DUCKDB_VERSION, not installed by bare name: a bare
+# `dbc install duckdb` resolves to dbc's latest and silently drifts from the CLI
+# (measured: 1.5.6 on 2026-10-07, while the CLI is pinned to 1.5.5). The
+# driver's engine is the DuckDB dbt runs, and step 4 installs the community
+# extension for the CLI's version only, so a drifted driver cannot load it and
+# `make duck` fails with `Candidate extensions: "icu", "iceberg", "parquet",
+# "inet", "quack"` from the CORE repo.
+printf '[2/4] installing the DuckDB ADBC driver %s (this is what pins the DuckDB engine version)\n' "$DUCKDB_VERSION"
+dbc install "duckdb=$DUCKDB_VERSION"
 
 # --- 3. the DuckDB CLI ------------------------------------------------------
 if command -v duckdb >/dev/null 2>&1; then
@@ -88,6 +95,8 @@ fi
 # "extensions: item 2 must be a string") and resolves a bare name in the CORE
 # repository only, where `bigquery` does not exist (HTTP 404). Installing it here
 # puts it in DuckDB's extension cache, after which the plain name loads it.
+# The extension is installed by the CLI, so the driver must be the same engine
+# version for the driver's LOAD to find it (see step 2).
 printf '[4/4] installing the community %s extension\n' "bigquery"
 printf 'INSTALL bigquery FROM community;\n' | duckdb ":memory:"
 

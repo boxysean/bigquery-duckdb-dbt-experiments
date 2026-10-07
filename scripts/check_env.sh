@@ -22,6 +22,9 @@ DBT_PIN="dbt-oss 2.0.5"        # `uv sync` installs it from pyproject.toml
 DBT_PIN_RE="2\.0\."
 DUCKDB_PIN="DuckDB 1.5.x"      # the engine behind the DuckDB target
 DUCKDB_PIN_PREFIX="v1.5"
+DUCKDB_EXACT="1.5.5"          # must equal install_prereqs.sh's DUCKDB_VERSION: the ADBC
+                              # driver is the engine dbt runs, and the community extension
+                              # is installed for this version only
 DBC_PIN="dbc 0.3.x"            # installs the DuckDB ADBC driver
 DBC_PIN_PREFIX="v0.3"
 DBC_DRIVER="duckdb"
@@ -73,12 +76,15 @@ fi
 if "$dbc_bin" --version >/dev/null 2>&1; then
     if list=$("$dbc_bin" list 2>&1) && printf '%s' "$list" | grep -qw "$DBC_DRIVER"; then
         ver=$(printf '%s' "$list" | awk -v d="$DBC_DRIVER" '$1 == d { print $2 }')
-        ok "duckdb ADBC driver installed (version ${ver:-unknown})"
         if [ -n "$ver" ] && [ "${ver#1.5}" = "$ver" ]; then
-            fail "the installed DuckDB driver is $ver, but the project pins $DUCKDB_PIN. Fix: dbc install duckdb"
+            fail "the installed DuckDB driver is $ver, but the project pins $DUCKDB_PIN. Fix: dbc install \"duckdb=$DUCKDB_EXACT\""
+        elif [ -n "$ver" ] && [ "$ver" != "$DUCKDB_EXACT" ]; then
+            fail "the installed DuckDB ADBC driver is $ver, but install_prereqs.sh pins it to $DUCKDB_EXACT (the engine dbt runs). A different engine version cannot load the community '$COMMUNITY_EXTENSION' extension, which is installed for $DUCKDB_EXACT only. Fix: dbc install \"duckdb=$DUCKDB_EXACT\""
+        else
+            ok "duckdb ADBC driver installed (version ${ver:-unknown})"
         fi
     else
-        fail "the DuckDB ADBC driver is not installed. Without it dbt uses its bundled driver and runs a different DuckDB version than this project pins. Fix: dbc install duckdb"
+        fail "the DuckDB ADBC driver is not installed. Without it dbt uses its bundled driver and runs a different DuckDB version than this project pins. Fix: dbc install \"duckdb=$DUCKDB_EXACT\""
     fi
 fi
 
