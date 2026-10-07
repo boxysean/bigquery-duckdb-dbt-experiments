@@ -1,0 +1,3 @@
+Marts layer: the tables parity is measured on. Empty on purpose in card 1.
+Row-for-row parity between BigQuery and Spark is asserted on the models that
+land here (`make parity`).

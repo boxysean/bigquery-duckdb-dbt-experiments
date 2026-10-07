@@ -1,0 +1,6075 @@
+{
+  "generated_at": "2026-10-07T01:20:48+0200",
+  "same_data": true,
+  "spark_source": "compiled",
+  "legs": {
+    "spark": "ok",
+    "bigquery": "ok"
+  },
+  "self_check": {
+    "spark": {
+      "__rows": 7,
+      "i__nulls": 1,
+      "i__sum": 17675302999,
+      "i__distinct": 6,
+      "f__nulls": 1,
+      "f__sum": 11690450866,
+      "f__distinct": 6,
+      "b__nulls": 1,
+      "b__sum": 15531600020,
+      "b__distinct": 2,
+      "d__nulls": 1,
+      "d__sum": 12581459669,
+      "d__distinct": 6,
+      "ts__nulls": 1,
+      "ts__sum": 12553943833,
+      "ts__distinct": 6,
+      "s__nulls": 1,
+      "s__sum": 13135857637,
+      "s__distinct": 6,
+      "dec__nulls": 1,
+      "dec__sum": 16387773551,
+      "dec__distinct": 6,
+      "arr__nulls": 1,
+      "arr__sum": 11289685126,
+      "arr__distinct": 6,
+      "st__nulls": 1,
+      "st__sum": 13014484839,
+      "st__distinct": 6
+    },
+    "bigquery": {
+      "__rows": 7,
+      "i__nulls": 1,
+      "i__sum": 17675302999,
+      "i__distinct": 6,
+      "f__nulls": 1,
+      "f__sum": 11690450866,
+      "f__distinct": 6,
+      "b__nulls": 1,
+      "b__sum": 15531600020,
+      "b__distinct": 2,
+      "d__nulls": 1,
+      "d__sum": 12581459669,
+      "d__distinct": 6,
+      "ts__nulls": 1,
+      "ts__sum": 12553943833,
+      "ts__distinct": 6,
+      "s__nulls": 1,
+      "s__sum": 13135857637,
+      "s__distinct": 6,
+      "dec__nulls": 1,
+      "dec__sum": 16387773551,
+      "dec__distinct": 6,
+      "arr__nulls": 1,
+      "arr__sum": 11289685126,
+      "arr__distinct": 6,
+      "st__nulls": 1,
+      "st__sum": 13014484839,
+      "st__distinct": 6
+    },
+    "kinds": {
+      "spark": {
+        "i": "int64",
+        "f": "float64",
+        "b": "bool",
+        "d": "date",
+        "ts": "timestamp",
+        "s": "string",
+        "dec": "decimal",
+        "arr": "array<int64>",
+        "st": "struct<a:int64,b:string>"
+      },
+      "bigquery": {
+        "i": "int64",
+        "f": "float64",
+        "b": "bool",
+        "d": "date",
+        "ts": "timestamp",
+        "s": "string",
+        "dec": "decimal",
+        "arr": "array<int64>",
+        "st": "struct<a:int64,b:string>"
+      }
+    },
+    "raw_types": {
+      "spark": {
+        "i": "bigint",
+        "f": "double",
+        "b": "boolean",
+        "d": "date",
+        "ts": "timestamp",
+        "s": "string",
+        "dec": "decimal(18,2)",
+        "arr": "array<bigint>",
+        "st": "struct<a:bigint,b:string>"
+      },
+      "bigquery": {
+        "i": "INTEGER",
+        "f": "FLOAT",
+        "b": "BOOLEAN",
+        "d": "DATE",
+        "ts": "TIMESTAMP",
+        "s": "STRING",
+        "dec": "NUMERIC",
+        "arr": "ARRAY<INTEGER>",
+        "st": "STRUCT<a INTEGER, b STRING>"
+      }
+    },
+    "spark_session_time_zone": "UTC",
+    "match": true,
+    "sql": {
+      "spark": "SELECT COUNT(*) AS __rows,\n  SUM(CASE WHEN `i` IS NULL THEN 1 ELSE 0 END) AS m0__nulls,\n  SUM(CAST(conv(substr(md5(CAST(`i` AS STRING)), 1, 8), 16, 10) AS BIGINT)) AS m0__sum,\n  COUNT(DISTINCT CAST(`i` AS STRING)) AS m0__distinct,\n  SUM(CASE WHEN `f` IS NULL THEN 1 ELSE 0 END) AS m1__nulls,\n  SUM(CAST(conv(substr(md5(CAST(CAST(round(CAST(`f` AS DOUBLE) * 1000000) AS BIGINT) AS STRING)), 1, 8), 16, 10) AS BIGINT)) AS m1__sum,\n  COUNT(DISTINCT CAST(CAST(round(CAST(`f` AS DOUBLE) * 1000000) AS BIGINT) AS STRING)) AS m1__distinct,\n  SUM(CASE WHEN `b` IS NULL THEN 1 ELSE 0 END) AS m2__nulls,\n  SUM(CAST(conv(substr(md5(CAST(`b` AS STRING)), 1, 8), 16, 10) AS BIGINT)) AS m2__sum,\n  COUNT(DISTINCT CAST(`b` AS STRING)) AS m2__distinct,\n  SUM(CASE WHEN `d` IS NULL THEN 1 ELSE 0 END) AS m3__nulls,\n  SUM(CAST(conv(substr(md5(CAST(`d` AS STRING)), 1, 8), 16, 10) AS BIGINT)) AS m3__sum,\n  COUNT(DISTINCT CAST(`d` AS STRING)) AS m3__distinct,\n  SUM(CASE WHEN `ts` IS NULL THEN 1 ELSE 0 END) AS m4__nulls,\n  SUM(CAST(conv(substr(md5(CAST(unix_micros(`ts`) AS STRING)), 1, 8), 16, 10) AS BIGINT)) AS m4__sum,\n  COUNT(DISTINCT CAST(unix_micros(`ts`) AS STRING)) AS m4__distinct,\n  SUM(CASE WHEN `s` IS NULL THEN 1 ELSE 0 END) AS m5__nulls,\n  SUM(CAST(conv(substr(md5(`s`), 1, 8), 16, 10) AS BIGINT)) AS m5__sum,\n  COUNT(DISTINCT `s`) AS m5__distinct,\n  SUM(CASE WHEN `dec` IS NULL THEN 1 ELSE 0 END) AS m6__nulls,\n  SUM(CAST(conv(substr(md5(regexp_replace(CAST(`dec` AS STRING), '([.][0-9]*[1-9])0+$|[.]0+$', '$1')), 1, 8), 16, 10) AS BIGINT)) AS m6__sum,\n  COUNT(DISTINCT regexp_replace(CAST(`dec` AS STRING), '([.][0-9]*[1-9])0+$|[.]0+$', '$1')) AS m6__distinct,\n  SUM(CASE WHEN `arr` IS NULL THEN 1 ELSE 0 END) AS m7__nulls,\n  SUM(CAST(conv(substr(md5(CASE WHEN `arr` IS NULL THEN NULL ELSE array_join(array_sort(transform(`arr`, __e0 -> CAST(__e0 AS STRING))), '|') END), 1, 8), 16, 10) AS BIGINT)) AS m7__sum,\n  COUNT(DISTINCT CASE WHEN `arr` IS NULL THEN NULL ELSE array_join(array_sort(transform(`arr`, __e0 -> CAST(__e0 AS STRING))), '|') END) AS m7__distinct,\n  SUM(CASE WHEN `st` IS NULL THEN 1 ELSE 0 END) AS m8__nulls,\n  SUM(CAST(conv(substr(md5(CASE WHEN `st` IS NULL THEN NULL ELSE concat_ws('|', COALESCE(CAST(`st`.`a` AS STRING), '<null>'), COALESCE(`st`.`b`, '<null>')) END), 1, 8), 16, 10) AS BIGINT)) AS m8__sum,\n  COUNT(DISTINCT CASE WHEN `st` IS NULL THEN NULL ELSE concat_ws('|', COALESCE(CAST(`st`.`a` AS STRING), '<null>'), COALESCE(`st`.`b`, '<null>')) END) AS m8__distinct\nFROM (\nSELECT CAST(1 AS BIGINT) AS i, CAST(1.5 AS DOUBLE) AS f, true AS b, DATE '2024-03-15' AS d, TIMESTAMP '2024-03-15 13:45:12.123456' AS ts, 'abc' AS s, CAST(12.34 AS DECIMAL(18,2)) AS dec, array(CAST(3 AS BIGINT), CAST(1 AS BIGINT), CAST(2 AS BIGINT)) AS arr, named_struct('a', CAST(1 AS BIGINT), 'b', 'x') AS st\n  UNION ALL SELECT CAST(2 AS BIGINT) AS i, CAST(-2.25 AS DOUBLE) AS f, false AS b, DATE '2023-01-01' AS d, TIMESTAMP '2023-01-01 00:00:00' AS ts, 'ABC' AS s, CAST(-0.05 AS DECIMAL(18,2)) AS dec, array(CAST(10 AS BIGINT), CAST(9 AS BIGINT)) AS arr, named_struct('a', CAST(2 AS BIGINT), 'b', '') AS st\n  UNION ALL SELECT CAST(3 AS BIGINT) AS i, CAST(0.30000000000000004 AS DOUBLE) AS f, true AS b, DATE '2024-02-29' AS d, TIMESTAMP '2024-02-29 23:59:59.999999' AS ts, 'Z\u00fcrich' AS s, CAST(12.30 AS DECIMAL(18,2)) AS dec, CAST(array() AS ARRAY<BIGINT>) AS arr, named_struct('a', CAST(3 AS BIGINT), 'b', 'z') AS st\n  UNION ALL SELECT CAST(4 AS BIGINT) AS i, CAST(100.0 AS DOUBLE) AS f, false AS b, DATE '1999-12-31' AS d, TIMESTAMP '1999-12-31 12:00:00' AS ts, '' AS s, CAST(12.00 AS DECIMAL(18,2)) AS dec, array(CAST(7 AS BIGINT)) AS arr, named_struct('a', CAST(4 AS BIGINT), 'b', 'y') AS st\n  UNION ALL SELECT CAST(5 AS BIGINT) AS i, CAST(0.0000001 AS DOUBLE) AS f, true AS b, DATE '1970-01-01' AS d, TIMESTAMP '1970-01-01 00:00:00' AS ts, 'x|y' AS s, CAST(0.00 AS DECIMAL(18,2)) AS dec, array(CAST(1 AS BIGINT), CAST(1 AS BIGINT)) AS arr, named_struct('a', CAST(5 AS BIGINT), 'b', 'w') AS st\n  UNION ALL SELECT CAST(6 AS BIGINT) AS i, CAST(2.0 AS DOUBLE) AS f, true AS b, DATE '2020-06-01' AS d, TIMESTAMP '2020-06-01 00:00:00' AS ts, 'n' AS s, CAST(1.00 AS DECIMAL(18,2)) AS dec, array(CAST(9 AS BIGINT), CAST(NULL AS BIGINT)) AS arr, named_struct('a', CAST(6 AS BIGINT), 'b', 'v') AS st\n  UNION ALL SELECT CAST(NULL AS BIGINT) AS i, CAST(NULL AS DOUBLE) AS f, CAST(NULL AS BOOLEAN) AS b, CAST(NULL AS DATE) AS d, CAST(NULL AS TIMESTAMP) AS ts, CAST(NULL AS STRING) AS s, CAST(NULL AS DECIMAL(18,2)) AS dec, CAST(NULL AS ARRAY<BIGINT>) AS arr, CAST(NULL AS STRUCT<a: BIGINT, b: STRING>) AS st\n) AS _fixture",
+      "bigquery": "SELECT COUNT(*) AS __rows,\n  SUM(CASE WHEN `i` IS NULL THEN 1 ELSE 0 END) AS m0__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(`i` AS STRING))), 1, 8)) AS INT64)) AS m0__sum,\n  COUNT(DISTINCT CAST(`i` AS STRING)) AS m0__distinct,\n  SUM(CASE WHEN `f` IS NULL THEN 1 ELSE 0 END) AS m1__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(CAST(ROUND(CAST(`f` AS FLOAT64) * 1000000) AS INT64) AS STRING))), 1, 8)) AS INT64)) AS m1__sum,\n  COUNT(DISTINCT CAST(CAST(ROUND(CAST(`f` AS FLOAT64) * 1000000) AS INT64) AS STRING)) AS m1__distinct,\n  SUM(CASE WHEN `b` IS NULL THEN 1 ELSE 0 END) AS m2__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(`b` AS STRING))), 1, 8)) AS INT64)) AS m2__sum,\n  COUNT(DISTINCT CAST(`b` AS STRING)) AS m2__distinct,\n  SUM(CASE WHEN `d` IS NULL THEN 1 ELSE 0 END) AS m3__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(`d` AS STRING))), 1, 8)) AS INT64)) AS m3__sum,\n  COUNT(DISTINCT CAST(`d` AS STRING)) AS m3__distinct,\n  SUM(CASE WHEN `ts` IS NULL THEN 1 ELSE 0 END) AS m4__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(UNIX_MICROS(`ts`) AS STRING))), 1, 8)) AS INT64)) AS m4__sum,\n  COUNT(DISTINCT CAST(UNIX_MICROS(`ts`) AS STRING)) AS m4__distinct,\n  SUM(CASE WHEN `s` IS NULL THEN 1 ELSE 0 END) AS m5__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CAST(`s` AS STRING))), 1, 8)) AS INT64)) AS m5__sum,\n  COUNT(DISTINCT CAST(`s` AS STRING)) AS m5__distinct,\n  SUM(CASE WHEN `dec` IS NULL THEN 1 ELSE 0 END) AS m6__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(REGEXP_REPLACE(CAST(`dec` AS STRING), r'([.][0-9]*[1-9])0+$|[.]0+$', r'\\1'))), 1, 8)) AS INT64)) AS m6__sum,\n  COUNT(DISTINCT REGEXP_REPLACE(CAST(`dec` AS STRING), r'([.][0-9]*[1-9])0+$|[.]0+$', r'\\1')) AS m6__distinct,\n  SUM(CASE WHEN `arr` IS NULL THEN 1 ELSE 0 END) AS m7__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CASE WHEN `arr` IS NULL THEN NULL ELSE ARRAY_TO_STRING(ARRAY(SELECT CAST(__e0 AS STRING) AS c FROM UNNEST(`arr`) AS __e0 ORDER BY c), '|') END)), 1, 8)) AS INT64)) AS m7__sum,\n  COUNT(DISTINCT CASE WHEN `arr` IS NULL THEN NULL ELSE ARRAY_TO_STRING(ARRAY(SELECT CAST(__e0 AS STRING) AS c FROM UNNEST(`arr`) AS __e0 ORDER BY c), '|') END) AS m7__distinct,\n  SUM(CASE WHEN `st` IS NULL THEN 1 ELSE 0 END) AS m8__nulls,\n  SUM(CAST(CONCAT('0x', SUBSTR(TO_HEX(MD5(CASE WHEN `st` IS NULL THEN NULL ELSE COALESCE(CAST(`st`.`a` AS STRING), '<null>') || '|' || COALESCE(CAST(`st`.`b` AS STRING), '<null>') END)), 1, 8)) AS INT64)) AS m8__sum,\n  COUNT(DISTINCT CASE WHEN `st` IS NULL THEN NULL ELSE COALESCE(CAST(`st`.`a` AS STRING), '<null>') || '|' || COALESCE(CAST(`st`.`b` AS STRING), '<null>') END) AS m8__distinct\nFROM (\nSELECT CAST(1 AS INT64) AS i, CAST(1.5 AS FLOAT64) AS f, true AS b, DATE '2024-03-15' AS d, TIMESTAMP '2024-03-15 13:45:12.123456' AS ts, 'abc' AS s, NUMERIC '12.34' AS dec, [CAST(3 AS INT64), CAST(1 AS INT64), CAST(2 AS INT64)] AS arr, STRUCT(CAST(1 AS INT64) AS a, 'x' AS b) AS st\n  UNION ALL SELECT CAST(2 AS INT64) AS i, CAST(-2.25 AS FLOAT64) AS f, false AS b, DATE '2023-01-01' AS d, TIMESTAMP '2023-01-01 00:00:00' AS ts, 'ABC' AS s, NUMERIC '-0.05' AS dec, [CAST(10 AS INT64), CAST(9 AS INT64)] AS arr, STRUCT(CAST(2 AS INT64) AS a, '' AS b) AS st\n  UNION ALL SELECT CAST(3 AS INT64) AS i, CAST(0.30000000000000004 AS FLOAT64) AS f, true AS b, DATE '2024-02-29' AS d, TIMESTAMP '2024-02-29 23:59:59.999999' AS ts, 'Z\u00fcrich' AS s, NUMERIC '12.30' AS dec, CAST([] AS ARRAY<INT64>) AS arr, STRUCT(CAST(3 AS INT64) AS a, 'z' AS b) AS st\n  UNION ALL SELECT CAST(4 AS INT64) AS i, CAST(100.0 AS FLOAT64) AS f, false AS b, DATE '1999-12-31' AS d, TIMESTAMP '1999-12-31 12:00:00' AS ts, '' AS s, NUMERIC '12.00' AS dec, [CAST(7 AS INT64)] AS arr, STRUCT(CAST(4 AS INT64) AS a, 'y' AS b) AS st\n  UNION ALL SELECT CAST(5 AS INT64) AS i, CAST(0.0000001 AS FLOAT64) AS f, true AS b, DATE '1970-01-01' AS d, TIMESTAMP '1970-01-01 00:00:00' AS ts, 'x|y' AS s, NUMERIC '0.00' AS dec, [CAST(1 AS INT64), CAST(1 AS INT64)] AS arr, STRUCT(CAST(5 AS INT64) AS a, 'w' AS b) AS st\n  UNION ALL SELECT CAST(6 AS INT64) AS i, CAST(2.0 AS FLOAT64) AS f, true AS b, DATE '2020-06-01' AS d, TIMESTAMP '2020-06-01 00:00:00' AS ts, 'n' AS s, NUMERIC '1.00' AS dec, [CAST(9 AS INT64), CAST(NULL AS INT64)] AS arr, STRUCT(CAST(6 AS INT64) AS a, 'v' AS b) AS st\n  UNION ALL SELECT CAST(NULL AS INT64) AS i, CAST(NULL AS FLOAT64) AS f, CAST(NULL AS BOOL) AS b, CAST(NULL AS DATE) AS d, CAST(NULL AS TIMESTAMP) AS ts, CAST(NULL AS STRING) AS s, CAST(NULL AS NUMERIC) AS dec, CAST(NULL AS ARRAY<INT64>) AS arr, CAST(NULL AS STRUCT<a INT64, b STRING>) AS st\n) AS _fixture"
+    }
+  },
+  "sources": [
+    {
+      "table": "distribution_centers",
+      "verdict": "match",
+      "row_count": {
+        "spark": 10,
+        "bigquery": 10
+      },
+      "columns": [
+        [
+          "id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "name",
+          "string",
+          "string"
+        ],
+        [
+          "latitude",
+          "float64",
+          "double"
+        ],
+        [
+          "longitude",
+          "float64",
+          "double"
+        ],
+        [
+          "distribution_center_geom",
+          "string",
+          "string"
+        ]
+      ],
+      "bigquery_types": [
+        [
+          "id",
+          "INTEGER"
+        ],
+        [
+          "name",
+          "STRING"
+        ],
+        [
+          "latitude",
+          "FLOAT"
+        ],
+        [
+          "longitude",
+          "FLOAT"
+        ],
+        [
+          "distribution_center_geom",
+          "GEOGRAPHY"
+        ]
+      ],
+      "differences": []
+    },
+    {
+      "table": "products",
+      "verdict": "match",
+      "row_count": {
+        "spark": 29120,
+        "bigquery": 29120
+      },
+      "columns": [
+        [
+          "id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "cost",
+          "float64",
+          "double"
+        ],
+        [
+          "category",
+          "string",
+          "string"
+        ],
+        [
+          "name",
+          "string",
+          "string"
+        ],
+        [
+          "brand",
+          "string",
+          "string"
+        ],
+        [
+          "retail_price",
+          "float64",
+          "double"
+        ],
+        [
+          "department",
+          "string",
+          "string"
+        ],
+        [
+          "sku",
+          "string",
+          "string"
+        ],
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint"
+        ]
+      ],
+      "bigquery_types": [
+        [
+          "id",
+          "INTEGER"
+        ],
+        [
+          "cost",
+          "FLOAT"
+        ],
+        [
+          "category",
+          "STRING"
+        ],
+        [
+          "name",
+          "STRING"
+        ],
+        [
+          "brand",
+          "STRING"
+        ],
+        [
+          "retail_price",
+          "FLOAT"
+        ],
+        [
+          "department",
+          "STRING"
+        ],
+        [
+          "sku",
+          "STRING"
+        ],
+        [
+          "distribution_center_id",
+          "INTEGER"
+        ]
+      ],
+      "differences": []
+    },
+    {
+      "table": "users",
+      "verdict": "match",
+      "row_count": {
+        "spark": 100000,
+        "bigquery": 100000
+      },
+      "columns": [
+        [
+          "id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "first_name",
+          "string",
+          "string"
+        ],
+        [
+          "last_name",
+          "string",
+          "string"
+        ],
+        [
+          "email",
+          "string",
+          "string"
+        ],
+        [
+          "age",
+          "int64",
+          "bigint"
+        ],
+        [
+          "gender",
+          "string",
+          "string"
+        ],
+        [
+          "state",
+          "string",
+          "string"
+        ],
+        [
+          "street_address",
+          "string",
+          "string"
+        ],
+        [
+          "postal_code",
+          "string",
+          "string"
+        ],
+        [
+          "city",
+          "string",
+          "string"
+        ],
+        [
+          "country",
+          "string",
+          "string"
+        ],
+        [
+          "latitude",
+          "float64",
+          "double"
+        ],
+        [
+          "longitude",
+          "float64",
+          "double"
+        ],
+        [
+          "traffic_source",
+          "string",
+          "string"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "user_geom",
+          "string",
+          "string"
+        ]
+      ],
+      "bigquery_types": [
+        [
+          "id",
+          "INTEGER"
+        ],
+        [
+          "first_name",
+          "STRING"
+        ],
+        [
+          "last_name",
+          "STRING"
+        ],
+        [
+          "email",
+          "STRING"
+        ],
+        [
+          "age",
+          "INTEGER"
+        ],
+        [
+          "gender",
+          "STRING"
+        ],
+        [
+          "state",
+          "STRING"
+        ],
+        [
+          "street_address",
+          "STRING"
+        ],
+        [
+          "postal_code",
+          "STRING"
+        ],
+        [
+          "city",
+          "STRING"
+        ],
+        [
+          "country",
+          "STRING"
+        ],
+        [
+          "latitude",
+          "FLOAT"
+        ],
+        [
+          "longitude",
+          "FLOAT"
+        ],
+        [
+          "traffic_source",
+          "STRING"
+        ],
+        [
+          "created_at",
+          "TIMESTAMP"
+        ],
+        [
+          "user_geom",
+          "GEOGRAPHY"
+        ]
+      ],
+      "differences": []
+    },
+    {
+      "table": "inventory_items",
+      "verdict": "match",
+      "row_count": {
+        "spark": 487799,
+        "bigquery": 487799
+      },
+      "columns": [
+        [
+          "id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "product_id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "sold_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "cost",
+          "float64",
+          "double"
+        ],
+        [
+          "product_category",
+          "string",
+          "string"
+        ],
+        [
+          "product_name",
+          "string",
+          "string"
+        ],
+        [
+          "product_brand",
+          "string",
+          "string"
+        ],
+        [
+          "product_retail_price",
+          "float64",
+          "double"
+        ],
+        [
+          "product_department",
+          "string",
+          "string"
+        ],
+        [
+          "product_sku",
+          "string",
+          "string"
+        ],
+        [
+          "product_distribution_center_id",
+          "int64",
+          "bigint"
+        ]
+      ],
+      "bigquery_types": [
+        [
+          "id",
+          "INTEGER"
+        ],
+        [
+          "product_id",
+          "INTEGER"
+        ],
+        [
+          "created_at",
+          "TIMESTAMP"
+        ],
+        [
+          "sold_at",
+          "TIMESTAMP"
+        ],
+        [
+          "cost",
+          "FLOAT"
+        ],
+        [
+          "product_category",
+          "STRING"
+        ],
+        [
+          "product_name",
+          "STRING"
+        ],
+        [
+          "product_brand",
+          "STRING"
+        ],
+        [
+          "product_retail_price",
+          "FLOAT"
+        ],
+        [
+          "product_department",
+          "STRING"
+        ],
+        [
+          "product_sku",
+          "STRING"
+        ],
+        [
+          "product_distribution_center_id",
+          "INTEGER"
+        ]
+      ],
+      "differences": []
+    },
+    {
+      "table": "orders",
+      "verdict": "match",
+      "row_count": {
+        "spark": 124650,
+        "bigquery": 124650
+      },
+      "columns": [
+        [
+          "order_id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "status",
+          "string",
+          "string"
+        ],
+        [
+          "gender",
+          "string",
+          "string"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "returned_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "shipped_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "delivered_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "num_of_item",
+          "int64",
+          "bigint"
+        ]
+      ],
+      "bigquery_types": [
+        [
+          "order_id",
+          "INTEGER"
+        ],
+        [
+          "user_id",
+          "INTEGER"
+        ],
+        [
+          "status",
+          "STRING"
+        ],
+        [
+          "gender",
+          "STRING"
+        ],
+        [
+          "created_at",
+          "TIMESTAMP"
+        ],
+        [
+          "returned_at",
+          "TIMESTAMP"
+        ],
+        [
+          "shipped_at",
+          "TIMESTAMP"
+        ],
+        [
+          "delivered_at",
+          "TIMESTAMP"
+        ],
+        [
+          "num_of_item",
+          "INTEGER"
+        ]
+      ],
+      "differences": []
+    },
+    {
+      "table": "order_items",
+      "verdict": "match",
+      "row_count": {
+        "spark": 180778,
+        "bigquery": 180778
+      },
+      "columns": [
+        [
+          "id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "order_id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "product_id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "inventory_item_id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "status",
+          "string",
+          "string"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "shipped_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "delivered_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "returned_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "sale_price",
+          "float64",
+          "double"
+        ]
+      ],
+      "bigquery_types": [
+        [
+          "id",
+          "INTEGER"
+        ],
+        [
+          "order_id",
+          "INTEGER"
+        ],
+        [
+          "user_id",
+          "INTEGER"
+        ],
+        [
+          "product_id",
+          "INTEGER"
+        ],
+        [
+          "inventory_item_id",
+          "INTEGER"
+        ],
+        [
+          "status",
+          "STRING"
+        ],
+        [
+          "created_at",
+          "TIMESTAMP"
+        ],
+        [
+          "shipped_at",
+          "TIMESTAMP"
+        ],
+        [
+          "delivered_at",
+          "TIMESTAMP"
+        ],
+        [
+          "returned_at",
+          "TIMESTAMP"
+        ],
+        [
+          "sale_price",
+          "FLOAT"
+        ]
+      ],
+      "differences": []
+    },
+    {
+      "table": "events",
+      "verdict": "match",
+      "row_count": {
+        "spark": 2421086,
+        "bigquery": 2421086
+      },
+      "columns": [
+        [
+          "id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint"
+        ],
+        [
+          "sequence_number",
+          "int64",
+          "bigint"
+        ],
+        [
+          "session_id",
+          "string",
+          "string"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp"
+        ],
+        [
+          "ip_address",
+          "string",
+          "string"
+        ],
+        [
+          "city",
+          "string",
+          "string"
+        ],
+        [
+          "state",
+          "string",
+          "string"
+        ],
+        [
+          "postal_code",
+          "string",
+          "string"
+        ],
+        [
+          "browser",
+          "string",
+          "string"
+        ],
+        [
+          "traffic_source",
+          "string",
+          "string"
+        ],
+        [
+          "uri",
+          "string",
+          "string"
+        ],
+        [
+          "event_type",
+          "string",
+          "string"
+        ]
+      ],
+      "bigquery_types": [
+        [
+          "id",
+          "INTEGER"
+        ],
+        [
+          "user_id",
+          "INTEGER"
+        ],
+        [
+          "sequence_number",
+          "INTEGER"
+        ],
+        [
+          "session_id",
+          "STRING"
+        ],
+        [
+          "created_at",
+          "TIMESTAMP"
+        ],
+        [
+          "ip_address",
+          "STRING"
+        ],
+        [
+          "city",
+          "STRING"
+        ],
+        [
+          "state",
+          "STRING"
+        ],
+        [
+          "postal_code",
+          "STRING"
+        ],
+        [
+          "browser",
+          "STRING"
+        ],
+        [
+          "traffic_source",
+          "STRING"
+        ],
+        [
+          "uri",
+          "STRING"
+        ],
+        [
+          "event_type",
+          "STRING"
+        ]
+      ],
+      "differences": []
+    }
+  ],
+  "models": [
+    {
+      "model": "dim_date",
+      "layer": "marts",
+      "verdict": "match",
+      "row_count": {
+        "spark": 2825,
+        "bigquery": 2825
+      },
+      "columns": 9,
+      "types": [
+        [
+          "date_day",
+          "date",
+          "date",
+          "DATE"
+        ],
+        [
+          "date_month",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "month_start_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "year_number",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "month_of_year",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "day_of_month",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "day_of_week_iso",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "is_weekend",
+          "bool",
+          "boolean",
+          "BOOLEAN"
+        ],
+        [
+          "days_since_first_order",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ]
+      ],
+      "secs": {
+        "spark": 16.94,
+        "bigquery": 1.94
+      },
+      "differences": []
+    },
+    {
+      "model": "dim_distribution_centers",
+      "layer": "marts",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 10,
+        "bigquery": 10
+      },
+      "columns": 8,
+      "types": [
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "latitude",
+          "float64",
+          "double",
+          "FLOAT"
+        ],
+        [
+          "longitude",
+          "float64",
+          "double",
+          "FLOAT"
+        ],
+        [
+          "inventory_units",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "open_units",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "sold_units",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "open_inventory_value",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ]
+      ],
+      "secs": {
+        "spark": 16.91,
+        "bigquery": 1.52
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "open_inventory_value",
+          "spark": 19204625838,
+          "bigquery": 20114613026,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "dim_products",
+      "layer": "marts",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 29120,
+        "bigquery": 29120
+      },
+      "columns": 15,
+      "types": [
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "product_name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "sku",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "category",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "department",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "brand",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "distribution_center_name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "unit_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "retail_price",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "units_sold",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "gross_revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "returned_units",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "return_rate",
+          "float64",
+          "double",
+          "FLOAT"
+        ]
+      ],
+      "secs": {
+        "spark": 41.98,
+        "bigquery": 2.06
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "unit_cost",
+          "spark": 61429156578190,
+          "bigquery": 62840061372025,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "unit_cost",
+          "spark": 7435,
+          "bigquery": 26375,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "retail_price",
+          "spark": 61217180993459,
+          "bigquery": 60862284818697,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "spark": 62414555291959,
+          "bigquery": 62216058072111,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "spark": 8150,
+          "bigquery": 8918,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "spark": 62325735331317,
+          "bigquery": 62360717127202,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "spark": 15605,
+          "bigquery": 28562,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "dim_users",
+      "layer": "marts",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 100000,
+        "bigquery": 100000
+      },
+      "columns": 20,
+      "types": [
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "first_name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "last_name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "email",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "age",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "gender",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "city",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "state",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "country",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "postal_code",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "traffic_source",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "signup_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "cohort_month",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "first_order_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "last_order_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "lifetime_orders",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "lifetime_items",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "lifetime_gross_revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "lifetime_gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "lifetime_returned_items",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ]
+      ],
+      "secs": {
+        "spark": 42.16,
+        "bigquery": 6.41
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_revenue",
+          "spark": 239346294806949,
+          "bigquery": 239588725613935,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_revenue",
+          "spark": 22892,
+          "bigquery": 32629,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_margin",
+          "spark": 239802958519185,
+          "bigquery": 241968538884933,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_margin",
+          "spark": 20475,
+          "bigquery": 63905,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "fct_inventory_items",
+      "layer": "marts",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 487799,
+        "bigquery": 487799
+      },
+      "columns": 12,
+      "types": [
+        [
+          "inventory_item_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "unit_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "product_retail_price",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "sold_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "is_sold",
+          "bool",
+          "boolean",
+          "BOOLEAN"
+        ],
+        [
+          "days_to_sell",
+          "float64",
+          "double",
+          "FLOAT"
+        ],
+        [
+          "product_category",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_department",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_brand",
+          "string",
+          "string",
+          "STRING"
+        ]
+      ],
+      "secs": {
+        "spark": 45.67,
+        "bigquery": 8.35
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "unit_cost",
+          "spark": 1028825165334992,
+          "bigquery": 1053281228750666,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "unit_cost",
+          "spark": 7428,
+          "bigquery": 26321,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_retail_price",
+          "spark": 1023698061614404,
+          "bigquery": 1017432002275298,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "fct_order_items",
+      "layer": "marts",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 180778,
+        "bigquery": 180778
+      },
+      "columns": 21,
+      "types": [
+        [
+          "order_item_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "order_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "inventory_item_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "order_item_status",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "order_status",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "sale_price",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "product_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "is_returned",
+          "bool",
+          "boolean",
+          "BOOLEAN"
+        ],
+        [
+          "order_item_created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "order_date",
+          "date",
+          "date",
+          "DATE"
+        ],
+        [
+          "product_name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_category",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_department",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_brand",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_retail_price",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "user_country",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "user_state",
+          "string",
+          "string",
+          "STRING"
+        ]
+      ],
+      "secs": {
+        "spark": 74.14,
+        "bigquery": 11.5
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "sale_price",
+          "spark": 379699405713779,
+          "bigquery": 377194082111706,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_cost",
+          "spark": 381372365012265,
+          "bigquery": 390374855844143,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "product_cost",
+          "spark": 7428,
+          "bigquery": 26321,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "spark": 382320809910586,
+          "bigquery": 392186242422228,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "spark": 7792,
+          "bigquery": 26326,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_retail_price",
+          "spark": 379699405713779,
+          "bigquery": 377194082111706,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "fct_orders",
+      "layer": "marts",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 124650,
+        "bigquery": 124650
+      },
+      "columns": 15,
+      "types": [
+        [
+          "order_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "order_status",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "order_created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "order_date",
+          "date",
+          "date",
+          "DATE"
+        ],
+        [
+          "order_month",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "item_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "returned_item_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "gross_revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "total_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "is_fully_returned",
+          "bool",
+          "boolean",
+          "BOOLEAN"
+        ],
+        [
+          "user_country",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "user_state",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "user_traffic_source",
+          "string",
+          "string",
+          "STRING"
+        ]
+      ],
+      "secs": {
+        "spark": 51.73,
+        "bigquery": 6.16
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "spark": 263725864593851,
+          "bigquery": 262515516797347,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "spark": 17204,
+          "bigquery": 24441,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "spark": 264314324502020,
+          "bigquery": 268490598399038,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "spark": 15422,
+          "bigquery": 62586,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "spark": 264171952735456,
+          "bigquery": 269618111377568,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "spark": 16429,
+          "bigquery": 62591,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "int_cohorts__user_months",
+      "layer": "intermediate",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 120636,
+        "bigquery": 120636
+      },
+      "columns": 7,
+      "types": [
+        [
+          "user_month_key",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "cohort_month",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "activity_month",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "orders",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "items",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ]
+      ],
+      "secs": {
+        "spark": 41.54,
+        "bigquery": 4.82
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "revenue",
+          "spark": 255336171372699,
+          "bigquery": 254360150196374,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "revenue",
+          "spark": 17789,
+          "bigquery": 25352,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "int_events__sessions",
+      "layer": "intermediate",
+      "verdict": "match",
+      "row_count": {
+        "spark": 680778,
+        "bigquery": 680778
+      },
+      "columns": 10,
+      "types": [
+        [
+          "session_id",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "first_event_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "last_event_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "session_seconds",
+          "float64",
+          "double",
+          "FLOAT"
+        ],
+        [
+          "event_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "max_sequence_number",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "traffic_source",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "browser",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "has_purchase",
+          "bool",
+          "boolean",
+          "BOOLEAN"
+        ]
+      ],
+      "secs": {
+        "spark": 50.77,
+        "bigquery": 5.76
+      },
+      "differences": []
+    },
+    {
+      "model": "int_inventory__by_product_center",
+      "layer": "intermediate",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 29055,
+        "bigquery": 29055
+      },
+      "columns": 8,
+      "types": [
+        [
+          "product_center_key",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "inventory_units",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "open_units",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "sold_units",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "open_inventory_value",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "open_retail_value",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ]
+      ],
+      "secs": {
+        "spark": 38.08,
+        "bigquery": 1.72
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "open_inventory_value",
+          "spark": 62067412308075,
+          "bigquery": 62606124036827,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "open_inventory_value",
+          "spark": 17978,
+          "bigquery": 28779,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "open_retail_value",
+          "spark": 62689102035682,
+          "bigquery": 62085971417297,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "open_retail_value",
+          "spark": 9877,
+          "bigquery": 10670,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "int_inventory_items__enriched",
+      "layer": "intermediate",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 487799,
+        "bigquery": 487799
+      },
+      "columns": 14,
+      "types": [
+        [
+          "inventory_item_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "product_category",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_department",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_brand",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_sku",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "unit_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "product_retail_price",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "sold_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "is_sold",
+          "bool",
+          "boolean",
+          "BOOLEAN"
+        ],
+        [
+          "days_to_sell",
+          "float64",
+          "double",
+          "FLOAT"
+        ]
+      ],
+      "secs": {
+        "spark": 37.37,
+        "bigquery": 7.63
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "unit_cost",
+          "spark": 1028825165334992,
+          "bigquery": 1053281228750666,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "unit_cost",
+          "spark": 7428,
+          "bigquery": 26321,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_retail_price",
+          "spark": 1023698061614404,
+          "bigquery": 1017432002275298,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "int_order_items__enriched",
+      "layer": "intermediate",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 180778,
+        "bigquery": 180778
+      },
+      "columns": 22,
+      "types": [
+        [
+          "order_item_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "order_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "inventory_item_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "order_item_status",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "order_status",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "sale_price",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "product_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "is_returned",
+          "bool",
+          "boolean",
+          "BOOLEAN"
+        ],
+        [
+          "order_item_created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "order_created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "order_date",
+          "date",
+          "date",
+          "DATE"
+        ],
+        [
+          "shipped_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "delivered_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "returned_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "product_category",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_department",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_brand",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "user_traffic_source",
+          "string",
+          "string",
+          "STRING"
+        ]
+      ],
+      "secs": {
+        "spark": 61.23,
+        "bigquery": 11.12
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "sale_price",
+          "spark": 379699405713779,
+          "bigquery": 377194082111706,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_cost",
+          "spark": 381372365012265,
+          "bigquery": 390374855844143,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "product_cost",
+          "spark": 7428,
+          "bigquery": 26321,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "spark": 382320809910586,
+          "bigquery": 392186242422228,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "spark": 7792,
+          "bigquery": 26326,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "int_orders__daily",
+      "layer": "intermediate",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 2779,
+        "bigquery": 2779
+      },
+      "columns": 8,
+      "types": [
+        [
+          "order_date",
+          "date",
+          "date",
+          "DATE"
+        ],
+        [
+          "order_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "order_item_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "customer_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "gross_revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "total_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "returned_item_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ]
+      ],
+      "secs": {
+        "spark": 40.53,
+        "bigquery": 1.48
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "spark": 5878237686768,
+          "bigquery": 5900969663808,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "spark": 2765,
+          "bigquery": 2773,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "spark": 5975687207838,
+          "bigquery": 5990807264489,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "spark": 2766,
+          "bigquery": 2779,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "spark": 5920860082937,
+          "bigquery": 6034553477364,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "spark": 2762,
+          "bigquery": 2779,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "int_orders__item_rollup",
+      "layer": "intermediate",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 124650,
+        "bigquery": 124650
+      },
+      "columns": 11,
+      "types": [
+        [
+          "order_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "order_status",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "order_created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "order_date",
+          "date",
+          "date",
+          "DATE"
+        ],
+        [
+          "item_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "returned_item_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "gross_revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "total_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "is_fully_returned",
+          "bool",
+          "boolean",
+          "BOOLEAN"
+        ]
+      ],
+      "secs": {
+        "spark": 31.38,
+        "bigquery": 5.52
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "spark": 263725864593851,
+          "bigquery": 262515516797347,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "spark": 17204,
+          "bigquery": 24441,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "spark": 264314324502020,
+          "bigquery": 268490598399038,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "spark": 15422,
+          "bigquery": 62586,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "spark": 264171952735456,
+          "bigquery": 269618111377568,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "spark": 16429,
+          "bigquery": 62591,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "int_products__returns",
+      "layer": "intermediate",
+      "verdict": "match",
+      "row_count": {
+        "spark": 29120,
+        "bigquery": 29120
+      },
+      "columns": 4,
+      "types": [
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "units_sold",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "returned_units",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "return_rate",
+          "float64",
+          "double",
+          "FLOAT"
+        ]
+      ],
+      "secs": {
+        "spark": 23.29,
+        "bigquery": 1.6
+      },
+      "differences": []
+    },
+    {
+      "model": "int_products__sales",
+      "layer": "intermediate",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 29120,
+        "bigquery": 29120
+      },
+      "columns": 8,
+      "types": [
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "units_sold",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "orders_with_product",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "gross_revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "total_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "first_sold_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "last_sold_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ]
+      ],
+      "secs": {
+        "spark": 24.33,
+        "bigquery": 2.54
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "spark": 62414555291959,
+          "bigquery": 62216058072111,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "spark": 8150,
+          "bigquery": 8918,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "spark": 62142277199483,
+          "bigquery": 62503798419085,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "spark": 15229,
+          "bigquery": 28560,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "spark": 62325735331317,
+          "bigquery": 62360717127202,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "spark": 15605,
+          "bigquery": 28562,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "int_users__first_order_cohort",
+      "layer": "intermediate",
+      "verdict": "match",
+      "row_count": {
+        "spark": 100000,
+        "bigquery": 100000
+      },
+      "columns": 4,
+      "types": [
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "signup_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "first_order_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "cohort_month",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ]
+      ],
+      "secs": {
+        "spark": 19.99,
+        "bigquery": 1.69
+      },
+      "differences": []
+    },
+    {
+      "model": "int_users__lifetime_orders",
+      "layer": "intermediate",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 100000,
+        "bigquery": 100000
+      },
+      "columns": 9,
+      "types": [
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "first_order_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "last_order_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "lifetime_orders",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "lifetime_items",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "lifetime_gross_revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "lifetime_total_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "lifetime_gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "lifetime_returned_items",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ]
+      ],
+      "secs": {
+        "spark": 25.53,
+        "bigquery": 5.84
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_revenue",
+          "spark": 239346294806949,
+          "bigquery": 239588725613935,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_revenue",
+          "spark": 22892,
+          "bigquery": 32629,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "lifetime_total_cost",
+          "spark": 239934592540409,
+          "bigquery": 241898404039659,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_total_cost",
+          "spark": 19359,
+          "bigquery": 63905,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_margin",
+          "spark": 239802958519185,
+          "bigquery": 241968538884933,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_margin",
+          "spark": 20475,
+          "bigquery": 63905,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "mart_cohort_retention",
+      "layer": "marts",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 3938,
+        "bigquery": 3938
+      },
+      "columns": 8,
+      "types": [
+        [
+          "cohort_activity_key",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "cohort_month",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "activity_month",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "months_since_cohort",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "customers",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "orders",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "retention_rate",
+          "float64",
+          "double",
+          "FLOAT"
+        ]
+      ],
+      "secs": {
+        "spark": 25.54,
+        "bigquery": 1.86
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "revenue",
+          "spark": 8312419761548,
+          "bigquery": 8373291297589,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "revenue",
+          "spark": 3734,
+          "bigquery": 3790,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "mart_customer_summary",
+      "layer": "marts",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 100000,
+        "bigquery": 100000
+      },
+      "columns": 13,
+      "types": [
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "cohort_month",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "signup_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "first_order_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "last_order_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "months_active",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "lifetime_orders",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "lifetime_items",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "lifetime_gross_revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "lifetime_gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "average_order_value",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "returned_item_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "is_repeat_customer",
+          "bool",
+          "boolean",
+          "BOOLEAN"
+        ]
+      ],
+      "secs": {
+        "spark": 36.52,
+        "bigquery": 7.03
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_revenue",
+          "spark": 239346294806949,
+          "bigquery": 239588725613935,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_revenue",
+          "spark": 22892,
+          "bigquery": 32629,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "lifetime_gross_margin",
+          "spark": 239802958519185,
+          "bigquery": 241968538884933,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "lifetime_gross_margin",
+          "spark": 20475,
+          "bigquery": 63905,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "average_order_value",
+          "spark": 169588895276672,
+          "bigquery": 169997929119394,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "average_order_value",
+          "spark": 17659,
+          "bigquery": 17688,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "mart_daily_revenue",
+      "layer": "marts",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 2779,
+        "bigquery": 2779
+      },
+      "columns": 9,
+      "types": [
+        [
+          "revenue_date",
+          "date",
+          "date",
+          "DATE"
+        ],
+        [
+          "order_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "order_item_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "customer_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "gross_revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "total_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "average_order_value",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "returned_item_count",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ]
+      ],
+      "secs": {
+        "spark": 36.2,
+        "bigquery": 1.41
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "spark": 5878237686768,
+          "bigquery": 5900969663808,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "spark": 2765,
+          "bigquery": 2773,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "spark": 5975687207838,
+          "bigquery": 5990807264489,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "spark": 2766,
+          "bigquery": 2779,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "spark": 5920860082937,
+          "bigquery": 6034553477364,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "spark": 2762,
+          "bigquery": 2779,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "average_order_value",
+          "spark": 5928012599461,
+          "bigquery": 5909314317784,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "average_order_value",
+          "spark": 2271,
+          "bigquery": 2273,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "mart_product_performance",
+      "layer": "marts",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 29120,
+        "bigquery": 29120
+      },
+      "columns": 16,
+      "types": [
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "product_name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "category",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "department",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "brand",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "unit_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "retail_price",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "units_sold",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "gross_revenue",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "total_cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "gross_margin",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "gross_margin_rate",
+          "float64",
+          "double",
+          "FLOAT"
+        ],
+        [
+          "returned_units",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "return_rate",
+          "float64",
+          "double",
+          "FLOAT"
+        ],
+        [
+          "first_sold_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "last_sold_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ]
+      ],
+      "secs": {
+        "spark": 35.1,
+        "bigquery": 2.22
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "unit_cost",
+          "spark": 61429156578190,
+          "bigquery": 62840061372025,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "unit_cost",
+          "spark": 7435,
+          "bigquery": 26375,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "retail_price",
+          "spark": 61217180993459,
+          "bigquery": 60862284818697,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_revenue",
+          "spark": 62414555291959,
+          "bigquery": 62216058072111,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_revenue",
+          "spark": 8150,
+          "bigquery": 8918,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "total_cost",
+          "spark": 62142277199483,
+          "bigquery": 62503798419085,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "total_cost",
+          "spark": 15229,
+          "bigquery": 28560,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin",
+          "spark": 62325735331317,
+          "bigquery": 62360717127202,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin",
+          "spark": 15605,
+          "bigquery": 28562,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "gross_margin_rate",
+          "spark": 62295364512690,
+          "bigquery": 61560196244972,
+          "kind": "float64",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "gross_margin_rate",
+          "spark": 18696,
+          "bigquery": 328,
+          "kind": "float64",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "stg_thelook__distribution_centers",
+      "layer": "staging",
+      "verdict": "match",
+      "row_count": {
+        "spark": 10,
+        "bigquery": 10
+      },
+      "columns": 4,
+      "types": [
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "latitude",
+          "float64",
+          "double",
+          "FLOAT"
+        ],
+        [
+          "longitude",
+          "float64",
+          "double",
+          "FLOAT"
+        ]
+      ],
+      "secs": {
+        "spark": 19.39,
+        "bigquery": 1.53
+      },
+      "differences": []
+    },
+    {
+      "model": "stg_thelook__events",
+      "layer": "staging",
+      "verdict": "match",
+      "row_count": {
+        "spark": 2421086,
+        "bigquery": 2421086
+      },
+      "columns": 13,
+      "types": [
+        [
+          "event_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "sequence_number",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "session_id",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "ip_address",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "city",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "state",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "postal_code",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "browser",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "traffic_source",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "uri",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "event_type",
+          "string",
+          "string",
+          "STRING"
+        ]
+      ],
+      "secs": {
+        "spark": 126.46,
+        "bigquery": 8.61
+      },
+      "differences": []
+    },
+    {
+      "model": "stg_thelook__inventory_items",
+      "layer": "staging",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 487799,
+        "bigquery": 487799
+      },
+      "columns": 12,
+      "types": [
+        [
+          "inventory_item_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "sold_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "product_category",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_brand",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_retail_price",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "product_department",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "product_sku",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ]
+      ],
+      "secs": {
+        "spark": 139.5,
+        "bigquery": 6.78
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "cost",
+          "spark": 1028825165334992,
+          "bigquery": 1053281228750666,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "cost",
+          "spark": 7428,
+          "bigquery": 26321,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "product_retail_price",
+          "spark": 1023698061614404,
+          "bigquery": 1017432002275298,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "stg_thelook__order_items",
+      "layer": "staging",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 180778,
+        "bigquery": 180778
+      },
+      "columns": 11,
+      "types": [
+        [
+          "order_item_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "order_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "inventory_item_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "status",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "shipped_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "delivered_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "returned_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "sale_price",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ]
+      ],
+      "secs": {
+        "spark": 27.47,
+        "bigquery": 4.51
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "sale_price",
+          "spark": 379699405713779,
+          "bigquery": 377194082111706,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "stg_thelook__orders",
+      "layer": "staging",
+      "verdict": "match",
+      "row_count": {
+        "spark": 124650,
+        "bigquery": 124650
+      },
+      "columns": 9,
+      "types": [
+        [
+          "order_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "status",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "gender",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "returned_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "shipped_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "delivered_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ],
+        [
+          "num_of_item",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ]
+      ],
+      "secs": {
+        "spark": 19.72,
+        "bigquery": 2.24
+      },
+      "differences": []
+    },
+    {
+      "model": "stg_thelook__products",
+      "layer": "staging",
+      "verdict": "differs",
+      "row_count": {
+        "spark": 29120,
+        "bigquery": 29120
+      },
+      "columns": 9,
+      "types": [
+        [
+          "product_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "cost",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "category",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "brand",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "retail_price",
+          "decimal",
+          "decimal(18,2)",
+          "NUMERIC"
+        ],
+        [
+          "department",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "sku",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "distribution_center_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ]
+      ],
+      "secs": {
+        "spark": 16.75,
+        "bigquery": 2.04
+      },
+      "differences": [
+        {
+          "check": "column_checksum",
+          "column": "cost",
+          "spark": 61429156578190,
+          "bigquery": 62840061372025,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_distinct_count",
+          "column": "cost",
+          "spark": 7435,
+          "bigquery": 26375,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        },
+        {
+          "check": "column_checksum",
+          "column": "retail_price",
+          "spark": 61217180993459,
+          "bigquery": 60862284818697,
+          "kind": "decimal",
+          "detail": "same input rows, different values"
+        }
+      ]
+    },
+    {
+      "model": "stg_thelook__users",
+      "layer": "staging",
+      "verdict": "match",
+      "row_count": {
+        "spark": 100000,
+        "bigquery": 100000
+      },
+      "columns": 15,
+      "types": [
+        [
+          "user_id",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "first_name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "last_name",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "email",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "age",
+          "int64",
+          "bigint",
+          "INTEGER"
+        ],
+        [
+          "gender",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "state",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "street_address",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "postal_code",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "city",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "country",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "latitude",
+          "float64",
+          "double",
+          "FLOAT"
+        ],
+        [
+          "longitude",
+          "float64",
+          "double",
+          "FLOAT"
+        ],
+        [
+          "traffic_source",
+          "string",
+          "string",
+          "STRING"
+        ],
+        [
+          "created_at",
+          "timestamp",
+          "timestamp",
+          "TIMESTAMP"
+        ]
+      ],
+      "secs": {
+        "spark": 14.3,
+        "bigquery": 3.99
+      },
+      "differences": []
+    }
+  ],
+  "money": {
+    "decimal_columns": [
+      {
+        "model": "dim_distribution_centers",
+        "column": "open_inventory_value",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "dim_products",
+        "column": "unit_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "dim_products",
+        "column": "retail_price",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "dim_products",
+        "column": "gross_revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "dim_products",
+        "column": "gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "dim_users",
+        "column": "lifetime_gross_revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "dim_users",
+        "column": "lifetime_gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "fct_inventory_items",
+        "column": "unit_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "fct_inventory_items",
+        "column": "product_retail_price",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "fct_order_items",
+        "column": "sale_price",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "fct_order_items",
+        "column": "product_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "fct_order_items",
+        "column": "gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "fct_order_items",
+        "column": "product_retail_price",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "fct_orders",
+        "column": "gross_revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "fct_orders",
+        "column": "total_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "fct_orders",
+        "column": "gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_cohorts__user_months",
+        "column": "revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_inventory__by_product_center",
+        "column": "open_inventory_value",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_inventory__by_product_center",
+        "column": "open_retail_value",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_inventory_items__enriched",
+        "column": "unit_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_inventory_items__enriched",
+        "column": "product_retail_price",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_order_items__enriched",
+        "column": "sale_price",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_order_items__enriched",
+        "column": "product_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_order_items__enriched",
+        "column": "gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_orders__daily",
+        "column": "gross_revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_orders__daily",
+        "column": "total_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_orders__daily",
+        "column": "gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_orders__item_rollup",
+        "column": "gross_revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_orders__item_rollup",
+        "column": "total_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_orders__item_rollup",
+        "column": "gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_products__sales",
+        "column": "gross_revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_products__sales",
+        "column": "total_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_products__sales",
+        "column": "gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_users__lifetime_orders",
+        "column": "lifetime_gross_revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_users__lifetime_orders",
+        "column": "lifetime_total_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "int_users__lifetime_orders",
+        "column": "lifetime_gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_cohort_retention",
+        "column": "revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_customer_summary",
+        "column": "lifetime_gross_revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_customer_summary",
+        "column": "lifetime_gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_customer_summary",
+        "column": "average_order_value",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_daily_revenue",
+        "column": "gross_revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_daily_revenue",
+        "column": "total_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_daily_revenue",
+        "column": "gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_daily_revenue",
+        "column": "average_order_value",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_product_performance",
+        "column": "unit_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_product_performance",
+        "column": "retail_price",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_product_performance",
+        "column": "gross_revenue",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_product_performance",
+        "column": "total_cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "mart_product_performance",
+        "column": "gross_margin",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "stg_thelook__inventory_items",
+        "column": "cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "stg_thelook__inventory_items",
+        "column": "product_retail_price",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "stg_thelook__order_items",
+        "column": "sale_price",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "stg_thelook__products",
+        "column": "cost",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      },
+      {
+        "model": "stg_thelook__products",
+        "column": "retail_price",
+        "spark_type": "decimal(18,2)",
+        "bigquery_type": "NUMERIC",
+        "checksum_equal": false
+      }
+    ],
+    "differing": [
+      {
+        "model": "dim_distribution_centers",
+        "column": "open_inventory_value",
+        "key": "distribution_center_id",
+        "rows_compared": 10,
+        "differing_rows": 10,
+        "spark_is_bigquery_rounded_to_cents": 0,
+        "max_abs_difference": "8.898967913",
+        "examples": [
+          {
+            "key": "2",
+            "spark": "1083957.18",
+            "bigquery": "1083954.762238527"
+          },
+          {
+            "key": "3",
+            "spark": "1256876.21",
+            "bigquery": "1256867.311032087"
+          },
+          {
+            "key": "7",
+            "spark": "897647.56",
+            "bigquery": "897646.367440156"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "dim_products",
+        "column": "unit_cost",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 29035,
+        "spark_is_bigquery_rounded_to_cents": 29034,
+        "max_abs_difference": "0.005",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "20.48",
+            "bigquery": "20.484000005"
+          },
+          {
+            "key": "2426",
+            "spark": "17.51",
+            "bigquery": "17.505000103"
+          },
+          {
+            "key": "23606",
+            "spark": "31.42",
+            "bigquery": "31.415999986"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "dim_products",
+        "column": "retail_price",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 15675,
+        "spark_is_bigquery_rounded_to_cents": 15675,
+        "max_abs_difference": "0.000014648",
+        "examples": [
+          {
+            "key": "2248",
+            "spark": "36.99",
+            "bigquery": "36.990001678"
+          },
+          {
+            "key": "17453",
+            "spark": "75.56",
+            "bigquery": "75.559997559"
+          },
+          {
+            "key": "1016",
+            "spark": "67.96",
+            "bigquery": "67.959999084"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "dim_products",
+        "column": "gross_revenue",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 15637,
+        "spark_is_bigquery_rounded_to_cents": 15637,
+        "max_abs_difference": "0.00013428",
+        "examples": [
+          {
+            "key": "2248",
+            "spark": "369.9",
+            "bigquery": "369.90001678"
+          },
+          {
+            "key": "17453",
+            "spark": "377.8",
+            "bigquery": "377.799987795"
+          },
+          {
+            "key": "1016",
+            "spark": "475.72",
+            "bigquery": "475.719993588"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "dim_products",
+        "column": "gross_margin",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 28970,
+        "spark_is_bigquery_rounded_to_cents": 7877,
+        "max_abs_difference": "0.084998708",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "108.64",
+            "bigquery": "108.611999965"
+          },
+          {
+            "key": "2426",
+            "spark": "109.96",
+            "bigquery": "109.979999588"
+          },
+          {
+            "key": "23606",
+            "spark": "380.38",
+            "bigquery": "380.424000154"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "dim_users",
+        "column": "lifetime_gross_revenue",
+        "key": "user_id",
+        "rows_compared": 100000,
+        "differing_rows": 57929,
+        "spark_is_bigquery_rounded_to_cents": 57929,
+        "max_abs_difference": "0.000021896",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "58.95",
+            "bigquery": "58.950000763"
+          },
+          {
+            "key": "42154",
+            "spark": "59.99",
+            "bigquery": "59.990001678"
+          },
+          {
+            "key": "17453",
+            "spark": "74.95",
+            "bigquery": "74.950000763"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "dim_users",
+        "column": "lifetime_gross_margin",
+        "key": "user_id",
+        "rows_compared": 100000,
+        "differing_rows": 79911,
+        "spark_is_bigquery_rounded_to_cents": 64563,
+        "max_abs_difference": "0.029437656",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "29.47",
+            "bigquery": "29.475000382"
+          },
+          {
+            "key": "42154",
+            "spark": "29.09",
+            "bigquery": "29.091090852"
+          },
+          {
+            "key": "23606",
+            "spark": "36",
+            "bigquery": "36.000999946"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "fct_inventory_items",
+        "column": "unit_cost",
+        "key": "inventory_item_id",
+        "rows_compared": 487799,
+        "differing_rows": 486407,
+        "spark_is_bigquery_rounded_to_cents": 486378,
+        "max_abs_difference": "0.005",
+        "examples": [
+          {
+            "key": "297819",
+            "spark": "33.07",
+            "bigquery": "33.067759285"
+          },
+          {
+            "key": "12131",
+            "spark": "8.58",
+            "bigquery": "8.580000026"
+          },
+          {
+            "key": "110633",
+            "spark": "8.58",
+            "bigquery": "8.581729843"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "fct_inventory_items",
+        "column": "product_retail_price",
+        "key": "inventory_item_id",
+        "rows_compared": 487799,
+        "differing_rows": 262440,
+        "spark_is_bigquery_rounded_to_cents": 262440,
+        "max_abs_difference": "0.000014648",
+        "examples": [
+          {
+            "key": "297819",
+            "spark": "77.99",
+            "bigquery": "77.989997864"
+          },
+          {
+            "key": "110633",
+            "spark": "14.57",
+            "bigquery": "14.569999695"
+          },
+          {
+            "key": "373425",
+            "spark": "24.99",
+            "bigquery": "24.989999771"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "fct_order_items",
+        "column": "sale_price",
+        "key": "order_item_id",
+        "rows_compared": 180778,
+        "differing_rows": 97201,
+        "spark_is_bigquery_rounded_to_cents": 97201,
+        "max_abs_difference": "0.000014648",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "29.99",
+            "bigquery": "29.989999771"
+          },
+          {
+            "key": "110633",
+            "spark": "36.29",
+            "bigquery": "36.290000916"
+          },
+          {
+            "key": "42154",
+            "spark": "75.07",
+            "bigquery": "75.069999695"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "fct_order_items",
+        "column": "product_cost",
+        "key": "order_item_id",
+        "rows_compared": 180778,
+        "differing_rows": 180263,
+        "spark_is_bigquery_rounded_to_cents": 180253,
+        "max_abs_difference": "0.005",
+        "examples": [
+          {
+            "key": "34095",
+            "spark": "96.48",
+            "bigquery": "96.479999721"
+          },
+          {
+            "key": "12131",
+            "spark": "16.73",
+            "bigquery": "16.734419829"
+          },
+          {
+            "key": "77841",
+            "spark": "18.09",
+            "bigquery": "18.090000045"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "fct_order_items",
+        "column": "gross_margin",
+        "key": "order_item_id",
+        "rows_compared": 180778,
+        "differing_rows": 180263,
+        "spark_is_bigquery_rounded_to_cents": 179724,
+        "max_abs_difference": "0.005002746",
+        "examples": [
+          {
+            "key": "34095",
+            "spark": "83.52",
+            "bigquery": "83.520000279"
+          },
+          {
+            "key": "12131",
+            "spark": "13.26",
+            "bigquery": "13.255579942"
+          },
+          {
+            "key": "77841",
+            "spark": "11.91",
+            "bigquery": "11.909999955"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "fct_order_items",
+        "column": "product_retail_price",
+        "key": "order_item_id",
+        "rows_compared": 180778,
+        "differing_rows": 97201,
+        "spark_is_bigquery_rounded_to_cents": 97201,
+        "max_abs_difference": "0.000014648",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "29.99",
+            "bigquery": "29.989999771"
+          },
+          {
+            "key": "110633",
+            "spark": "36.29",
+            "bigquery": "36.290000916"
+          },
+          {
+            "key": "42154",
+            "spark": "75.07",
+            "bigquery": "75.069999695"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "fct_orders",
+        "column": "gross_revenue",
+        "key": "order_id",
+        "rows_compared": 124650,
+        "differing_rows": 77895,
+        "spark_is_bigquery_rounded_to_cents": 77895,
+        "max_abs_difference": "0.000020294",
+        "examples": [
+          {
+            "key": "34095",
+            "spark": "30.98",
+            "bigquery": "30.979999542"
+          },
+          {
+            "key": "77841",
+            "spark": "192.94",
+            "bigquery": "192.940002441"
+          },
+          {
+            "key": "42154",
+            "spark": "53.98",
+            "bigquery": "53.980001449"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "fct_orders",
+        "column": "total_cost",
+        "key": "order_id",
+        "rows_compared": 124650,
+        "differing_rows": 124394,
+        "spark_is_bigquery_rounded_to_cents": 113643,
+        "max_abs_difference": "0.01884975",
+        "examples": [
+          {
+            "key": "34095",
+            "spark": "12.96",
+            "bigquery": "12.955629769"
+          },
+          {
+            "key": "110287",
+            "spark": "9.96",
+            "bigquery": "9.960000031"
+          },
+          {
+            "key": "12131",
+            "spark": "10.25",
+            "bigquery": "10.247999981"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "fct_orders",
+        "column": "gross_margin",
+        "key": "order_id",
+        "rows_compared": 124650,
+        "differing_rows": 124394,
+        "spark_is_bigquery_rounded_to_cents": 113377,
+        "max_abs_difference": "0.018849979",
+        "examples": [
+          {
+            "key": "34095",
+            "spark": "18.02",
+            "bigquery": "18.024369773"
+          },
+          {
+            "key": "110287",
+            "spark": "10.04",
+            "bigquery": "10.039999969"
+          },
+          {
+            "key": "12131",
+            "spark": "13.75",
+            "bigquery": "13.752000019"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_cohorts__user_months",
+        "column": "revenue",
+        "key": "user_month_key",
+        "rows_compared": 120636,
+        "differing_rows": 76230,
+        "spark_is_bigquery_rounded_to_cents": 76230,
+        "max_abs_difference": "0.000020294",
+        "examples": [
+          {
+            "key": "5423a6c9c360856d2be1029ccb534450",
+            "spark": "356.99",
+            "bigquery": "356.990005493"
+          },
+          {
+            "key": "6bdcad96f6c2d3d7a258c13798df18d9",
+            "spark": "46.98",
+            "bigquery": "46.979999542"
+          },
+          {
+            "key": "9825f1e4736f850236d96a54c0b38c68",
+            "spark": "34.99",
+            "bigquery": "34.990001678"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_inventory__by_product_center",
+        "column": "open_inventory_value",
+        "key": "product_center_key",
+        "rows_compared": 29055,
+        "differing_rows": 28970,
+        "spark_is_bigquery_rounded_to_cents": 6427,
+        "max_abs_difference": "0.164997459",
+        "examples": [
+          {
+            "key": "a1b9a3e0f9e4399c3ae59f5ba2bbc833",
+            "spark": "225.6",
+            "bigquery": "225.59999898"
+          },
+          {
+            "key": "634d563ff554bab38a34fbc9c6f97a4e",
+            "spark": "270.24",
+            "bigquery": "270.254563152"
+          },
+          {
+            "key": "e2d620af0c67b4e6442bc23e289e87ec",
+            "spark": "957.33",
+            "bigquery": "957.301576128"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_inventory__by_product_center",
+        "column": "open_retail_value",
+        "key": "product_center_key",
+        "rows_compared": 29055,
+        "differing_rows": 15637,
+        "spark_is_bigquery_rounded_to_cents": 15637,
+        "max_abs_difference": "0.000256347",
+        "examples": [
+          {
+            "key": "634d563ff554bab38a34fbc9c6f97a4e",
+            "spark": "480.88",
+            "bigquery": "480.88000488"
+          },
+          {
+            "key": "e2d620af0c67b4e6442bc23e289e87ec",
+            "spark": "1918.44",
+            "bigquery": "1918.440032958"
+          },
+          {
+            "key": "2a957e4a06dae5d4daa43c88b21cad19",
+            "spark": "319.92",
+            "bigquery": "319.920013424"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_inventory_items__enriched",
+        "column": "unit_cost",
+        "key": "inventory_item_id",
+        "rows_compared": 487799,
+        "differing_rows": 486407,
+        "spark_is_bigquery_rounded_to_cents": 486378,
+        "max_abs_difference": "0.005",
+        "examples": [
+          {
+            "key": "297819",
+            "spark": "33.07",
+            "bigquery": "33.067759285"
+          },
+          {
+            "key": "12131",
+            "spark": "8.58",
+            "bigquery": "8.580000026"
+          },
+          {
+            "key": "110633",
+            "spark": "8.58",
+            "bigquery": "8.581729843"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_inventory_items__enriched",
+        "column": "product_retail_price",
+        "key": "inventory_item_id",
+        "rows_compared": 487799,
+        "differing_rows": 262440,
+        "spark_is_bigquery_rounded_to_cents": 262440,
+        "max_abs_difference": "0.000014648",
+        "examples": [
+          {
+            "key": "297819",
+            "spark": "77.99",
+            "bigquery": "77.989997864"
+          },
+          {
+            "key": "110633",
+            "spark": "14.57",
+            "bigquery": "14.569999695"
+          },
+          {
+            "key": "373425",
+            "spark": "24.99",
+            "bigquery": "24.989999771"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_order_items__enriched",
+        "column": "sale_price",
+        "key": "order_item_id",
+        "rows_compared": 180778,
+        "differing_rows": 97201,
+        "spark_is_bigquery_rounded_to_cents": 97201,
+        "max_abs_difference": "0.000014648",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "29.99",
+            "bigquery": "29.989999771"
+          },
+          {
+            "key": "110633",
+            "spark": "36.29",
+            "bigquery": "36.290000916"
+          },
+          {
+            "key": "42154",
+            "spark": "75.07",
+            "bigquery": "75.069999695"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_order_items__enriched",
+        "column": "product_cost",
+        "key": "order_item_id",
+        "rows_compared": 180778,
+        "differing_rows": 180263,
+        "spark_is_bigquery_rounded_to_cents": 180253,
+        "max_abs_difference": "0.005",
+        "examples": [
+          {
+            "key": "34095",
+            "spark": "96.48",
+            "bigquery": "96.479999721"
+          },
+          {
+            "key": "12131",
+            "spark": "16.73",
+            "bigquery": "16.734419829"
+          },
+          {
+            "key": "77841",
+            "spark": "18.09",
+            "bigquery": "18.090000045"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_order_items__enriched",
+        "column": "gross_margin",
+        "key": "order_item_id",
+        "rows_compared": 180778,
+        "differing_rows": 180263,
+        "spark_is_bigquery_rounded_to_cents": 179724,
+        "max_abs_difference": "0.005002746",
+        "examples": [
+          {
+            "key": "34095",
+            "spark": "83.52",
+            "bigquery": "83.520000279"
+          },
+          {
+            "key": "12131",
+            "spark": "13.26",
+            "bigquery": "13.255579942"
+          },
+          {
+            "key": "77841",
+            "spark": "11.91",
+            "bigquery": "11.909999955"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_orders__daily",
+        "column": "gross_revenue",
+        "key": "order_date",
+        "rows_compared": 2779,
+        "differing_rows": 2738,
+        "spark_is_bigquery_rounded_to_cents": 2738,
+        "max_abs_difference": "0.000148133",
+        "examples": [
+          {
+            "key": "2020-04-07",
+            "spark": "584.89",
+            "bigquery": "584.890001297"
+          },
+          {
+            "key": "2024-01-04",
+            "spark": "4486.98",
+            "bigquery": "4486.980002875"
+          },
+          {
+            "key": "2024-03-08",
+            "spark": "4371.8",
+            "bigquery": "4371.800017354"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_orders__daily",
+        "column": "total_cost",
+        "key": "order_date",
+        "rows_compared": 2779,
+        "differing_rows": 2776,
+        "spark_is_bigquery_rounded_to_cents": 661,
+        "max_abs_difference": "0.406985847",
+        "examples": [
+          {
+            "key": "2020-04-07",
+            "spark": "311.37",
+            "bigquery": "311.357701599"
+          },
+          {
+            "key": "2024-01-04",
+            "spark": "2146.18",
+            "bigquery": "2146.202870557"
+          },
+          {
+            "key": "2024-03-08",
+            "spark": "2025.68",
+            "bigquery": "2025.637516593"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_orders__daily",
+        "column": "gross_margin",
+        "key": "order_date",
+        "rows_compared": 2779,
+        "differing_rows": 2776,
+        "spark_is_bigquery_rounded_to_cents": 661,
+        "max_abs_difference": "0.407096846",
+        "examples": [
+          {
+            "key": "2020-04-07",
+            "spark": "273.52",
+            "bigquery": "273.532299698"
+          },
+          {
+            "key": "2024-01-04",
+            "spark": "2340.8",
+            "bigquery": "2340.777132318"
+          },
+          {
+            "key": "2024-03-08",
+            "spark": "2346.12",
+            "bigquery": "2346.162500761"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_orders__item_rollup",
+        "column": "gross_revenue",
+        "key": "order_id",
+        "rows_compared": 124650,
+        "differing_rows": 77895,
+        "spark_is_bigquery_rounded_to_cents": 77895,
+        "max_abs_difference": "0.000020294",
+        "examples": [
+          {
+            "key": "34095",
+            "spark": "30.98",
+            "bigquery": "30.979999542"
+          },
+          {
+            "key": "77841",
+            "spark": "192.94",
+            "bigquery": "192.940002441"
+          },
+          {
+            "key": "42154",
+            "spark": "53.98",
+            "bigquery": "53.980001449"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_orders__item_rollup",
+        "column": "total_cost",
+        "key": "order_id",
+        "rows_compared": 124650,
+        "differing_rows": 124394,
+        "spark_is_bigquery_rounded_to_cents": 113643,
+        "max_abs_difference": "0.01884975",
+        "examples": [
+          {
+            "key": "34095",
+            "spark": "12.96",
+            "bigquery": "12.955629769"
+          },
+          {
+            "key": "110287",
+            "spark": "9.96",
+            "bigquery": "9.960000031"
+          },
+          {
+            "key": "12131",
+            "spark": "10.25",
+            "bigquery": "10.247999981"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_orders__item_rollup",
+        "column": "gross_margin",
+        "key": "order_id",
+        "rows_compared": 124650,
+        "differing_rows": 124394,
+        "spark_is_bigquery_rounded_to_cents": 113377,
+        "max_abs_difference": "0.018849979",
+        "examples": [
+          {
+            "key": "34095",
+            "spark": "18.02",
+            "bigquery": "18.024369773"
+          },
+          {
+            "key": "110287",
+            "spark": "10.04",
+            "bigquery": "10.039999969"
+          },
+          {
+            "key": "12131",
+            "spark": "13.75",
+            "bigquery": "13.752000019"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_products__sales",
+        "column": "gross_revenue",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 15637,
+        "spark_is_bigquery_rounded_to_cents": 15637,
+        "max_abs_difference": "0.00013428",
+        "examples": [
+          {
+            "key": "2248",
+            "spark": "369.9",
+            "bigquery": "369.90001678"
+          },
+          {
+            "key": "17453",
+            "spark": "377.8",
+            "bigquery": "377.799987795"
+          },
+          {
+            "key": "1016",
+            "spark": "475.72",
+            "bigquery": "475.719993588"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_products__sales",
+        "column": "total_cost",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 28970,
+        "spark_is_bigquery_rounded_to_cents": 7881,
+        "max_abs_difference": "0.084998708",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "143.36",
+            "bigquery": "143.388000035"
+          },
+          {
+            "key": "2426",
+            "spark": "70.04",
+            "bigquery": "70.020000412"
+          },
+          {
+            "key": "23606",
+            "spark": "345.62",
+            "bigquery": "345.575999846"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_products__sales",
+        "column": "gross_margin",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 28970,
+        "spark_is_bigquery_rounded_to_cents": 7877,
+        "max_abs_difference": "0.084998708",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "108.64",
+            "bigquery": "108.611999965"
+          },
+          {
+            "key": "2426",
+            "spark": "109.96",
+            "bigquery": "109.979999588"
+          },
+          {
+            "key": "23606",
+            "spark": "380.38",
+            "bigquery": "380.424000154"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_users__lifetime_orders",
+        "column": "lifetime_gross_revenue",
+        "key": "user_id",
+        "rows_compared": 100000,
+        "differing_rows": 57929,
+        "spark_is_bigquery_rounded_to_cents": 57929,
+        "max_abs_difference": "0.000021896",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "58.95",
+            "bigquery": "58.950000763"
+          },
+          {
+            "key": "42154",
+            "spark": "59.99",
+            "bigquery": "59.990001678"
+          },
+          {
+            "key": "17453",
+            "spark": "74.95",
+            "bigquery": "74.950000763"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_users__lifetime_orders",
+        "column": "lifetime_total_cost",
+        "key": "user_id",
+        "rows_compared": 100000,
+        "differing_rows": 79911,
+        "spark_is_bigquery_rounded_to_cents": 64685,
+        "max_abs_difference": "0.029441776",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "29.48",
+            "bigquery": "29.475000381"
+          },
+          {
+            "key": "42154",
+            "spark": "30.9",
+            "bigquery": "30.898910826"
+          },
+          {
+            "key": "23606",
+            "spark": "33.5",
+            "bigquery": "33.499000054"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "int_users__lifetime_orders",
+        "column": "lifetime_gross_margin",
+        "key": "user_id",
+        "rows_compared": 100000,
+        "differing_rows": 79911,
+        "spark_is_bigquery_rounded_to_cents": 64563,
+        "max_abs_difference": "0.029437656",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "29.47",
+            "bigquery": "29.475000382"
+          },
+          {
+            "key": "42154",
+            "spark": "29.09",
+            "bigquery": "29.091090852"
+          },
+          {
+            "key": "23606",
+            "spark": "36",
+            "bigquery": "36.000999946"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_cohort_retention",
+        "column": "revenue",
+        "key": "cohort_activity_key",
+        "rows_compared": 3938,
+        "differing_rows": 3683,
+        "spark_is_bigquery_rounded_to_cents": 3683,
+        "max_abs_difference": "0.000382681",
+        "examples": [
+          {
+            "key": "71ce817e4d62edb14d9a505f70b59259",
+            "spark": "102.99",
+            "bigquery": "102.989999771"
+          },
+          {
+            "key": "6d500bc5c0b1950f867c4306861fba87",
+            "spark": "230.32",
+            "bigquery": "230.320001602"
+          },
+          {
+            "key": "475c55c7ee01b00e04103342b2422d02",
+            "spark": "789.74",
+            "bigquery": "789.740003585"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_customer_summary",
+        "column": "lifetime_gross_revenue",
+        "key": "user_id",
+        "rows_compared": 100000,
+        "differing_rows": 57929,
+        "spark_is_bigquery_rounded_to_cents": 57929,
+        "max_abs_difference": "0.000021896",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "58.95",
+            "bigquery": "58.950000763"
+          },
+          {
+            "key": "42154",
+            "spark": "59.99",
+            "bigquery": "59.990001678"
+          },
+          {
+            "key": "17453",
+            "spark": "74.95",
+            "bigquery": "74.950000763"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_customer_summary",
+        "column": "lifetime_gross_margin",
+        "key": "user_id",
+        "rows_compared": 100000,
+        "differing_rows": 79911,
+        "spark_is_bigquery_rounded_to_cents": 64563,
+        "max_abs_difference": "0.029437656",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "29.47",
+            "bigquery": "29.475000382"
+          },
+          {
+            "key": "42154",
+            "spark": "29.09",
+            "bigquery": "29.091090852"
+          },
+          {
+            "key": "23606",
+            "spark": "36",
+            "bigquery": "36.000999946"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_customer_summary",
+        "column": "average_order_value",
+        "key": "user_id",
+        "rows_compared": 100000,
+        "differing_rows": 5443,
+        "spark_is_bigquery_rounded_to_cents": 0,
+        "max_abs_difference": "0.01",
+        "examples": [
+          {
+            "key": "80164",
+            "spark": "39.49",
+            "bigquery": "39.48"
+          },
+          {
+            "key": "20129",
+            "spark": "19",
+            "bigquery": "18.99"
+          },
+          {
+            "key": "23223",
+            "spark": "64.04",
+            "bigquery": "64.03"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_daily_revenue",
+        "column": "gross_revenue",
+        "key": "revenue_date",
+        "rows_compared": 2779,
+        "differing_rows": 2738,
+        "spark_is_bigquery_rounded_to_cents": 2738,
+        "max_abs_difference": "0.000148133",
+        "examples": [
+          {
+            "key": "2020-04-07",
+            "spark": "584.89",
+            "bigquery": "584.890001297"
+          },
+          {
+            "key": "2024-01-04",
+            "spark": "4486.98",
+            "bigquery": "4486.980002875"
+          },
+          {
+            "key": "2024-03-08",
+            "spark": "4371.8",
+            "bigquery": "4371.800017354"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_daily_revenue",
+        "column": "total_cost",
+        "key": "revenue_date",
+        "rows_compared": 2779,
+        "differing_rows": 2776,
+        "spark_is_bigquery_rounded_to_cents": 661,
+        "max_abs_difference": "0.406985847",
+        "examples": [
+          {
+            "key": "2020-04-07",
+            "spark": "311.37",
+            "bigquery": "311.357701599"
+          },
+          {
+            "key": "2024-01-04",
+            "spark": "2146.18",
+            "bigquery": "2146.202870557"
+          },
+          {
+            "key": "2024-03-08",
+            "spark": "2025.68",
+            "bigquery": "2025.637516593"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_daily_revenue",
+        "column": "gross_margin",
+        "key": "revenue_date",
+        "rows_compared": 2779,
+        "differing_rows": 2776,
+        "spark_is_bigquery_rounded_to_cents": 661,
+        "max_abs_difference": "0.407096846",
+        "examples": [
+          {
+            "key": "2020-04-07",
+            "spark": "273.52",
+            "bigquery": "273.532299698"
+          },
+          {
+            "key": "2024-01-04",
+            "spark": "2340.8",
+            "bigquery": "2340.777132318"
+          },
+          {
+            "key": "2024-03-08",
+            "spark": "2346.12",
+            "bigquery": "2346.162500761"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_daily_revenue",
+        "column": "average_order_value",
+        "key": "revenue_date",
+        "rows_compared": 2779,
+        "differing_rows": 43,
+        "spark_is_bigquery_rounded_to_cents": 0,
+        "max_abs_difference": "0.01",
+        "examples": [
+          {
+            "key": "2019-12-08",
+            "spark": "42.61",
+            "bigquery": "42.6"
+          },
+          {
+            "key": "2024-12-20",
+            "spark": "88.3",
+            "bigquery": "88.29"
+          },
+          {
+            "key": "2020-01-29",
+            "spark": "232.33",
+            "bigquery": "232.32"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_product_performance",
+        "column": "unit_cost",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 29035,
+        "spark_is_bigquery_rounded_to_cents": 29034,
+        "max_abs_difference": "0.005",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "20.48",
+            "bigquery": "20.484000005"
+          },
+          {
+            "key": "2426",
+            "spark": "17.51",
+            "bigquery": "17.505000103"
+          },
+          {
+            "key": "7331",
+            "spark": "72.58",
+            "bigquery": "72.575999575"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_product_performance",
+        "column": "retail_price",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 15675,
+        "spark_is_bigquery_rounded_to_cents": 15675,
+        "max_abs_difference": "0.000014648",
+        "examples": [
+          {
+            "key": "17453",
+            "spark": "75.56",
+            "bigquery": "75.559997559"
+          },
+          {
+            "key": "2248",
+            "spark": "36.99",
+            "bigquery": "36.990001678"
+          },
+          {
+            "key": "1016",
+            "spark": "67.96",
+            "bigquery": "67.959999084"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_product_performance",
+        "column": "gross_revenue",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 15637,
+        "spark_is_bigquery_rounded_to_cents": 15637,
+        "max_abs_difference": "0.00013428",
+        "examples": [
+          {
+            "key": "17453",
+            "spark": "377.8",
+            "bigquery": "377.799987795"
+          },
+          {
+            "key": "2248",
+            "spark": "369.9",
+            "bigquery": "369.90001678"
+          },
+          {
+            "key": "1016",
+            "spark": "475.72",
+            "bigquery": "475.719993588"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_product_performance",
+        "column": "total_cost",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 28970,
+        "spark_is_bigquery_rounded_to_cents": 7881,
+        "max_abs_difference": "0.084998708",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "143.36",
+            "bigquery": "143.388000035"
+          },
+          {
+            "key": "2426",
+            "spark": "70.04",
+            "bigquery": "70.020000412"
+          },
+          {
+            "key": "7331",
+            "spark": "290.32",
+            "bigquery": "290.3039983"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "mart_product_performance",
+        "column": "gross_margin",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 28970,
+        "spark_is_bigquery_rounded_to_cents": 7877,
+        "max_abs_difference": "0.084998708",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "108.64",
+            "bigquery": "108.611999965"
+          },
+          {
+            "key": "2426",
+            "spark": "109.96",
+            "bigquery": "109.979999588"
+          },
+          {
+            "key": "7331",
+            "spark": "465.68",
+            "bigquery": "465.6960017"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "stg_thelook__inventory_items",
+        "column": "cost",
+        "key": "inventory_item_id",
+        "rows_compared": 487799,
+        "differing_rows": 486407,
+        "spark_is_bigquery_rounded_to_cents": 486378,
+        "max_abs_difference": "0.005",
+        "examples": [
+          {
+            "key": "297819",
+            "spark": "33.07",
+            "bigquery": "33.067759285"
+          },
+          {
+            "key": "12131",
+            "spark": "8.58",
+            "bigquery": "8.580000026"
+          },
+          {
+            "key": "110633",
+            "spark": "8.58",
+            "bigquery": "8.581729843"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "stg_thelook__inventory_items",
+        "column": "product_retail_price",
+        "key": "inventory_item_id",
+        "rows_compared": 487799,
+        "differing_rows": 262440,
+        "spark_is_bigquery_rounded_to_cents": 262440,
+        "max_abs_difference": "0.000014648",
+        "examples": [
+          {
+            "key": "297819",
+            "spark": "77.99",
+            "bigquery": "77.989997864"
+          },
+          {
+            "key": "110633",
+            "spark": "14.57",
+            "bigquery": "14.569999695"
+          },
+          {
+            "key": "373425",
+            "spark": "24.99",
+            "bigquery": "24.989999771"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "stg_thelook__order_items",
+        "column": "sale_price",
+        "key": "order_item_id",
+        "rows_compared": 180778,
+        "differing_rows": 97201,
+        "spark_is_bigquery_rounded_to_cents": 97201,
+        "max_abs_difference": "0.000014648",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "29.99",
+            "bigquery": "29.989999771"
+          },
+          {
+            "key": "110633",
+            "spark": "36.29",
+            "bigquery": "36.290000916"
+          },
+          {
+            "key": "42154",
+            "spark": "75.07",
+            "bigquery": "75.069999695"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "stg_thelook__products",
+        "column": "cost",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 29035,
+        "spark_is_bigquery_rounded_to_cents": 29034,
+        "max_abs_difference": "0.005",
+        "examples": [
+          {
+            "key": "12131",
+            "spark": "20.48",
+            "bigquery": "20.484000005"
+          },
+          {
+            "key": "2426",
+            "spark": "17.51",
+            "bigquery": "17.505000103"
+          },
+          {
+            "key": "23606",
+            "spark": "31.42",
+            "bigquery": "31.415999986"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      },
+      {
+        "model": "stg_thelook__products",
+        "column": "retail_price",
+        "key": "product_id",
+        "rows_compared": 29120,
+        "differing_rows": 15675,
+        "spark_is_bigquery_rounded_to_cents": 15675,
+        "max_abs_difference": "0.000014648",
+        "examples": [
+          {
+            "key": "2248",
+            "spark": "36.99",
+            "bigquery": "36.990001678"
+          },
+          {
+            "key": "17453",
+            "spark": "75.56",
+            "bigquery": "75.559997559"
+          },
+          {
+            "key": "1016",
+            "spark": "67.96",
+            "bigquery": "67.959999084"
+          }
+        ],
+        "keys_only_in_spark": 0,
+        "keys_only_in_bigquery": 0
+      }
+    ],
+    "keyless": [],
+    "prediction_confirmed": true
+  },
+  "bigquery_bytes_billed": 2801795072,
+  "wall_s": 3599.8,
+  "verdict": {
+    "exit": 1,
+    "reason": "gating (names/types): none; rows/values: ['dim_distribution_centers', 'dim_products', 'dim_users', 'fct_inventory_items', 'fct_order_items', 'fct_orders', 'int_cohorts__user_months', 'int_inventory__by_product_center', 'int_inventory_items__enriched', 'int_order_items__enriched', 'int_orders__daily', 'int_orders__item_rollup', 'int_products__sales', 'int_users__lifetime_orders', 'mart_cohort_retention', 'mart_customer_summary', 'mart_daily_revenue', 'mart_product_performance', 'stg_thelook__inventory_items', 'stg_thelook__order_items', 'stg_thelook__products']",
+    "gating_failed": [],
+    "value_failed": [
+      "dim_distribution_centers",
+      "dim_products",
+      "dim_users",
+      "fct_inventory_items",
+      "fct_order_items",
+      "fct_orders",
+      "int_cohorts__user_months",
+      "int_inventory__by_product_center",
+      "int_inventory_items__enriched",
+      "int_order_items__enriched",
+      "int_orders__daily",
+      "int_orders__item_rollup",
+      "int_products__sales",
+      "int_users__lifetime_orders",
+      "mart_cohort_retention",
+      "mart_customer_summary",
+      "mart_daily_revenue",
+      "mart_product_performance",
+      "stg_thelook__inventory_items",
+      "stg_thelook__order_items",
+      "stg_thelook__products"
+    ],
+    "unmeasured": [],
+    "source_diffs": []
+  }
+}

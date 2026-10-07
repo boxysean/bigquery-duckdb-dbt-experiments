@@ -1,0 +1,2 @@
+Staging layer: one model per source table, renames and casts only.
+Empty on purpose in card 1 — no source has been chosen yet.
