@@ -20,15 +20,15 @@ number below is measured unless marked otherwise.
 |---|---|---|
 | dbt | v2 (dbt-oss 2.0.5 / Fusion) | **v1** (dbt-core 1.11.11 + dbt-trino 1.10.2). dbt v2 has no Trino adapter |
 | Shared model SQL | 34 `.sql` files (baseline) | **Same 34, byte-identical.** Porting needed **1 change to 1 model** (typed struct fields in `mart_polyglot_types`), made render-neutral for option 1 |
-| Macro seam | 29 macros × 2 implementations, 812 lines | 29 macros × 2 implementations, 812 lines. **The same size** |
+| Macro seam | 30 macros × 2 implementations, 851 lines | 30 macros × 2 implementations, 840 lines. **About the same size** |
 | Dialect strictness for model authors | BigQuery and DuckDB both infer struct field types; both have a star modifier | Trino needs **explicit types** for struct fields and has **no** `* EXCEPT`; Iceberg forbids JSON and geography column types |
 | Local engine | One DuckDB file, no services | **4 containers** (S3, Iceberg REST catalog, Trino, Spark), about 6 GB of images, plus 2 sha-pinned jars |
 | Local build time | DuckDB: 19.96 s of model time on the **3.3M-row real data** (option 1 README) | Trino: ~65 s wall time for `dbt build` (198 nodes) on the **41,610-row fixture**; full round trip from an empty stack: 287 s. *Not comparable to the DuckDB figure (different data, different measure); option 2 on the real data: Trino 47 s wall time for `dbt build`, BigQuery 152 s* |
 | BigQuery compile in CI without a secret | Works out of the box (dbt v2) | Needs a **workaround** (throwaway key + `--no-populate-cache --no-introspect`) |
 | CI (every PR) | Compile both targets + guardrail; DuckDB built and tested end to end (~30-51 s locally) | Model-tree check; compile both targets + guardrail; lakehouse up; **Spark** lands sources; Trino built and tested; macros executed; **Spark reads every table back** (~5 min) |
-| Macro self-check executed | 47 cases on DuckDB | 59 cases on Trino (including microsecond and sub-cent checks) |
-| Money vs BigQuery | `decimal(18,2)` vs `NUMERIC`: 21 of 29 models differ on money (measured, explained row by row) | `decimal(38,9)` = BigQuery `NUMERIC` exactly. **Measured: 30 of 30 relations identical to BigQuery**, every money sum equal to 9 decimals, `average_order_value` included |
-| Row-level parity vs BigQuery | Money columns joined row by row (`row_join.py`): differences explained by scale | **30 / 30 relations equal row for row**, 0 of 79.8M cells different. Representation differs in 4 type pairs: naive vs instant timestamps, decimal text padding, double scientific notation, JSON text vs JSON ([`row_parity.md`](../2_dbt_bigquery_trino_spark/docs/row_parity.md)) |
+| Macro self-check executed | 52 cases on DuckDB (including exact money division) | 64 cases on Trino (including microsecond, sub-cent and money-division checks) |
+| Money vs BigQuery | `decimal(38,9)` = BigQuery `NUMERIC`, with exact division (`money_quotient()`). **Measured: 30 of 30 relations equal to BigQuery row for row** ([`money_fix`](../1_dbt_bigquery_duckdb/analyses/money_fix/README.md)). Until 2026-10-07 it was `decimal(18,2)`, and 21 of 29 models differed on money | `decimal(38,9)` = BigQuery `NUMERIC` exactly. **Measured: 30 of 30 relations identical to BigQuery**, every money sum equal to 9 decimals, `average_order_value` included |
+| Row-level parity vs BigQuery | **30 / 30 relations equal row for row**, 0 of 79.8M cells different (after the money fix; before it, `row_join.py` explained every money difference by scale) | **30 / 30 relations equal row for row**, 0 of 79.8M cells different. Representation differs in 4 type pairs: naive vs instant timestamps, decimal text padding, double scientific notation, JSON text vs JSON ([`row_parity.md`](../2_dbt_bigquery_trino_spark/docs/row_parity.md)) |
 | A second consumer engine | None | **Spark**, through the shared Iceberg catalog: 12/12 tables read with identical profiles |
 | Failure modes that only appear at read time | None | Spark cannot read Trino's Parquet v2 encodings unless a table property is set (5 of 12 tables failed without it); Spark cannot read dbt-trino views at all |
 | Decisions that are not translations | Partitioning (BigQuery only) | Partitioning per engine (`day` on BigQuery, `month` on Iceberg: the daily layout **failed**); materialization decides who can read a model; table properties; three engines' time zones |
@@ -65,10 +65,11 @@ number below is measured unless marked otherwise.
 **Reading so far:** option 2 costs about the same to make portable, and noticeably more
 to operate and keep correct. The extra cost is concentrated in one place, the
 Trino ↔ Spark boundary, and every failure there is caught by an automated check in CI. In
-return, option 2 gets exact `NUMERIC`-equivalent money and a second engine (Spark) on the
-same data. On the same real rows, option 2's Trino leg is identical to BigQuery on every
-measured column of all 30 relations, where option 1's DuckDB leg differs on money in 21 of
-29 models. Option 1 offers nothing comparable.
+return, option 2 gets a second engine (Spark) on the same data, which option 1 has no
+equivalent for. Money is no longer a difference between them: both local engines are now
+equal to BigQuery row for row on all 30 relations, option 2 by holding `decimal(38,9)`
+from the start, option 1 since it moved to `decimal(38,9)` with exact division
+(`money_quotient()`; DuckDB divides decimals in DOUBLE, Trino does not).
 
 ## What would change this assessment
 

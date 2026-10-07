@@ -31,10 +31,10 @@ The assessment so far is in **[`docs/comparison.md`](docs/comparison.md)**.
 
 | Goal | Project 1: BigQuery + DuckDB | Project 2: BigQuery + Trino (+ Spark) |
 |---|---|---|
-| Polyglot macros | ✅ 29 macros, `bigquery__` / `default__` (DuckDB) | ✅ 29 macros, `bigquery__` / `trino__`; 59 self-check cases **executed** on Trino |
+| Polyglot macros | ✅ 30 macros, `bigquery__` / `default__` (DuckDB); 52 self-check cases **executed** on DuckDB | ✅ 30 macros, `bigquery__` / `trino__`; 64 self-check cases **executed** on Trino |
 | Builds on the local engine | ✅ DuckDB | ✅ Trino: 198 / 198 (30 models, 168 tests) |
 | Builds on BigQuery | ✅ built and value-measured on real data | ✅ built on real data: 197 pass, 1 warn (the deliberate dirty-data test), 0 error |
-| Value parity measured | ✅ BigQuery vs DuckDB on the same real rows: row counts 29/29, money explained row by row | ✅ BigQuery vs Trino on the same real rows: **30/30 relations identical**, money exact to 9 decimals ([`value_parity.md`](2_dbt_bigquery_trino_spark/docs/value_parity.md)); **equal row for row**, 0 of 79.8M cells different ([`row_parity.md`](2_dbt_bigquery_trino_spark/docs/row_parity.md)). Spark vs Trino: 12/12 tables identical |
+| Value parity measured | ✅ BigQuery vs DuckDB on the same real rows: **equal row for row**, 0 of 79.8M cells different, since money became `decimal(38,9)` with exact division ([`money_fix`](1_dbt_bigquery_duckdb/analyses/money_fix/README.md)) | ✅ BigQuery vs Trino on the same real rows: **30/30 relations identical**, money exact to 9 decimals ([`value_parity.md`](2_dbt_bigquery_trino_spark/docs/value_parity.md)); **equal row for row**, 0 of 79.8M cells different ([`row_parity.md`](2_dbt_bigquery_trino_spark/docs/row_parity.md)). Spark vs Trino: 12/12 tables identical |
 | CI keeps it polyglot | ✅ [`1_dbt_bigquery_duckdb.yml`](.github/workflows/1_dbt_bigquery_duckdb.yml): both targets compile, guardrail, DuckDB built and tested | ✅ [`2_dbt_bigquery_trino_spark.yml`](.github/workflows/2_dbt_bigquery_trino_spark.yml): both targets compile, guardrail, full lakehouse round trip (Spark → dbt on Trino → Spark) |
 | Gaps / challenges / blind spots documented | ✅ [`gaps`](1_dbt_bigquery_duckdb/docs/gaps.md), [`challenges`](1_dbt_bigquery_duckdb/docs/challenges.md) | ✅ [`gaps`](2_dbt_bigquery_trino_spark/docs/gaps.md), [`challenges`](2_dbt_bigquery_trino_spark/docs/challenges.md), [`architecture`](2_dbt_bigquery_trino_spark/docs/architecture.md) |
 

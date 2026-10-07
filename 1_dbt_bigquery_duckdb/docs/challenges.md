@@ -471,10 +471,15 @@ credentials, the box) or **dbt v2** (dbt-oss 2.0.5). See also [`gaps.md`](gaps.m
   rounded to nine decimals first, `95.625000000`, and then to 95.63. Recomputing both rules
   exactly reproduces L9 and BigQuery on 7 of 7 rows (`division_rule_explains`). L2 agrees
   with BigQuery because its numerator is whole cents, `191.25`.
-* **Resolution.** The rows are counted as they are (bucket *identical*, since L2 equals
-  BigQuery). The unapplied proposal in `rows.md` says that the one-line `decimal(38,9)`
-  change removes all 273,826 cent differences but would create these 7. No model or macro
-  changed.
+* **Resolution.** The rows were counted as they were (bucket *identical*, since L2 equals
+  BigQuery). The proposal in `rows.md` said that the one-line `decimal(38,9)` change removes
+  all 273,826 cent differences but would create these 7. **Applied on 2026-10-07**, with
+  `money_quotient()` (`macros/polyglot/math.sql`) for the division: the DuckDB branch
+  divides in integers, the numerator in nanos as a `HUGEINT`, rounded half away from zero,
+  which is BigQuery's rule. Casting the DOUBLE quotient back to `decimal(38,9)` is not
+  enough: it was wrong on 102 of 5,000 random half-way cases. After the change: 0 of
+  79,839,931 cells differ from BigQuery
+  ([`analyses/money_fix/README.md`](../analyses/money_fix/README.md)).
 * **Classification.** dual-target: the same arithmetic on the same declared type has
   different result types on the two engines.
 
@@ -535,7 +540,9 @@ the 32 built from cost still differ. Schema/type parity holds (0 gating mismatch
 digest self-check passed and the DuckDB-vs-DuckDB baseline matched. The same 29 models took
 19.96 s of model execution time on DuckDB and 230.25 s on BigQuery (11.5x). So "runs
 unchanged" holds for 29 of 29 models; "returns the same values" holds for 8 of 29, and the
-cause is one macro's type choice, not the model code. Sources:
+cause is one macro's type choice, not the model code. (Fixed on 2026-10-07: with
+`decimal(38,9)` and `money_quotient()`, all 30 relations return the same values,
+[`analyses/money_fix/README.md`](../analyses/money_fix/README.md).) Sources:
 `analyses/value_parity/results.md:11-12,52`, `analyses/value_parity/logs/parity.log:44`,
 `analyses/value_parity/logs/probe_scale_attribution.log:59`; the default `make parity`
 still reads the fixture and still reports 28 of 29 differing on that path

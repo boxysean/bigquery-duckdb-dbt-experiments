@@ -36,7 +36,7 @@ select
     users.lifetime_items,
     users.lifetime_gross_revenue,
     users.lifetime_gross_margin,
-    cast(round(users.lifetime_gross_revenue / nullif(users.lifetime_orders, 0), 2)
+    cast(round({{ money_quotient('users.lifetime_gross_revenue', 'users.lifetime_orders') }}, 2)
         as {{ money_type() }})                                      as average_order_value,
     users.lifetime_returned_items                                   as returned_item_count,
     users.lifetime_orders > 1                                       as is_repeat_customer

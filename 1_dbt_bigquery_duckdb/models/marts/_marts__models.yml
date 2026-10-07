@@ -4,7 +4,7 @@ version: 2
 # as tables (SPEC sections 4 and 5). Explicit column lists, no `select *`.
 #
 # Conventions for every model below:
-#   * money is money_type() (decimal(18,2) on DuckDB, numeric on BigQuery), in USD.
+#   * money is money_type() (decimal(38,9) on DuckDB, numeric on BigQuery), in USD.
 #   * rates are float_type() (double on DuckDB, float64 on BigQuery), in 0..1.
 #   * every *_at column is a NAIVE UTC timestamp (from staging's to_utc_timestamp());
 #     dates and months are UTC calendar dates and months (months are timestamp_type()

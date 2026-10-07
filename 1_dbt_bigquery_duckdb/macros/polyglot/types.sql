@@ -76,14 +76,17 @@
 {#
   money_type(): fixed-point money (USD). BigQuery NUMERIC is always 38,9 and takes
   no parameters in an expression cast; DuckDB's DECIMAL needs an explicit
-  width/scale (a bare DECIMAL is 18,3), so it is pinned to decimal(18,2).
+  width/scale (a bare DECIMAL is 18,3), so it is pinned to decimal(38,9): exactly
+  NUMERIC. It was decimal(18,2) until 2026-10-07, which rounded the source's sub-cent
+  FLOAT64 prices and costs to cents on DuckDB only (21 of 29 models differed from
+  BigQuery on money, docs/gaps.md); with 38,9 every money value equals BigQuery's.
 #}
 {% macro money_type() -%}
     {{ return(adapter.dispatch('money_type', 'bq_duckdb_experiments')()) }}
 {%- endmacro %}
 
 {% macro default__money_type() -%}
-    decimal(18,2)
+    decimal(38,9)
 {%- endmacro %}
 
 {% macro bigquery__money_type() -%}

@@ -44,6 +44,7 @@
         ['month_number', month_number('activity_month')],
         ['seconds_between', seconds_between('started_at', 'ended_at')],
         ['safe_divide', safe_divide('gross_margin', 'gross_revenue')],
+        ['money_quotient', money_quotient('gross_revenue', 'order_count')],
         ['regexp_contains', regexp_contains('email', "'^Life'")],
         ['generate_surrogate_key', generate_surrogate_key(['user_id', 'order_id'])],
     ] -%}
@@ -81,6 +82,11 @@
         ['safe_divide value', safe_divide(1, 4), '0.25'],
         ['safe_divide typeof', 'typeof(' ~ safe_divide(1, 4) ~ ')', 'DOUBLE'],
         ['safe_divide decimal typeof', 'typeof(' ~ safe_divide('cast(1 as decimal(18,2))', 'cast(4 as decimal(18,2))') ~ ')', 'DOUBLE'],
+        ['money_quotient half-way rounds like BigQuery', 'round(' ~ money_quotient('cast(191.249999999 as ' ~ money_type() ~ ')', '2') ~ ', 2)', '95.63'],
+        ['money_quotient value (nine decimals)', money_quotient('cast(191.249999999 as ' ~ money_type() ~ ')', '2'), '95.625000000'],
+        ['money_quotient negative rounds away from zero', money_quotient('cast(-191.249999999 as ' ~ money_type() ~ ')', '2'), '-95.625000000'],
+        ['money_quotient by zero is null', money_quotient('cast(191.249999999 as ' ~ money_type() ~ ')', '0'), none],
+        ['money_quotient typeof', 'typeof(' ~ money_quotient('cast(191.249999999 as ' ~ money_type() ~ ')', '2') ~ ')', 'DECIMAL(38,9)'],
         ['date_diff_days', date_diff_days("date '2024-03-15'", "date '2024-03-01'"), '14'],
         ['date_diff_days negative', date_diff_days("date '2024-03-01'", "date '2024-03-15'"), '-14'],
         ['format_month', format_month("timestamp '2024-03-15 13:45:00'"), '2024-03'],
@@ -118,7 +124,7 @@
         ['string_type', "typeof(cast('x' as " ~ string_type() ~ '))', 'VARCHAR'],
         ['float_type', 'typeof(cast(1 as ' ~ float_type() ~ '))', 'DOUBLE'],
         ['timestamp_type', "typeof(cast('2024-03-15' as " ~ timestamp_type() ~ '))', 'TIMESTAMP'],
-        ['money_type', 'typeof(cast(1 as ' ~ money_type() ~ '))', 'DECIMAL(18,2)'],
+        ['money_type (= BigQuery NUMERIC)', 'typeof(cast(1 as ' ~ money_type() ~ '))', 'DECIMAL(38,9)'],
         ['decimal_type(38, 9)', 'typeof(cast(1 as ' ~ decimal_type(38, 9) ~ '))', 'DECIMAL(38,9)'],
     ] -%}
 

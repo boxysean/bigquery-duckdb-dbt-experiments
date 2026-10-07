@@ -15,9 +15,13 @@ sums agree to the ninth decimal place, for example
 Those metrics are `round(x / nullif(y, 0), 2)`, which project 1 predicted could differ
 under Trino's decimal division rules. They do not.
 
-This is the result project 1 could not reach with DuckDB. There, 21 of 29 models differ
-on money because `decimal(18,2)` rounds what BigQuery's `NUMERIC` keeps (project 1's
-README).
+Project 1 could not reach this result with DuckDB at the time: 21 of 29 models differed
+on money because `decimal(18,2)` rounded what BigQuery's `NUMERIC` keeps. It has since
+moved to `decimal(38,9)` and exact division (`money_quotient()`), and its DuckDB leg is
+equal to BigQuery in every cell too
+([`../../1_dbt_bigquery_duckdb/analyses/money_fix/README.md`](../../1_dbt_bigquery_duckdb/analyses/money_fix/README.md)).
+Both models now compute `average_order_value` as `round(money_quotient(x, y), 2)`; on
+Trino that renders the same `x / nullif(y, 0)` measured here.
 
 The row-by-row comparison, and the representation differences it names, are in
 [`row_parity.md`](row_parity.md): 30 / 30 relations equal row for row.

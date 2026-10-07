@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Row-by-row join of a matched pair of value-parity legs, every money column (docs/history/SPEC-rows.md).
 
+HISTORICAL: this measured money_type() = decimal(18,2) on DuckDB. Its result (L9, the
+decimal(38,9) build, equals BigQuery on all but 7 rows, and those 7 are DuckDB's DOUBLE
+division) is why money_type() is decimal(38,9) and money_quotient() exists since
+2026-10-07. It now refuses to run; analyses/value_parity/rows.md is the record.
+
     BQ_KEYFILE=... DBT_ENV=rows python3 scripts/row_join.py      # make row-join DBT_ENV=rows
 
 The pair is the one `make value-parity` last built over ONE load of the source:
@@ -895,6 +900,15 @@ def main() -> int:
     ap.add_argument("--rebuild-l9", action="store_true",
                     help="rebuild L9 even when the previous build is still valid")
     args = ap.parse_args()
+    # This harness measures the decimal(18,2) era: L2 is money at cents, L9 the same build
+    # at decimal(38,9). Since 2026-10-07 money_type() IS decimal(38,9) on DuckDB, so there
+    # is no L2 to explain; the published result (analyses/value_parity/rows.md) is the
+    # record of why the type changed. Refuse rather than build a meaningless L9.
+    if not re.search(r"\{% macro default__money_type\(\) -%\}\s*decimal\(18,2\)", (REPO / TYPES).read_text()):
+        print("row_join.py measures money_type() = decimal(18,2) against decimal(38,9); money_type() is no longer "
+              "decimal(18,2) on DuckDB (macros/polyglot/types.sql), so there is nothing for it to explain. "
+              "See analyses/value_parity/rows.md for the result that led to the change.")
+        return 2
     KEY = os.environ.get("BQ_KEYFILE") or ""
     if not KEY or not Path(KEY).is_file():
         print("BQ_KEYFILE is not set to a readable key file")

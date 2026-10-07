@@ -23,7 +23,7 @@ This repository proves that a single dbt project can target:
 What matters to an architect:
 
 - The portability pattern is real: **29 models** build on both targets with **no forked copies** and **no `target.type` branching in models**.
-- The biggest divergence is also the most important one: **money precision**. BigQuery keeps sub-cent precision in `NUMERIC`; DuckDB rounds the same source values into `DECIMAL(18,2)`.
+- The biggest divergence was also the most important one: **money precision**. BigQuery keeps sub-cent precision in `NUMERIC`; DuckDB rounded the same source values into `DECIMAL(18,2)`. **Fixed on 2026-10-07**: `money_type()` is `decimal(38,9)` on DuckDB and money-per-order division goes through `money_quotient()`. On the real data the DuckDB leg is now equal to BigQuery in every cell of all 30 relations ([`analyses/money_fix/README.md`](analyses/money_fix/README.md)). The figures below are the measurements that led to the fix.
 - On the same real dataset, **row counts match on all 29 models**. Exact value parity holds for **8 of 29** models and **1 of 11 marts**.
 - A row-by-row follow-up on the **money-column mismatches** shows **0 genuinely different money values**. Those differences are attributable to declared scale and rounding behavior, not unexplained logic drift.
 - The project also measures two ways to get BigQuery data into DuckDB:
@@ -105,6 +105,10 @@ The main root cause is simple:
 
 - **BigQuery** money path: `NUMERIC` with 9 decimal places
 - **DuckDB** money path: `DECIMAL(18,2)` rounded to cents
+
+Fixed since: with `decimal(38,9)` and exact division (`money_quotient()`), **30 / 30
+relations are equal row for row, 0 of 79,839,931 cells different**
+([`analyses/money_fix/README.md`](analyses/money_fix/README.md)).
 
 If you are deciding whether one project can span both engines, this is the core takeaway: **SQL portability is manageable; numeric policy is the real design decision**.
 

@@ -4,7 +4,7 @@ version: 2
 # sections 4 and 5). Views; no `select *` in the final select.
 #
 # Conventions for every model below:
-#   * money is money_type() (decimal(18,2) on DuckDB, numeric on BigQuery), in USD.
+#   * money is money_type() (decimal(38,9) on DuckDB, numeric on BigQuery), in USD.
 #   * every *_at column is a NAIVE UTC timestamp (from staging's to_utc_timestamp());
 #     dates and months are UTC calendar dates and months.
 #   * "gross" means before returns and cancellations: every order item counts,
