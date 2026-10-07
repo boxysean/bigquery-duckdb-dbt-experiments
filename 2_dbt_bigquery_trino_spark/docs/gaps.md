@@ -45,8 +45,7 @@ Also measured on real data: Spark reads all 12 tables with profiles identical to
 ## 3. Deliberately out of scope
 
 - **Running dbt on Spark** (dbt-spark) as a third target: the brief is "everything goes
-  to Trino". The archived dbt v2 experiment
-  ([`../../archive/dbt_v2_bigquery_spark/`](../../archive/dbt_v2_bigquery_spark/)) did
-  Spark-as-a-dbt-target and documents what that costs.
+  to Trino". An earlier dbt v2 experiment, since removed from the repository
+  ([its last version](https://github.com/boxysean/bigquery-duckdb-dbt-experiments/tree/8a8ca399eb8a54af5669df7567c888bfc85c263c/archive/dbt_v2_bigquery_spark)), did Spark-as-a-dbt-target and documents what that costs.
 - **Delta Lake / Hudi**: Iceberg was chosen for its REST catalog and Trino write support
   ([`architecture.md`](architecture.md) §2).

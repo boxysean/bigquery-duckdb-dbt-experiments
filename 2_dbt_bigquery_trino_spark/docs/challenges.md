@@ -143,7 +143,7 @@ modifier), so a little more is asked of every model author.
   microseconds, and they match.
 - **Ongoing**: three engines' time-zone settings must agree. A Spark session left on a
   local time zone would render the same instants differently, which is the risk the
-  archived dbt v2 Spark project also documented.
+  earlier dbt v2 Spark experiment also documented ([its last version](https://github.com/boxysean/bigquery-duckdb-dbt-experiments/tree/8a8ca399eb8a54af5669df7567c888bfc85c263c/archive/dbt_v2_bigquery_spark)).
 
 ## 5. What did *not* cause trouble
 

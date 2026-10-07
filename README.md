@@ -47,7 +47,6 @@ Plus, for both: [`repo.yml`](.github/workflows/repo.yml) runs the model-tree dri
 2_dbt_bigquery_trino_spark/   project 2 (its own README, Makefile, pyproject, docs/, stack/)
 docs/comparison.md            the comparison of the two
 scripts/check_model_trees.py  the two projects still build the same models
-archive/                      the earlier dbt v2 BigQuery + Spark experiment (not maintained)
 .github/workflows/            one workflow per project, plus repo-level checks
 ```
 
