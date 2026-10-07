@@ -1,6 +1,0 @@
-# Kept deliberately empty until a package earns its place: every package added
-# here has to work on BOTH targets (BigQuery and Spark), which shrinks the set
-# drastically. dbt-labs/dbt_utils is the obvious first candidate and is not
-# added yet, because an unused dependency would claim more than the project can
-# verify.
-packages: []
