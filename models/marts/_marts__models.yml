@@ -368,6 +368,8 @@ models:
       Grain: one row per inventory item (one physical unit), keyed by
       inventory_item_id, sold or open. The product_* columns are the source's
       denormalised copies on inventory_items. Money in USD; timestamps naive UTC.
+      On BigQuery the table is partitioned by created_at (day) and clustered by
+      product_id, through the physical_layout() seam; DuckDB gets a plain table.
     columns:
       - name: inventory_item_id
         description: Inventory item identifier; primary key.

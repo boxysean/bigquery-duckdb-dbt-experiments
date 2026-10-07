@@ -221,6 +221,14 @@ comments, `{# #}` and YAML comments stripped:
 | `with_offset` | `UNNEST ... WITH OFFSET` |
 | `target_branch` | `target.type`, `target.name`, `adapter.type` (any branch on the target) |
 
+The `partition_by` and `cluster_by` rules match the literal config keys, and still fire on a
+literal `partition_by =` / `cluster_by =`. This project's one partitioned model,
+`fct_inventory_items`, carries neither literally: its config is
+`{{ config(**physical_layout()) }}` (`macros/polyglot/physical.sql`), whose BigQuery branch
+returns the partition and cluster keys and whose default branch returns an empty dict. The
+move renders the model as a plain table, with no key for the detector to find. The seam is
+what keeps that model portable; a key written into a model would be a finding.
+
 **In this project:** the source has **1 finding**:
 `models/staging/_thelook__sources.yml:17: [target_branch] target.type`, the
 `database:` line. Rewrite 1 resolves it. The moved project, re-scanned after the move,

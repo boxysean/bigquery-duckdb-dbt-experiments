@@ -78,6 +78,11 @@ The project uses a macro seam instead of a forked model tree. The seam handles t
   coverage model, and asserted by the self-check and the guardrail; measured on both engines too —
   schema and four of its five column checksums agree, the JSON column's text differs by key order,
   a named divergence in NOTES.md)
+- physical layout (`physical_layout()`: on BigQuery `fct_inventory_items` is partitioned by day on
+  `created_at` and clustered by `product_id`; the DuckDB branch is empty, so DuckDB builds a plain
+  table; measured on BigQuery — one month of the 488,895-row fact table processed -98.8 % and
+  billed -79.2 % bytes, the billed figure floored by the 10 MiB per-query minimum; clustering's own
+  effect not isolated, see [`analyses/partitioning/`](analyses/partitioning/))
 - key generation
 
 That is the important architectural result: **the project divergence lives in the seam, not in the business models**.
@@ -205,14 +210,17 @@ If you are a senior architect deciding whether this pattern is worth using:
 | `Makefile` | Entry point for setup, build, parity, and transport measurement commands |
 | `models/` | Shared dbt model tree |
 | `macros/polyglot/` | Cross-engine compatibility seam |
+| `macros/polyglot/physical.sql` | The physical-layout seam: `physical_layout()` returns BigQuery's partition and cluster keys, and nothing on DuckDB |
 | `scripts/parity.py` | Cross-target parity harness |
 | `scripts/check_portability.py` | Guardrail against engine-specific leakage |
 | `scripts/bq_preflight.py` | Read-only check that the BigQuery target can be built (dataset, job creation, dataset read); names the permission to grant when it cannot. `--create` creates the missing target dataset; run by `make bq` |
 | `scripts/ci_compile_both.sh` | Compiles both targets and runs the guardrail; behind `make ci-compile`, the one check CI runs |
+| `scripts/bq_partition_measure.py` | Partitioning harness: one leg's table metadata, uncached full and filtered scans and partitions, or the before/after report; behind `make partition-measure` |
 | `.github/workflows/ci.yml` | CI: runs `make ci-compile` on every push to `main` and every pull request; the gate `ci-compile` holds no credential, `ci-compile-bigquery` runs only with the `BQ_SA_KEY` secret ([`docs/ci.md`](docs/ci.md)) |
 | `analyses/transport_a/` | Direct-read transport evidence (committed README plus generated results) |
 | `analyses/transport_b/` | File-based transport evidence (committed README plus generated results) |
 | [`analyses/value_parity/`](analyses/value_parity/) | Committed parity overview; generated results and row-level follow-up artifacts sit beside it |
+| [`analyses/partitioning/`](analyses/partitioning/) | Partitioning and clustering on `fct_inventory_items`: the method (README), the measured before/after (`results.md`, `results.{before,after}.json`, `logs/`) |
 | [`docs/challenges.md`](docs/challenges.md) | Full list of issues encountered and resolved |
 | [`docs/gaps.md`](docs/gaps.md) | What remains unverified or intentionally unresolved |
 | [`docs/move_to_duckdb.md`](docs/move_to_duckdb.md) | What it takes to turn this into a DuckDB-only project |
@@ -228,7 +236,7 @@ make check-env
 
 ### Common commands
 
-The supported command surface is the `Makefile`. Before using the commands below, run `make setup` and `make check-env`. `make duck` uses the local fixture automatically; `make bq` and `make value-parity` require BigQuery credentials (for example `BQ_KEYFILE`); `make value-parity` performs the real-data load itself, then costs money to compare the two builds over that shared input; and the separate transport suites are available as `make transport-a` and `make transport-b`, which need additional cloud permissions, with Transport B also requiring a writable GCS bucket. Next to `make portability`, `make ci-compile` compiles both targets and runs the same guardrail; it is exactly what CI runs (see [CI](#ci)), needs no credentials for the DuckDB half, and costs nothing.
+The supported command surface is the `Makefile`. Before using the commands below, run `make setup` and `make check-env`. `make duck` uses the local fixture automatically; `make bq` and `make value-parity` require BigQuery credentials (for example `BQ_KEYFILE`); `make value-parity` performs the real-data load itself, then costs money to compare the two builds over that shared input; and the separate transport suites are available as `make transport-a` and `make transport-b`, which need additional cloud permissions, with Transport B also requiring a writable GCS bucket. Next to `make portability`, `make ci-compile` compiles both targets and runs the same guardrail; it is exactly what CI runs (see [CI](#ci)), needs no credentials for the DuckDB half, and costs nothing. `make partition-measure` runs one leg of the partitioning measurement (or the before/after report) against a BigQuery table and needs `BQ_KEYFILE`; the full sequence is in [`analyses/partitioning/README.md`](analyses/partitioning/README.md).
 
 ```bash
 make duck            # build the DuckDB target against the local fixture
@@ -237,6 +245,7 @@ make parity          # structural parity checks across both targets
 make value-parity    # same-data value comparison across both targets
 make portability     # fail if one target leaks the other target's dialect
 make ci-compile      # compile both targets + the guardrail: what CI runs
+make partition-measure ARGS="..."  # one leg of the partitioning measurement (BQ_KEYFILE required)
 make move-to-duckdb  # generate a DuckDB-only version of the project
 ```
 
