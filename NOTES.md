@@ -1723,3 +1723,104 @@ The pre-PR gate, which never reaches the preflight or the wrapper:
   ceiling is per job, not per build.
 * `maximum_bytes_billed` refusing at 1000 bytes shows the setting is enforced by BigQuery; it was
   not shown refusing at the configured 1 GB, because no job of the build comes near it.
+
+# Card t_55f119de — partitioning and clustering on the largest fact table, measured
+
+`docs/gaps.md` section 2 said the BigQuery write path was a plain build: no partitioning, no
+clustering, and a `maximum_bytes_billed` ceiling that no build job comes near. On BigQuery a
+table's physical layout decides how many bytes a filtered query scans, which is what a query is
+billed for; DuckDB has no such config and no per-byte bill. This card put a layout on one table,
+through the seam, and measured what it buys. Every number below was read from the BigQuery jobs
+API by `scripts/bq_partition_measure.py` (orchestrator, 2026-10-07) and is in
+`analyses/partitioning/results.md`, `results.before.json`, `results.after.json` and
+`logs/{before,after}.log`.
+
+## What was built
+
+* **The table**: `fct_inventory_items`, the largest fact table by both measures, 488,895 rows /
+  49,525,078 bytes, against `fct_order_items` 181,070 rows / 45,581,586 bytes (BigQuery table
+  metadata, 2026-10-07).
+* **The seam**: `macros/polyglot/physical.sql`, `physical_layout()`, dispatched like every other
+  macro in `macros/polyglot/`. The BigQuery branch returns
+  `partition_by = {field: created_at, data_type: timestamp, granularity: day}` and
+  `cluster_by = [product_id]`; the default branch returns an empty dict, so DuckDB builds a plain
+  table.
+* **The model line**: `models/marts/fct_inventory_items.sql` carries
+  `{{ config(**physical_layout()) }}`. No file under `models/` names either key or branches on the
+  target, so the guardrail and the `partition_by` / `cluster_by` rules of
+  `scripts/move_to_duckdb.py` have nothing to flag (`docs/move_to_duckdb.md` §5).
+* **The harness**: `scripts/bq_partition_measure.py`, behind `make partition-measure ARGS=...`.
+  `measure` records one leg (table metadata, a dry run, three executed queries, rows per
+  partition); `report` compares a before and an after leg of the same table and window. Method:
+  `analyses/partitioning/README.md`.
+
+## Measured 2026-10-07
+
+Dataset `coreychimpbot.experiments_partition`, window `2024-06`
+(`created_at >= TIMESTAMP '2024-06-01 00:00:00' AND created_at < TIMESTAMP '2024-07-01 00:00:00'`).
+The before leg was built from a scratch copy under `target/partition_before/`, the identical tree
+with only the `physical_layout()` config line removed; the after leg was built by the real tree.
+Every executed job ran with `useQueryCache: false` and `maximumBytesBilled: 1000000000` (the 1 GB
+ceiling from `profiles.yml`, unchanged), and every one reported `cacheHit: false`.
+
+| query | bytes processed before | bytes processed after | bytes billed before | bytes billed after |
+|---|---:|---:|---:|---:|
+| `full_scan`: `SELECT *` (no filter) | 49,525,078 | 49,525,078 | 50,331,648 | 50,331,648 |
+| `filtered_scan`: `SELECT *` where `created_at` in 2024-06 | 49,525,078 | 592,415 | 50,331,648 | 10,485,760 |
+| `filtered_count`: `COUNT(*)` over the same filter | 3,911,160 | 46,728 | 10,485,760 | 10,485,760 |
+| `dry_run` estimate of `filtered_scan` (bills nothing) | 49,525,078 | 592,415 | — | — |
+
+* `filtered_scan`, the representative query: processed **-98.8 %** (49,525,078 → 592,415), billed
+  **-79.2 %** (50,331,648 → 10,485,760). It read 100.0 % of the full scan before and 1.2 % after.
+* The billed delta is smaller than the processed delta because BigQuery bills a **10 MiB minimum
+  per query**: the after leg's filtered scan billed 10,485,760, the floor. `filtered_count` shows
+  the same floor from the other side: its processed bytes fell -98.8 % and its billed bytes did not
+  move (10,485,760 in both legs).
+* `full_scan` is the control: identical bytes both times, so the two tables hold the same rows.
+* Table metadata (`tables.get`): after, `timePartitioning type=DAY field=created_at`, clustering
+  `product_id`; before, `timePartitioning: none`, clustering `none`.
+* Rows per partition (`INFORMATION_SCHEMA.PARTITIONS`): before, one row with a NULL
+  `partition_id` holding all 488,895 rows (an unpartitioned table); after, **2,826 day
+  partitions** from `20181121` to `20261010`, 488,895 rows over them, of which `2024-06` is
+  **30 partitions holding 5,841 rows**.
+* Job ids of the filtered query: before `job_--eUTegE5ZnzLQC2JBQAGWRkayPs`, after
+  `job_pHUPQzT6gH9cgWuH-n3o90457FvT`.
+
+## Commands run (orchestrator, 2026-10-07) and their output
+
+The sequence in `analyses/partitioning/README.md`, "How to run it", with `--window 2024-06`:
+the scratch copy built with `dbt run --target bigquery --select +fct_inventory_items` under
+`DBT_ENV=partition`, `make partition-measure ARGS="measure ... --label before --window 2024-06"`,
+`DBT_ENV=partition make bq`, the same `measure` with `--label after`, then
+`make partition-measure ARGS="report --before ... --after ..."`.
+
+    $ DBT_ENV=partition make bq                                   # exit 0
+    Processed: 30 models | 168 tests
+    Summary: 198 total | 197 success | 1 warn
+
+The one warning is the intended `severity: warn` test `assert_order_item_created_at_is_plausible`,
+which fires on the real data.
+
+    $ dbt build --target duckdb                                   # the DuckDB leg, unchanged
+    Processed: 30 models | 168 tests
+    Summary: 198 total | 198 success
+
+`make portability`: `PORTABLE`, 0 BigQuery-only tokens in the DuckDB render (0/15), 0 DuckDB-only
+tokens in the BigQuery render (0/13), 0 target-branch findings, 31 compiled files (30 models,
+1 analysis).
+
+## What this does not establish
+
+* **Clustering's own byte effect was not isolated.** No measured query filters on `product_id`
+  alone, and on a table of this size (one block per partition) clustering has nothing to prune
+  that partition pruning has not already removed. What is established about clustering is only
+  that the table's metadata reports the cluster column (`product_id`) and that the table built
+  with it.
+* **One table, one query shape, one window.** It says nothing about which layout suits the other
+  marts, nor about queries that do not filter on `created_at`.
+* **The billed figure is floored.** At 10,485,760 bytes the after leg's filtered scan billed the
+  10 MiB per-query minimum, so -79.2 % is bounded by that floor. How the billed delta moves on a
+  larger table or another window was not measured.
+* **The before leg is a scratch copy, not a build of record.** It is the identical tree under
+  `target/partition_before/` with one line removed, built into the same dataset; the repository
+  holds only the after state.

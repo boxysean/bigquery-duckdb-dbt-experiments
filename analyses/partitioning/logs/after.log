@@ -1,0 +1,74 @@
+bq_partition_measure: label after, table coreychimpbot.experiments_partition.fct_inventory_items, window 2024-06 [2024-06-01 00:00:00, 2024-07-01 00:00:00)
+jobs run in project coreychimpbot; maximumBytesBilled 1,000,000,000; useQueryCache false; started 2026-10-07 07:22:41Z
+
+[table metadata] (tables.get; a metadata read, bills nothing)
+  numRows:          488,895
+  numBytes:         49,525,078 (47.23 MiB)
+  timePartitioning: type=DAY field=created_at expirationMs=none
+  clustering:       product_id
+  creationTime:     2026-10-07 07:21:29.614Z
+  lastModifiedTime: 2026-10-07 07:21:29.614Z
+  location:         US
+
+[dry_run]
+  sql:                 SELECT * FROM `coreychimpbot.experiments_partition.fct_inventory_items` WHERE created_at >= TIMESTAMP '2024-06-01 00:00:00' AND created_at < TIMESTAMP '2024-07-01 00:00:00'
+  jobId:               (none: dry run)  [read back from jobs.insert response (dry run, not persisted)]
+  totalBytesProcessed: 592,415 (0.56 MiB)
+  statementType:       SELECT
+  schema fields:       12
+
+[full_scan]
+  sql:                 SELECT * FROM `coreychimpbot.experiments_partition.fct_inventory_items`
+  jobId:               job_EPs8_GpPzFNufkWs5LCk-RD1w6Bd  [read back from jobs.get]
+  totalBytesProcessed: 49,525,078 (47.23 MiB)
+  totalBytesBilled:    50,331,648 (48.00 MiB)
+  cacheHit:            false
+  statementType:       SELECT
+  schema fields:       None
+  creationTime:        2026-10-07 07:22:42.619Z
+  endTime:             2026-10-07 07:22:48.907Z  (6288 ms)
+  totalSlotMs:         171997
+
+[filtered_scan]
+  sql:                 SELECT * FROM `coreychimpbot.experiments_partition.fct_inventory_items` WHERE created_at >= TIMESTAMP '2024-06-01 00:00:00' AND created_at < TIMESTAMP '2024-07-01 00:00:00'
+  jobId:               job_pHUPQzT6gH9cgWuH-n3o90457FvT  [read back from jobs.get]
+  totalBytesProcessed: 592,415 (0.56 MiB)
+  totalBytesBilled:    10,485,760 (10.00 MiB)
+  cacheHit:            false
+  statementType:       SELECT
+  schema fields:       None
+  creationTime:        2026-10-07 07:22:50.714Z
+  endTime:             2026-10-07 07:22:51.102Z  (388 ms)
+  totalSlotMs:         167
+
+[filtered_count]
+  sql:                 SELECT COUNT(*) FROM `coreychimpbot.experiments_partition.fct_inventory_items` WHERE created_at >= TIMESTAMP '2024-06-01 00:00:00' AND created_at < TIMESTAMP '2024-07-01 00:00:00'
+  jobId:               job_eF4YEbCaXtvWiXLmEmc5lUbcpAtQ  [read back from jobs.get]
+  totalBytesProcessed: 46,728 (0.04 MiB)
+  totalBytesBilled:    10,485,760 (10.00 MiB)
+  cacheHit:            false
+  statementType:       SELECT
+  schema fields:       None
+  creationTime:        2026-10-07 07:22:51.442Z
+  endTime:             2026-10-07 07:22:51.849Z  (407 ms)
+  totalSlotMs:         109
+
+[partitions]
+  sql:                 SELECT partition_id, total_rows, total_logical_bytes, total_billable_bytes FROM `coreychimpbot.experiments_partition.INFORMATION_SCHEMA.PARTITIONS` WHERE table_name = 'fct_inventory_items' ORDER BY partition_id
+  jobId:               job_AftiVSbNha7Lg5AZeLjWvBxvIxoE  [read back from jobs.get]
+  totalBytesProcessed: 10,485,760 (10.00 MiB)
+  totalBytesBilled:    10,485,760 (10.00 MiB)
+  cacheHit:            false
+  statementType:       SELECT
+  schema fields:       None
+  creationTime:        2026-10-07 07:22:52.264Z
+  endTime:             2026-10-07 07:22:52.625Z  (361 ms)
+  totalSlotMs:         98
+  partitions listed:   2826
+  first partition_id:  20181121
+  last partition_id:   20261010
+  window 2024-06:      30 partition(s), 5,841 rows
+  rows over real partitions: 488,895 in 2826 partition(s)
+
+ok: after measured, every executed job reported cacheHit false
+wrote /home/hermes/projects/bigquery-duckdb-dbt-experiments/.worktrees/t_55f119de/analyses/partitioning/logs/after.log and /home/hermes/projects/bigquery-duckdb-dbt-experiments/.worktrees/t_55f119de/analyses/partitioning/results.after.json

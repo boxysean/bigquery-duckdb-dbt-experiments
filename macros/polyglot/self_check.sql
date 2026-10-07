@@ -23,6 +23,7 @@
         ['decimal_type', decimal_type(38, 9)],
         ['decimal_type', decimal_type(38, 18)],
         ['type_bigint_array', type_bigint_array()],
+        ['physical_layout', physical_layout()],
         ['safe_cast', safe_cast("'42'", int_type())],
         ['to_string', to_string('user_id')],
         ['to_utc_timestamp', to_utc_timestamp('created_at')],

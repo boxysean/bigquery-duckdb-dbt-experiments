@@ -8,7 +8,7 @@ SHELL := /bin/bash
 DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup check-env fixtures duck fixtures-real duck-real value-parity row-join bq build-both parity polyglot portability pre-pr ci-compile transport-a transport-b move-to-duckdb handmove-example clean
+.PHONY: help setup check-env fixtures duck fixtures-real duck-real value-parity row-join bq build-both parity polyglot portability pre-pr ci-compile transport-a transport-b partition-measure move-to-duckdb handmove-example clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -70,6 +70,13 @@ help:
 	@printf '                    reverse load, and the type-fidelity table). Writes\n'
 	@printf '                    analyses/transport_b/results.{json,md} and logs/; needs\n'
 	@printf '                    BQ_KEYFILE, a writable GCS bucket, and costs money.\n'
+	@printf '  make partition-measure ARGS="measure|report ..."  one leg of the\n'
+	@printf '                    partitioning measurement of fct_inventory_items: table\n'
+	@printf '                    metadata, the full and filtered scans and the partitions\n'
+	@printf '                    (scripts/bq_partition_measure.py), or the before/after report.\n'
+	@printf '                    Writes analyses/partitioning/results.*; measure needs\n'
+	@printf '                    BQ_KEYFILE, runs real BigQuery jobs and costs bytes. The\n'
+	@printf '                    command sequence is in analyses/partitioning/README.md\n'
 	@printf '  make move-to-duckdb  move the project to a DuckDB-only one in\n'
 	@printf '                    target/duckdb_only (seam macros inlined, source database,\n'
 	@printf '                    profile and dbt_project rewritten), build it, and write\n'
@@ -168,6 +175,13 @@ transport-a:
 # the probe tables, so the bucket and the dataset are left as they were found.
 transport-b:
 	@python3 scripts/transport_b_measure.py
+
+# Partitioning measured (analyses/partitioning/README.md): one leg per call, e.g.
+#   make partition-measure ARGS="measure --table P.D.fct_inventory_items --label after --window 2022-01"
+# measure runs real BigQuery jobs under the 1 GB maximumBytesBilled ceiling and costs
+# bytes; report only reads the two results.<label>.json files.
+partition-measure:
+	@python3 scripts/bq_partition_measure.py $(ARGS)
 
 # The code-movement procedure: this BigQuery-targeted project -> a DuckDB-only one
 # (docs/move_to_duckdb.md). jinja2 comes from the dev group of `uv sync`.

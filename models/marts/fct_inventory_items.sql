@@ -1,4 +1,6 @@
 -- Grain: one row per inventory item (one physical unit), sold or open.
+{{ config(**physical_layout()) }}
+
 select
     inventory_item_id,
     product_id,
