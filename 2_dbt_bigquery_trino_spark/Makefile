@@ -10,7 +10,7 @@ PY := $(CURDIR)/.venv/bin/python
 COMPOSE := docker compose -f $(CURDIR)/stack/compose.yml
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup jars check-env stack-up stack-down stack-reset fixture land-sources real-sources land-real trino trino-real bq parity selfcheck render portability portability-demo interop trees pre-pr clean
+.PHONY: help setup jars check-env stack-up stack-down stack-reset fixture land-sources real-sources land-real trino trino-real bq parity rows selfcheck render portability portability-demo interop trees pre-pr clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -27,6 +27,7 @@ help:
 	@printf '  make land-real      real-sources, then Spark lands them as lake.thelook_ecommerce.*\n'
 	@printf '  make trino-real     land-real, then dbt build --target trino on the real rows\n'
 	@printf '  make parity         BigQuery vs Trino, every relation, every column (needs bq + trino-real)\n'
+	@printf '  make rows           BigQuery vs Trino, row by row on each key: values and representations\n'
 	@printf '  make selfcheck      execute every polyglot macro on Trino and check its value\n'
 	@printf '  make render         log every macro'"'"'s rendering on both targets\n'
 	@printf '  make portability    compile both targets, scan each render for the other dialect\n'
@@ -79,6 +80,9 @@ trino-real: land-real
 
 parity:
 	$(PY) scripts/bq_trino_parity.py
+
+rows:
+	$(PY) scripts/bq_trino_rows.py
 
 selfcheck:
 	$(DBT) run-operation polyglot_selfcheck --target trino

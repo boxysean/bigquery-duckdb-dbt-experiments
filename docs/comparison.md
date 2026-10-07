@@ -28,6 +28,7 @@ number below is measured unless marked otherwise.
 | CI (every PR) | Compile both targets + guardrail; DuckDB built and tested end to end (~30-51 s locally) | Model-tree check; compile both targets + guardrail; lakehouse up; **Spark** lands sources; Trino built and tested; macros executed; **Spark reads every table back** (~5 min) |
 | Macro self-check executed | 47 cases on DuckDB | 59 cases on Trino (including microsecond and sub-cent checks) |
 | Money vs BigQuery | `decimal(18,2)` vs `NUMERIC`: 21 of 29 models differ on money (measured, explained row by row) | `decimal(38,9)` = BigQuery `NUMERIC` exactly. **Measured: 30 of 30 relations identical to BigQuery**, every money sum equal to 9 decimals, `average_order_value` included |
+| Row-level parity vs BigQuery | Money columns joined row by row (`row_join.py`): differences explained by scale | **30 / 30 relations equal row for row**, 0 of 79.8M cells different. Representation differs in 4 type pairs: naive vs instant timestamps, decimal text padding, double scientific notation, JSON text vs JSON ([`row_parity.md`](../2_dbt_bigquery_trino_spark/docs/row_parity.md)) |
 | A second consumer engine | None | **Spark**, through the shared Iceberg catalog: 12/12 tables read with identical profiles |
 | Failure modes that only appear at read time | None | Spark cannot read Trino's Parquet v2 encodings unless a table property is set (5 of 12 tables failed without it); Spark cannot read dbt-trino views at all |
 | Decisions that are not translations | Partitioning (BigQuery only) | Partitioning per engine (`day` on BigQuery, `month` on Iceberg: the daily layout **failed**); materialization decides who can read a model; table properties; three engines' time zones |
@@ -71,13 +72,10 @@ measured column of all 30 relations, where option 1's DuckDB leg differs on mone
 
 ## What would change this assessment
 
-1. **Row-level parity on option 2.** The BigQuery-vs-Trino comparison is per column
-   (exact sums, distinct counts, ranges), not row by row as option 1's `row_join.py` is.
-   It is strong evidence, not proof, of row equality.
-2. **A real cluster and production volumes on option 2.** The 3.3M-row numbers come from
+1. **A real cluster and production volumes on option 2.** The 3.3M-row numbers come from
    one machine (single-node Trino, `local[2]` Spark). They say nothing about cluster
    performance or about the cost of Spark's non-vectorized reader.
-3. **Concurrency and table maintenance** (option 2 blind spots): both engines writing,
+2. **Concurrency and table maintenance** (option 2 blind spots): both engines writing,
    snapshot expiry, compaction. These are operational costs option 1 does not have, and
    they are not measured.
 

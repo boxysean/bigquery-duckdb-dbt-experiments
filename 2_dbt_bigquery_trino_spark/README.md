@@ -28,6 +28,7 @@ adapter.
 | `bigquery` target | **197 pass, 1 warn, 0 error** on the real dataset, 152 s (`make bq`; the warning is the deliberate dirty-data test). Compiles with no credential in CI |
 | Trino on the **real** data | **197 pass, 1 warn, 0 error**, 47 s, on the 3.3M real rows landed by Spark (`make trino-real`) |
 | BigQuery vs Trino values | **30 / 30 relations identical** (887 / 887 per-column metrics), money exact to 9 decimals (`make parity`, [`docs/value_parity.md`](docs/value_parity.md)) |
+| BigQuery vs Trino, row by row | **30 / 30 relations equal row for row**: 6.3M rows joined on their key, 0 of 79.8M cells different. 4 type pairs differ in representation only (`make rows`, [`docs/row_parity.md`](docs/row_parity.md)) |
 | CI | `.github/workflows/2_dbt_bigquery_trino_spark.yml` runs `make pre-pr` end to end on every PR: green on GitHub's runner in 3m30s (first run, PR #33) |
 
 ## The architecture, and why it looks like this
@@ -125,7 +126,7 @@ tables:
 For the BigQuery target: `BQ_KEYFILE=/path/to/key.json make bq` (it writes to the
 dataset `trino_experiments_${DBT_ENV:-dev}`, separate from project 1's). `BQ_PROJECT`
 picks the GCP project (default `coreychimpbot`). To compare the two targets on the same
-real rows: `make bq trino-real parity` ([`docs/value_parity.md`](docs/value_parity.md)).
+real rows: `make bq trino-real parity rows` ([`docs/value_parity.md`](docs/value_parity.md)).
 
 ## Repository map
 
@@ -147,4 +148,5 @@ real rows: `make bq trino-real parity` ([`docs/value_parity.md`](docs/value_pari
 | [`docs/challenges.md`](docs/challenges.md) | Everything that was hit, measured, and how it was resolved |
 | [`docs/gaps.md`](docs/gaps.md) | What is not verified yet, and blind spots |
 | [`docs/value_parity.md`](docs/value_parity.md) | BigQuery vs Trino on the same real rows: how it was run, and the result |
-| `scripts/render_real.py`, `scripts/bq_trino_parity.py` | Download the real sources for the Trino leg; compare the two targets |
+| [`docs/row_parity.md`](docs/row_parity.md) | The same, row by row, and every representation difference between the engines |
+| `scripts/render_real.py`, `scripts/bq_trino_parity.py`, `scripts/bq_trino_rows.py` | Download the real sources for the Trino leg; compare the two targets per column, then row by row |

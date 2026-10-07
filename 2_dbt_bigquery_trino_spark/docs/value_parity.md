@@ -19,6 +19,9 @@ This is the result project 1 could not reach with DuckDB. There, 21 of 29 models
 on money because `decimal(18,2)` rounds what BigQuery's `NUMERIC` keeps (project 1's
 README).
 
+The row-by-row comparison, and the representation differences it names, are in
+[`row_parity.md`](row_parity.md): 30 / 30 relations equal row for row.
+
 ## How it was run
 
 ```bash
