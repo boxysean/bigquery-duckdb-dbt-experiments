@@ -13,6 +13,20 @@ models** and **the same source dataset**, so the difference between them is the 
 
 The assessment so far is in **[`docs/comparison.md`](docs/comparison.md)**.
 
+## At a glance: DuckDB makes CI much faster
+
+- **Project 1's CI is 5 to 10 times faster.** Its end-to-end DuckDB job builds and tests all
+  30 models in **24-39 s** on a GitHub runner. Project 2's equivalent Trino job takes
+  **3.5-4.4 min** for the same models, tests and source rows.
+- **The difference is the platform, not the SQL.** DuckDB is one local file with nothing to
+  start. Project 2's CI has to bring up a four-container lakehouse (S3, Iceberg catalog,
+  Trino, Spark) and run two Spark jobs around the dbt build, which is most of its time.
+- **Both run on every pull request**, so the gap is paid on every change: under a minute of
+  feedback for project 1 against four or more minutes for project 2.
+
+Measured on GitHub Actions, three runs each (PRs #33 and #35, 2026-10-07): DuckDB job 39 s,
+24 s and 39 s; Trino + Spark job 3 min 30 s, 4 min 11 s and 4 min 21 s.
+
 ## What both projects share, and how that is enforced
 
 - **The same source**: `bigquery-public-data.thelook_ecommerce` on the BigQuery target.
