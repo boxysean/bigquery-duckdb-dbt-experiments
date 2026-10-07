@@ -8,7 +8,7 @@ SHELL := /bin/bash
 DBT := $(CURDIR)/.venv/bin/dbt
 export DBT_PROFILES_DIR := $(CURDIR)
 
-.PHONY: help setup check-env fixtures duck fixtures-real duck-real value-parity row-join bq build-both parity polyglot portability pre-pr ci-compile transport-a transport-b partition-measure move-to-duckdb handmove-example clean
+.PHONY: help setup check-env fixtures duck fixtures-real duck-real value-parity row-join bq build-both parity polyglot portability check-schema pre-pr ci-compile transport-a transport-b partition-measure move-to-duckdb handmove-example clean
 
 help:
 	@printf 'make targets:\n\n'
@@ -53,10 +53,16 @@ help:
 	@printf '                    needs BQ_KEYFILE and Google credentials, and costs money.\n'
 	@printf '  make portability  compile both targets and scan each render for the other\n'
 	@printf '                    dialect (scripts/check_portability.py)\n'
+	@printf '  make check-schema  prove the fixture'"'"'s schema equals the declared sources\n'
+	@printf '                    and the committed real schema (column names, order, types),\n'
+	@printf '                    and that every source-reading model binds against the\n'
+	@printf '                    fixture (scripts/check_source_schema.py; offline, builds its\n'
+	@printf '                    own scratch fixture in target/schema_check/)\n'
 	@printf '  make pre-pr       the whole pre-PR routine: check-env, the fixture, the\n'
-	@printf '                    guardrail, then parity (scripts/pre_pr.sh). The script exits\n'
-	@printf '                    1 on a real finding, 2 when parity is NOT established (no\n'
-	@printf '                    BQ_KEYFILE; the guardrail still ran). make itself exits 2\n'
+	@printf '                    guardrail, the source-schema check, then parity\n'
+	@printf '                    (scripts/pre_pr.sh). The script exits 1 on a real\n'
+	@printf '                    finding, 2 when parity is NOT established (no BQ_KEYFILE;\n'
+	@printf '                    the guardrail still ran). make itself exits 2\n'
 	@printf '                    on either and prints it as "Error 1" / "Error 2". CI runs\n'
 	@printf '                    this too, on every push and PR (job ci-duckdb-run)\n'
 	@printf '  make ci-compile   compile BOTH targets and run the guardrail — the same thing\n'
@@ -145,6 +151,13 @@ polyglot: check-env fixtures
 # the BigQuery render, no target branching in models/ or tests/. Needs dev.duckdb.
 portability: check-env
 	python3 scripts/check_portability.py
+
+# The fixture's schema against the declared sources and the real tables, and every
+# source-reading model bound against the fixture (scripts/check_source_schema.py).
+# Builds its own scratch fixture under target/schema_check/; needs no dev.duckdb and
+# no credentials. Exit 1 on a finding, 2 when it could not run.
+check-schema: check-env
+	python3 scripts/check_source_schema.py
 
 # Everything to run before a PR (scripts/pre_pr.sh). No prerequisites on purpose: the
 # script runs check-env itself, and parity.py already runs `make duck`. GNU make exits 2

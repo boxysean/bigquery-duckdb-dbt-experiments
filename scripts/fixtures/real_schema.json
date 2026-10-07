@@ -1,0 +1,399 @@
+{
+  "source": "bigquery-public-data.thelook_ecommerce",
+  "endpoint": "GET https://bigquery.googleapis.com/bigquery/v2/projects/bigquery-public-data/datasets/thelook_ecommerce/tables/{table}",
+  "field": "schema.fields",
+  "captured_at_utc": "2026-10-07T09:23:53Z",
+  "captured_by": "python3 scripts/check_source_schema.py --emit",
+  "note": "Public schema metadata only (tables.get: read-only, not a query job, bills nothing). Column order is the table's. Read by scripts/check_source_schema.py.",
+  "tables": {
+    "orders": [
+      {
+        "name": "order_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "status",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "gender",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "returned_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "shipped_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "delivered_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "num_of_item",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      }
+    ],
+    "order_items": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "order_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "product_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "inventory_item_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "status",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "shipped_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "delivered_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "returned_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "sale_price",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      }
+    ],
+    "users": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "first_name",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "last_name",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "email",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "age",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "gender",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "state",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "street_address",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "postal_code",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "city",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "country",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "latitude",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "longitude",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "traffic_source",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "user_geom",
+        "type": "GEOGRAPHY",
+        "mode": "NULLABLE"
+      }
+    ],
+    "products": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "cost",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "category",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "name",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "brand",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "retail_price",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "department",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "sku",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "distribution_center_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      }
+    ],
+    "inventory_items": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "product_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "sold_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "cost",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "product_category",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "product_name",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "product_brand",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "product_retail_price",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "product_department",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "product_sku",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "product_distribution_center_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      }
+    ],
+    "distribution_centers": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "name",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "latitude",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "longitude",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "distribution_center_geom",
+        "type": "GEOGRAPHY",
+        "mode": "NULLABLE"
+      }
+    ],
+    "events": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "sequence_number",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "session_id",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "ip_address",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "city",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "state",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "postal_code",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "browser",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "traffic_source",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "uri",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "event_type",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      }
+    ]
+  }
+}

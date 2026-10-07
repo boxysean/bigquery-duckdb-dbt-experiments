@@ -1824,3 +1824,159 @@ tokens in the BigQuery render (0/13), 0 target-branch findings, 31 compiled file
 * **The before leg is a scratch copy, not a build of record.** It is the identical tree under
   `target/partition_before/` with one line removed, built into the same dataset; the repository
   holds only the after state.
+
+---
+
+# Card t_153b4307 — the fixture's schema is the real schema, enforced
+
+`docs/gaps.md` section 1 recorded the local fixture's schema as a **subset** of the real table:
+`bigquery-public-data.thelook_ecommerce` carries `users.user_geom` and
+`distribution_centers.distribution_center_geom`, which the fixture did not have. Nothing read
+them (every staging model renames an explicit column list), so the difference was silent — the
+guardrail passed and `make pre-pr` passed, and a model that started reading `user_geom` would
+have referenced a column the fixture does not define. This card closes the difference and adds
+the check that keeps it closed. Everything below was run by the orchestrator on this machine,
+2026-10-07; the only edits the orchestrator made to the implementation were two sentences of
+`docs/gaps.md` provenance, to say the real-schema record was emitted rather than bootstrapped.
+
+## What was built
+
+* **The fixture** (`scripts/fixtures/thelook_ecommerce.sql`): both columns, **last** in their
+  tables as on BigQuery, as DuckDB's native `GEOMETRY` (1.5.5 has the type; no extension is
+  installed or needed) holding a WKT `POINT(longitude latitude)` built from the row's own
+  lat/lon. `('POINT(' || longitude::VARCHAR || ' ' || latitude::VARCHAR || ')')::GEOMETRY`.
+  No row count, value or other column moved: the two tables' existing columns keep their order.
+* **The seam** (`macros/polyglot/types.sql`): `geography_type()`, `geometry` on DuckDB and
+  `geography` on BigQuery. No model calls it — a model would cast through it; the fixture is
+  plain SQL run by the `duckdb` CLI and writes the DuckDB spelling directly.
+* **The declared contract** (`models/staging/_thelook__sources.yml`): both columns declared as
+  `GEOGRAPHY` (the real BigQuery type), and the header's "On DuckDB they arrive as ..." list
+  extended with `GEOMETRY`. `GEOGRAPHY` is the real type: `tables.get` reports it for both
+  columns (2026-10-07), and the real loader's own diff (`loader.log:103-106`) shows DuckDB
+  receiving `GEOMETRY`.
+* **The real-schema record** (`scripts/fixtures/real_schema.json`, committed): the seven real
+  tables' columns, order, types and modes, captured from the BigQuery REST `tables.get`
+  `schema.fields` — metadata, not a query job, so it bills nothing. 7 tables, 75 columns,
+  captured 2026-10-07T09:23:53Z. `python3 scripts/check_source_schema.py --emit` refreshes it
+  (needs `BQ_KEYFILE`). It was written twice: first bootstrapped without a key from the real
+  load's measured columns, then emitted; the two agree on every name, order and type.
+* **The check** (`scripts/check_source_schema.py`, `make check-schema`, step 4 of
+  `scripts/pre_pr.sh`): stdlib only, exit 0/1/2 like the guardrail. It builds its own fixture
+  into a scratch `target/schema_check/dev.duckdb` (catalog `dev`, so compiled SQL resolves) and
+  a scratch `profiles.yml` — it never reads or needs the developer's `dev.duckdb` — then runs
+  four arms: **A** fixture columns vs the declared sources (from `dbt parse`'s manifest, in
+  order); **B** declared vs the real record; **C** fixture vs the real record, column for column
+  **and DuckDB type for type** through one explicit mapping
+  (`INTEGER/FLOAT/STRING/TIMESTAMP/GEOGRAPHY` -> `BIGINT/DOUBLE/VARCHAR/TIMESTAMP WITH TIME
+  ZONE/GEOMETRY`); **D** every compiled model that reads one of the 7 source relations is bound
+  with DuckDB `EXPLAIN` — the binder `dbt build` uses, reading no rows — so a model reading a
+  column the fixture lacks is a finding. A model that cannot be bound for another reason (it
+  reads a model as well as a source) is printed with its error and counted, never skipped
+  silently.
+* **`scripts/parity.py`** (not in the card; necessary): `real_sources_problem()` told a real
+  load from the fixture by `users.user_geom` being present, which the fixture now has, so the
+  guard would have let the fixture through on `--sources real` and in `row_join.py` (which calls
+  the same function). It now treats exactly 400 users — the fixture's fixed volume, against the
+  real table's 100,000 — as the fixture, and the `TIMESTAMPTZ` test is unchanged.
+
+## Commands run and their real output
+
+    $ make fixtures                                              # exit 0
+    Row counts: distribution_centers 10 | products 200 | users 400 | inventory_items 10000
+                orders 3000 | order_items 8000 | events 20000
+    Integrity and coherence checks (violating rows): 24 lines, every one "ok  0"
+    Fixture loaded and coherent.
+
+    $ make check-schema                                          # exit 0
+    real-schema record: scripts/fixtures/real_schema.json (bigquery-public-data.thelook_ecommerce,
+      captured 2026-10-07T09:23:53Z, by python3 scripts/check_source_schema.py --emit)
+    tables: fixture 7, declared 7, real 7; columns: fixture 75, declared 75, real 75
+    arm A  fixture vs declared:         0 finding(s)
+    arm B  declared vs real:            0 finding(s)
+    arm C  fixture vs real (+ types):   0 finding(s)
+    arm D  source-reading models bound: 7 bound, 0 finding(s), 0 could not be bound for another reason
+    FIXTURE SCHEMA OK
+
+    $ python3 scripts/check_source_schema.py --emit             # exit 0 (BQ_KEYFILE set)
+    orders 9 | order_items 11 | users 16 | products 9 | inventory_items 12
+    distribution_centers 5 | events 13 columns
+    --emit: wrote scripts/fixtures/real_schema.json (7 tables, 75 columns, captured 2026-10-07T09:23:53Z)
+
+    $ python3 scripts/check_source_schema.py --demo              # exit 0
+    demo: wrote models/staging/_schema_demo.sql (selects user_geom_wkt from the users source)
+    arm D  model _schema_demo: column "user_geom_wkt" is missing from the fixture
+      (target/schema_check/compiled/bq_duckdb_experiments/models/staging/_schema_demo.sql) ->
+      Binder Error: Referenced column "user_geom_wkt" not found in FROM clause!
+      Candidate bindings: "user_geom", "state", "last_name"
+      LINE 3: select id, user_geom_wkt from "dev"."thelook_ecommerce"."users"
+    arm D  source-reading models bound: 7 bound, 1 finding(s), 0 could not be bound ...
+    FIXTURE SCHEMA: 1 finding(s)
+    demo: the check failed as designed (1 finding(s) naming user_geom_wkt in _schema_demo)
+    demo: removed models/staging/_schema_demo.sql
+    ... (re-run without the file) ...
+    arm D  source-reading models bound: 7 bound, 0 finding(s), 0 could not be bound ...
+    FIXTURE SCHEMA OK
+    demo: the check failed as designed, then passed again
+
+The failing line is the card's acceptance item made concrete: the model reads a column the
+fixture does not define, and the check names it. That DuckDB's own binder produced it, and that
+the candidate list contains `user_geom` (now present) but not `user_geom_wkt`, is the proof that
+the check binds against the fixture rather than a list of names.
+
+    $ make portability                                          # exit 0
+    compiled files checked: 31 (models: 30, analyses: 1)
+    BigQuery-only tokens in the DuckDB render: 0/15
+    DuckDB-only tokens in the BigQuery render: 0/13
+    target-branch findings: 0
+    type coverage (mart_polyglot_types): array/struct/json present in both renders
+    PORTABLE
+
+    $ make duck                                                 # exit 0
+    Processed: 30 models | 168 tests
+    Summary: 198 total | 198 success
+
+    $ BQ_KEYFILE=... bash scripts/pre_pr.sh                     # exit 0 — the acceptance gate
+      ok    bash scripts/check_env.sh
+      ok    bash scripts/load_duckdb_sources.sh
+      ok    python3 scripts/check_portability.py
+      ok    python3 scripts/check_source_schema.py
+      ok    python3 scripts/parity.py
+    parity: schema parity holds on all 30 models. Row counts and checksums differ on 29 of
+      them, as expected: the two legs read different source data (fixture vs the real dataset).
+    pre-pr: all steps ok
+    pre-pr: 251.8s
+
+`schema parity holds on all 30 models` is the load-bearing line: the credentialed leg built all
+30 models on BigQuery (real data) and all 30 on DuckDB (fixture) and their **schemas** matched,
+so the two source columns added to the fixture changed no model's output. (Contrast the
+partitioning card's build, `198 total | 197 success | 1 warn` on BigQuery: the one warn is the
+intended `severity: warn` test.)
+
+    $ python3 <count macros with move_to_duckdb.Seam over models/>   # the method of move_to_duckdb.md:98-116
+    model files 30 call sites 150
+    dialect macros 28 called by a model 19
+    not called by any model: ['safe_cast', 'to_string', 'format_date_str', 'timestamp_trunc_to',
+      'except_columns', 'regexp_contains', 'decimal_type', 'type_bigint_array', 'geography_type'] 9
+    branch macros 56
+
+So `docs/gaps.md` section 3's "10 of 26" is now "**9 of 28**"; the second number moved by more
+than this card's one new macro because `physical_layout` and `mart_polyglot_types` had been
+added since that count was written.
+
+## What this does not establish
+
+* **CI was not observed.** `make pre-pr` is what the `ci-duckdb-run` job runs, so the new step
+  rides it, and CI runs it with the credential variables blanked — the check needs no
+  credential — but this box's `gh` token is Actions: read-only, so no run was watched.
+* **Arm D binds the models that read a source directly** (7 today, the staging models). A model
+  that reads both a source and a model cannot be bound against the fixture alone; it is printed
+  and counted in that case (0 today) rather than skipped, and `make duck` binds it.
+* **The fixture's geometry is planar WKT from lat/lon, not the real spherical values.** No model
+  reads it, and parity compares models, not sources; so nothing here says the fixture's points
+  equal the real ones. WGS84 lon/lat is what the real columns hold, which is why the fixture
+  builds it from the row's own latitude/longitude.
+* **The real-schema record is a capture, not a live check.** If the real table gains or loses a
+  column, the record is stale until someone runs `--emit`, and nothing detects that on its own.
+  The record's capture time is printed on every check run and is in the file.
+* **`parity.py`'s fixture test is now a fixed volume** (exactly 400 users). If the fixture's
+  users volume ever changed, that guard would need the new number in the same commit.

@@ -149,3 +149,25 @@
 {% macro bigquery__type_bigint_array() -%}
     array<int64>
 {%- endmacro %}
+
+{#
+  geography_type(): a geometry/geography value (here, points in WGS84 lon/lat).
+  BigQuery's GEOGRAPHY is spherical, on the WGS84 ellipsoid; DuckDB's native type
+  (no extension needed in 1.5.x) is spelled GEOMETRY. The two real
+  thelook_ecommerce columns of this kind, users.user_geom and
+  distribution_centers.distribution_center_geom, are GEOGRAPHY on BigQuery. This
+  is the type a model would cast through; the fixture
+  (scripts/fixtures/thelook_ecommerce.sql) is plain SQL run by the duckdb CLI, not
+  dbt, so it writes the DuckDB spelling directly.
+#}
+{% macro geography_type() -%}
+    {{ return(adapter.dispatch('geography_type', 'bq_duckdb_experiments')()) }}
+{%- endmacro %}
+
+{% macro default__geography_type() -%}
+    geometry
+{%- endmacro %}
+
+{% macro bigquery__geography_type() -%}
+    geography
+{%- endmacro %}

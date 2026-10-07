@@ -5,7 +5,9 @@
 #   1. scripts/check_env.sh                     prerequisites
 #   2. scripts/load_duckdb_sources.sh           the DuckDB fixture (dev.duckdb)
 #   3. scripts/check_portability.py             the guardrail
-#   4. scripts/parity.py                        the cross-target comparison
+#   4. scripts/check_source_schema.py           fixture schema == declared == real,
+#                                               and source-reading models bind on it
+#   5. scripts/parity.py                        the cross-target comparison
 #
 # Why: nothing else routinely runs the guardrail. A raw `try_cast(...)` or a
 # `{% if target.type == 'duckdb' %}` branch in a model passes `make duck`, and
@@ -83,6 +85,7 @@ parity_step() {
 step bash scripts/check_env.sh
 step bash scripts/load_duckdb_sources.sh
 step python3 scripts/check_portability.py
+step python3 scripts/check_source_schema.py
 parity_step
 
 elapsed_ds=$(( ($(date +%s%N) - started_ns) / 100000000 ))
