@@ -1,0 +1,38 @@
+# Committed on purpose: it holds no credentials. The Makefile points dbt here with
+# DBT_PROFILES_DIR, so ~/.dbt/profiles.yml is never involved.
+bq_trino_experiments:
+  # The target that works on any machine with Docker and no cloud credential.
+  target: trino
+  outputs:
+    # -------------------------------------------------------------------- trino
+    # Trino from stack/compose.yml (make stack-up). `database` is the Trino CATALOG:
+    # `lake` is the Iceberg REST catalog Trino shares with Spark, so every model dbt
+    # builds here is an Iceberg table Spark can read as lake.<schema>.<model>.
+    trino:
+      type: trino
+      method: none
+      user: dbt
+      host: "{{ env_var('TRINO_HOST', 'localhost') }}"
+      port: "{{ env_var('TRINO_PORT', 8080) | int }}"
+      http_scheme: http
+      database: lake
+      schema: "analytics_{{ env_var('DBT_ENV', 'dev') }}"
+      # Instants render and bucket in UTC, as on BigQuery and on the Spark side.
+      timezone: UTC
+      threads: 4
+
+    # ----------------------------------------------------------------- bigquery
+    # As in project 1, but its own dataset, so the two projects never overwrite each
+    # other's tables in the shared GCP project.
+    #   * default            -> method: oauth (Application Default Credentials)
+    #   * BQ_KEYFILE=<path>  -> method: service-account with that key file
+    bigquery:
+      type: bigquery
+      method: "{{ env_var('BQ_AUTH_METHOD', 'oauth') }}"
+      keyfile: "{{ env_var('BQ_KEYFILE', '') }}"
+      project: coreychimpbot
+      dataset: "trino_experiments_{{ env_var('DBT_ENV', 'dev') }}"
+      location: US
+      threads: 4
+      # Hard cost ceiling, as in project 1.
+      maximum_bytes_billed: "{{ env_var('BQ_MAXIMUM_BYTES_BILLED', 1000000000) | int }}"

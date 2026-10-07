@@ -1,0 +1,202 @@
+version: 2
+
+# One source, two targets:
+#   target bigquery -> bigquery-public-data.thelook_ecommerce.<table>  (the real data)
+#   target trino    -> lake.thelook_ecommerce.<table>  (Iceberg tables WRITTEN BY SPARK:
+#                      stack/spark/jobs/land_sources.py lands project 1's fixture, the
+#                      same rows project 1's DuckDB leg reads; never `dbt seed`)
+# Types below are the real BigQuery types. On Trino they arrive as BIGINT, DOUBLE,
+# VARCHAR, TIMESTAMP(6) WITH TIME ZONE, and VARCHAR (WKT) for the two GEOGRAPHY columns.
+# The `database` expression is identical to project 1's: on Trino target.database is
+# the `lake` catalog.
+sources:
+  - name: thelook_ecommerce
+    description: >
+      TheLook, a fictitious online clothing retailer published by Google as the
+      BigQuery public dataset `bigquery-public-data.thelook_ecommerce`. On the
+      Trino target this resolves to Iceberg tables landed by a Spark job from the
+      deterministic fixture project 1 uses, with the same tables, columns and value
+      vocabularies. All timestamps are absolute instants (BigQuery TIMESTAMP, Iceberg
+      timestamptz); all money is USD.
+    database: "{{ 'bigquery-public-data' if target.type == 'bigquery' else target.database }}"
+    schema: thelook_ecommerce
+    tables:
+      - name: orders
+        description: One row per customer order.
+        columns:
+          - name: order_id
+            description: "INT64. Order identifier; primary key."
+          - name: user_id
+            description: "INT64. The customer who placed the order (users.id)."
+          - name: status
+            description: "STRING. Order status: Complete, Shipped, Processing, Returned or Cancelled."
+          - name: gender
+            description: "STRING. The customer's gender at order time, copied from users (M or F)."
+          - name: created_at
+            description: "TIMESTAMP. When the order was placed."
+          - name: returned_at
+            description: "TIMESTAMP. When the order was returned; null unless returned."
+          - name: shipped_at
+            description: "TIMESTAMP. When the order shipped; null until shipped."
+          - name: delivered_at
+            description: "TIMESTAMP. When the order was delivered; null until delivered."
+          - name: num_of_item
+            description: "INT64. Number of items (order_items rows) in the order."
+
+      - name: order_items
+        description: One row per unit ordered (an order line of quantity one).
+        columns:
+          - name: id
+            description: "INT64. Order item identifier; primary key."
+          - name: order_id
+            description: "INT64. The order this item belongs to (orders.order_id)."
+          - name: user_id
+            description: "INT64. The customer (users.id); equal to the order's user_id."
+          - name: product_id
+            description: "INT64. The product ordered (products.id)."
+          - name: inventory_item_id
+            description: "INT64. The inventory unit fulfilling the item (inventory_items.id)."
+          - name: status
+            description: "STRING. Item status: Complete, Shipped, Processing, Returned or Cancelled."
+          - name: created_at
+            description: "TIMESTAMP. When the item was added to the order."
+          - name: shipped_at
+            description: "TIMESTAMP. When the item shipped; null until shipped."
+          - name: delivered_at
+            description: "TIMESTAMP. When the item was delivered; null until delivered."
+          - name: returned_at
+            description: "TIMESTAMP. When the item was returned; null unless returned."
+          - name: sale_price
+            description: "FLOAT64. Price the item sold for, USD."
+
+      - name: users
+        description: One row per registered customer.
+        columns:
+          - name: id
+            description: "INT64. User identifier; primary key."
+          - name: first_name
+            description: "STRING. First name."
+          - name: last_name
+            description: "STRING. Last name."
+          - name: email
+            description: "STRING. Email address."
+          - name: age
+            description: "INT64. Age in years."
+          - name: gender
+            description: "STRING. M or F."
+          - name: state
+            description: "STRING. State or region of the address."
+          - name: street_address
+            description: "STRING. Street address."
+          - name: postal_code
+            description: "STRING. Postal code."
+          - name: city
+            description: "STRING. City."
+          - name: country
+            description: "STRING. Country."
+          - name: latitude
+            description: "FLOAT64. Latitude of the address."
+          - name: longitude
+            description: "FLOAT64. Longitude of the address."
+          - name: traffic_source
+            description: "STRING. Acquisition channel: Search, Organic, Facebook, Email or Display."
+          - name: created_at
+            description: "TIMESTAMP. When the user signed up."
+          - name: user_geom
+            description: "GEOGRAPHY. The address as a point, WGS84 lon/lat (POINT(longitude latitude))."
+
+      - name: products
+        description: One row per product in the catalogue.
+        columns:
+          - name: id
+            description: "INT64. Product identifier; primary key."
+          - name: cost
+            description: "FLOAT64. Unit cost to the retailer, USD."
+          - name: category
+            description: "STRING. Product category, e.g. Jeans, Sweaters, Tops & Tees."
+          - name: name
+            description: "STRING. Product name."
+          - name: brand
+            description: "STRING. Brand."
+          - name: retail_price
+            description: "FLOAT64. List price, USD."
+          - name: department
+            description: "STRING. Men or Women."
+          - name: sku
+            description: "STRING. Stock-keeping unit code."
+          - name: distribution_center_id
+            description: "INT64. The distribution center stocking the product (distribution_centers.id)."
+
+      - name: inventory_items
+        description: >
+          One row per physical unit of stock. The product_* columns are a
+          denormalised copy of the product at stocking time.
+        columns:
+          - name: id
+            description: "INT64. Inventory unit identifier; primary key."
+          - name: product_id
+            description: "INT64. The product this unit is (products.id)."
+          - name: created_at
+            description: "TIMESTAMP. When the unit entered stock."
+          - name: sold_at
+            description: "TIMESTAMP. When the unit was sold; null while in stock."
+          - name: cost
+            description: "FLOAT64. Unit cost, USD."
+          - name: product_category
+            description: "STRING. Denormalised products.category."
+          - name: product_name
+            description: "STRING. Denormalised products.name."
+          - name: product_brand
+            description: "STRING. Denormalised products.brand."
+          - name: product_retail_price
+            description: "FLOAT64. Denormalised products.retail_price, USD."
+          - name: product_department
+            description: "STRING. Denormalised products.department."
+          - name: product_sku
+            description: "STRING. Denormalised products.sku."
+          - name: product_distribution_center_id
+            description: "INT64. Denormalised products.distribution_center_id."
+
+      - name: distribution_centers
+        description: One row per distribution center (warehouse).
+        columns:
+          - name: id
+            description: "INT64. Distribution center identifier; primary key."
+          - name: name
+            description: "STRING. Name, e.g. Memphis TN."
+          - name: latitude
+            description: "FLOAT64. Latitude."
+          - name: longitude
+            description: "FLOAT64. Longitude."
+          - name: distribution_center_geom
+            description: "GEOGRAPHY. The center as a point, WGS84 lon/lat (POINT(longitude latitude))."
+
+      - name: events
+        description: One row per website event (page view or action) within a session.
+        columns:
+          - name: id
+            description: "INT64. Event identifier; primary key."
+          - name: user_id
+            description: "INT64. The user (users.id)."
+          - name: sequence_number
+            description: "INT64. Position of the event in its session, starting at 1."
+          - name: session_id
+            description: "STRING. Session identifier (UUID)."
+          - name: created_at
+            description: "TIMESTAMP. When the event happened."
+          - name: ip_address
+            description: "STRING. Client IP address."
+          - name: city
+            description: "STRING. City of the visitor."
+          - name: state
+            description: "STRING. State or region of the visitor."
+          - name: postal_code
+            description: "STRING. Postal code of the visitor."
+          - name: browser
+            description: "STRING. Browser, e.g. Chrome, Firefox, Safari."
+          - name: traffic_source
+            description: "STRING. Channel of the session: Search, Organic, Facebook, Email or Display."
+          - name: uri
+            description: "STRING. Page path requested."
+          - name: event_type
+            description: "STRING. home, department, product, cart, purchase or cancel."

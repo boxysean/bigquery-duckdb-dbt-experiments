@@ -1,0 +1,127 @@
+# The local lakehouse behind the `trino` target. One command brings it up
+# (`make stack-up` in the project folder); CI runs the very same file.
+#
+#   storage       SeaweedFS, an S3-compatible object store (the "S3" of the lakehouse).
+#                 MinIO stopped publishing community images in 2025, so it is not used.
+#   iceberg-rest  The Apache Iceberg REST catalog (the reference implementation). This is
+#                 the ONE catalog both engines share: every table Spark writes is visible
+#                 to Trino and vice versa, because both resolve names here and read the
+#                 same Iceberg metadata and Parquet files in `storage`.
+#   trino         The engine dbt talks to (dbt-trino). Catalog `lake` = the Iceberg REST
+#                 catalog above.
+#   spark         NOT a long-running service. Spark jobs run on demand with
+#                 `docker compose run --rm spark ...` (profile `jobs`): the upstream job that
+#                 lands the raw sources, and the downstream job that reads dbt's marts back.
+#
+# Why this shape, and not "Trino sends queries to Spark": Trino has no connector that
+# pushes SQL to a Spark engine. Trino and Spark cooperate by sharing TABLES (Iceberg, one
+# catalog, one object store). See ../docs/architecture.md.
+#
+# Images come from mirror.gcr.io (Google's Docker Hub mirror) by default to avoid Docker Hub
+# pull rate limits; set IMAGE_REGISTRY=docker.io to pull from Docker Hub directly.
+name: bq_trino_spark
+
+x-s3-credentials: &s3-credentials
+  # Local-only credentials for the local object store. Not a secret.
+  AWS_ACCESS_KEY_ID: lakehouse
+  AWS_SECRET_ACCESS_KEY: lakehouse-secret
+  AWS_REGION: us-east-1
+
+services:
+  storage:
+    image: ${IMAGE_REGISTRY:-mirror.gcr.io}/chrislusf/seaweedfs:4.48
+    command: >-
+      server -dir=/data -ip=storage -ip.bind=0.0.0.0
+      -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+      -master.volumeSizeLimitMB=256 -volume.max=0
+    volumes:
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+      - storage-data:/data
+    ports:
+      - "8333:8333"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status && wget -q -S -O /dev/null http://127.0.0.1:8333/ 2>&1 | grep -q 'HTTP/'"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  # One-shot: create the `warehouse` bucket (idempotent).
+  create-bucket:
+    image: ${IMAGE_REGISTRY:-mirror.gcr.io}/chrislusf/seaweedfs:4.48
+    depends_on:
+      storage:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        for i in $$(seq 1 30); do
+          out=$$(echo 's3.bucket.create -name warehouse' | weed shell -master=storage:9333 2>&1)
+          echo "$$out"
+          echo "$$out" | grep -qE 'created bucket|already exists' && exit 0
+          sleep 2
+        done
+        exit 1
+    restart: "no"
+
+  iceberg-rest:
+    image: ${IMAGE_REGISTRY:-mirror.gcr.io}/apache/iceberg-rest-fixture:1.10.0
+    # The image's own user cannot write a fresh named volume.
+    user: root
+    depends_on:
+      create-bucket:
+        condition: service_completed_successfully
+    environment:
+      <<: *s3-credentials
+      CATALOG_WAREHOUSE: s3://warehouse/
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3_ENDPOINT: http://storage:8333
+      CATALOG_S3_PATH__STYLE__ACCESS: "true"
+      # Persist the catalog across restarts, and use the V1 JDBC schema: V0 cannot store
+      # Iceberg VIEWS, and dbt-trino creates views (see docs/challenges.md).
+      CATALOG_URI: jdbc:sqlite:/catalog/iceberg_catalog.db
+      CATALOG_JDBC_SCHEMA__VERSION: V1
+    volumes:
+      - catalog-data:/catalog
+    ports:
+      - "8181:8181"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8181/v1/config >/dev/null || wget -q -O /dev/null http://127.0.0.1:8181/v1/config"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  trino:
+    image: ${IMAGE_REGISTRY:-mirror.gcr.io}/trinodb/trino:483
+    depends_on:
+      iceberg-rest:
+        condition: service_healthy
+    environment:
+      <<: *s3-credentials
+    volumes:
+      - ./trino/catalog:/etc/trino/catalog:ro
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "trino --execute 'select 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 60
+
+  spark:
+    image: ${IMAGE_REGISTRY:-mirror.gcr.io}/apache/spark:4.0.1-scala2.13-java21-python3-ubuntu
+    profiles: ["jobs"]
+    user: root
+    environment:
+      <<: *s3-credentials
+      SPARK_CONF_DIR: /opt/stack/spark/conf
+    volumes:
+      - ./spark/conf:/opt/stack/spark/conf:ro
+      - ./spark/jars:/opt/stack/spark/jars:ro
+      - ./spark/jobs:/opt/stack/spark/jobs:ro
+      - ../target/stack_io:/data
+    working_dir: /opt/stack/spark/jobs
+    entrypoint: ["/opt/spark/bin/spark-submit"]
+
+volumes:
+  storage-data:
+  catalog-data:

@@ -1,0 +1,10 @@
+# dbt v1 build artifacts
+target/
+dbt_packages/
+logs/
+.user.yml
+# Managed by `uv sync`
+.venv/
+__pycache__/
+# Downloaded by scripts/fetch_spark_jars.sh (sha256-pinned there)
+stack/spark/jars/*.jar

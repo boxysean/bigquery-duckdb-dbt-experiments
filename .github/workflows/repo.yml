@@ -1,0 +1,29 @@
+# Repository-level checks that span both peer projects.
+#
+#   model-trees   1_dbt_bigquery_duckdb and 2_dbt_bigquery_trino_spark must keep
+#                 building the SAME models from the SAME source: every .sql under
+#                 models/ and tests/ byte-identical, every .yml structurally equal, the
+#                 same polyglot macro names (scripts/check_model_trees.py). Seconds to run,
+#                 so drift is caught even when only one project's workflow is looked at.
+name: repo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  model-trees:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+      - name: python scripts/check_model_trees.py
+        run: uv run --no-project --with pyyaml==6.0.2 python scripts/check_model_trees.py

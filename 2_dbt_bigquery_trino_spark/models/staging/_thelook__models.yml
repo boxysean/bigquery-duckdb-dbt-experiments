@@ -1,0 +1,311 @@
+version: 2
+
+# Staging: one view per thelook_ecommerce source table. Rename + cast only; no
+# joins, no business logic, no aggregation (SPEC section 4).
+#
+# Conventions for every model below:
+#   * `id` is renamed `<entity>_id`; every id and integer is bigint.
+#   * money is money_type() (decimal(38,9) on Trino, numeric on BigQuery), USD.
+#   * every *_at column is a NAIVE UTC timestamp produced by to_utc_timestamp():
+#     the source's absolute instant, expressed as UTC wall-clock time with no
+#     time zone attached, independent of the session time zone.
+
+models:
+  - name: stg_thelook__orders
+    description: >
+      Grain: one row per order (source `orders`). Renamed and cast only.
+      Timestamps are naive UTC.
+    columns:
+      - name: order_id
+        description: Order identifier; primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: The customer who placed the order (stg_thelook__users.user_id).
+        data_tests:
+          - not_null
+      - name: status
+        description: Order status.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Complete', 'Shipped', 'Processing', 'Returned', 'Cancelled']
+      - name: gender
+        description: The customer's gender as recorded on the order (M or F).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['M', 'F']
+      - name: created_at
+        description: When the order was placed; naive UTC timestamp.
+        data_tests:
+          - not_null
+      - name: returned_at
+        description: When the order was returned; naive UTC timestamp, null unless returned.
+      - name: shipped_at
+        description: When the order shipped; naive UTC timestamp, null until shipped.
+      - name: delivered_at
+        description: When the order was delivered; naive UTC timestamp, null until delivered.
+      - name: num_of_item
+        description: Number of items in the order, as recorded by the source.
+
+  - name: stg_thelook__order_items
+    description: >
+      Grain: one row per order item, i.e. one unit ordered (source `order_items`).
+      `id` is renamed `order_item_id`. Timestamps are naive UTC; sale_price is USD.
+    columns:
+      - name: order_item_id
+        description: Order item identifier (source `id`); primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: The order this item belongs to (stg_thelook__orders.order_id).
+        data_tests:
+          - not_null
+      - name: user_id
+        description: The customer (stg_thelook__users.user_id); equal to the order's user_id.
+        data_tests:
+          - not_null
+      - name: product_id
+        description: The product ordered (stg_thelook__products.product_id).
+        data_tests:
+          - not_null
+      - name: inventory_item_id
+        description: The inventory unit fulfilling the item (stg_thelook__inventory_items.inventory_item_id).
+        data_tests:
+          - not_null
+      - name: status
+        description: Item status.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Complete', 'Shipped', 'Processing', 'Returned', 'Cancelled']
+      - name: created_at
+        description: When the item was added to the order; naive UTC timestamp.
+        data_tests:
+          - not_null
+      - name: shipped_at
+        description: When the item shipped; naive UTC timestamp, null until shipped.
+      - name: delivered_at
+        description: When the item was delivered; naive UTC timestamp, null until delivered.
+      - name: returned_at
+        description: When the item was returned; naive UTC timestamp, null unless returned.
+      - name: sale_price
+        description: Price the item sold for, USD, money_type() (source FLOAT64).
+
+  - name: stg_thelook__users
+    description: >
+      Grain: one row per registered customer (source `users`). `id` is renamed
+      `user_id`. created_at (the signup time) is naive UTC.
+    columns:
+      - name: user_id
+        description: User identifier (source `id`); primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: first_name
+        description: First name.
+      - name: last_name
+        description: Last name.
+      - name: email
+        description: Email address.
+      - name: age
+        description: Age in years.
+      - name: gender
+        description: Gender (M or F).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['M', 'F']
+      - name: state
+        description: State or region of the address.
+      - name: street_address
+        description: Street address.
+      - name: postal_code
+        description: Postal code.
+      - name: city
+        description: City.
+      - name: country
+        description: Country.
+      - name: latitude
+        description: Latitude of the address, float_type().
+      - name: longitude
+        description: Longitude of the address, float_type().
+      - name: traffic_source
+        description: Acquisition channel of the user.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Search', 'Organic', 'Facebook', 'Email', 'Display']
+      - name: created_at
+        description: When the user signed up; naive UTC timestamp.
+        data_tests:
+          - not_null
+
+  - name: stg_thelook__products
+    description: >
+      Grain: one row per product (source `products`). `id` is renamed
+      `product_id`. cost and retail_price are USD, money_type().
+    columns:
+      - name: product_id
+        description: Product identifier (source `id`); primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: cost
+        description: Unit cost to the retailer, USD, money_type() (source FLOAT64).
+      - name: category
+        description: Product category, e.g. Jeans, Sweaters, Tops & Tees.
+      - name: name
+        description: Product name.
+      - name: brand
+        description: Brand.
+      - name: retail_price
+        description: List price, USD, money_type() (source FLOAT64).
+      - name: department
+        description: Department (Men or Women).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Men', 'Women']
+      - name: sku
+        description: Stock-keeping unit code.
+      - name: distribution_center_id
+        description: The distribution center stocking the product (stg_thelook__distribution_centers.distribution_center_id).
+        data_tests:
+          - not_null
+
+  - name: stg_thelook__inventory_items
+    description: >
+      Grain: one row per physical unit of stock (source `inventory_items`).
+      `id` is renamed `inventory_item_id` and `product_distribution_center_id`
+      is renamed `distribution_center_id`. The product_* columns are the
+      source's own denormalised copy of the product; this model does NOT join
+      products. Timestamps are naive UTC; money is USD, money_type().
+    columns:
+      - name: inventory_item_id
+        description: Inventory unit identifier (source `id`); primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: product_id
+        description: The product this unit is (stg_thelook__products.product_id).
+        data_tests:
+          - not_null
+      - name: created_at
+        description: When the unit entered stock; naive UTC timestamp.
+        data_tests:
+          - not_null
+      - name: sold_at
+        description: When the unit was sold; naive UTC timestamp, null while the unit is in stock.
+      - name: cost
+        description: Unit cost, USD, money_type() (source FLOAT64).
+      - name: product_category
+        description: Product category, denormalised from products by the source.
+      - name: product_name
+        description: Product name, denormalised from products by the source.
+      - name: product_brand
+        description: Brand, denormalised from products by the source.
+      - name: product_retail_price
+        description: List price, USD, money_type(); denormalised from products by the source.
+      - name: product_department
+        description: Department (Men or Women), denormalised from products by the source.
+      - name: product_sku
+        description: Stock-keeping unit code, denormalised from products by the source.
+      - name: distribution_center_id
+        description: >
+          The distribution center holding the unit (source
+          `product_distribution_center_id`, renamed); stg_thelook__distribution_centers.distribution_center_id.
+        data_tests:
+          - not_null
+
+  - name: stg_thelook__distribution_centers
+    description: >
+      Grain: one row per distribution center (source `distribution_centers`).
+      `id` is renamed `distribution_center_id`.
+    columns:
+      - name: distribution_center_id
+        description: Distribution center identifier (source `id`); primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: name
+        description: Name, e.g. Memphis TN.
+      - name: latitude
+        description: Latitude, float_type().
+      - name: longitude
+        description: Longitude, float_type().
+
+  - name: stg_thelook__events
+    description: >
+      Grain: one row per website event (source `events`). `id` is renamed
+      `event_id`. created_at is naive UTC.
+    columns:
+      - name: event_id
+        description: Event identifier (source `id`); primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: >
+          The signed-in user (stg_thelook__users.user_id), or null when the event
+          came from anonymous traffic. Measured against the real
+          bigquery-public-data.thelook_ecommerce on 2026-09-27: 1,124,610 of
+          2,425,698 events (46.4%) carry no user, so the column is nullable in the
+          source and this model deliberately does not test it `not_null` (a
+          SPEC section 4 deviation, see NOTES.md > "Measured against the real
+          dataset"). Every non-null value still resolves: 0 orphans against
+          stg_thelook__users, which is what the `relationships` test below
+          asserts.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_thelook__users')
+                field: user_id
+      - name: sequence_number
+        description: Position of the event within its session, starting at 1.
+      - name: session_id
+        description: Session identifier (UUID string).
+        data_tests:
+          - not_null
+      - name: created_at
+        description: When the event happened; naive UTC timestamp.
+        data_tests:
+          - not_null
+      - name: ip_address
+        description: Client IP address.
+      - name: city
+        description: City of the visitor.
+      - name: state
+        description: State or region of the visitor.
+      - name: postal_code
+        description: Postal code of the visitor.
+      - name: browser
+        description: Browser, e.g. Chrome, Firefox, Safari.
+      - name: traffic_source
+        description: >
+          The marketing channel the visit arrived through, as recorded on the
+          event. Note that `events.traffic_source` and `users.traffic_source` are
+          different vocabularies in the real dataset: measured on 2026-09-27, the
+          events table carries exactly Email, Adwords, Facebook, YouTube and
+          Organic over 2,425,698 rows, while the users table (and so
+          `dim_users`, `fct_orders`) carries Search, Organic, Facebook, Email and
+          Display. The list tested here is the measured events set, not the
+          users set.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Email', 'Adwords', 'Facebook', 'YouTube', 'Organic']
+      - name: uri
+        description: Page path requested.
+      - name: event_type
+        description: Event type.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['home', 'department', 'product', 'cart', 'purchase', 'cancel']
