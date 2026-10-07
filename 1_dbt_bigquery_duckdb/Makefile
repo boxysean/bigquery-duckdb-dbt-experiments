@@ -167,7 +167,7 @@ pre-pr:
 	bash scripts/pre_pr.sh
 
 # Both targets compiled, plus the guardrail (scripts/ci_compile_both.sh): the one
-# command CI runs (.github/workflows/ci.yml), and the one to run locally before a PR.
+# command CI runs (../.github/workflows/1_dbt_bigquery_duckdb.yml), and the one to run locally before a PR.
 # No prerequisites on purpose: the script runs check-env and the fixture itself. GNU
 # make reports the script's exit 2 (BigQuery leg not established) as "Error 2", and its
 # exit 1 as "Error 1", but make itself exits 2 for both; call

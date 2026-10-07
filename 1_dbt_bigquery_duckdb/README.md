@@ -1,10 +1,16 @@
-# bigquery-duckdb-dbt-experiments
+# Project 1: BigQuery + DuckDB (dbt v2)
+
+> **Project 1 of 2** in this repository. Its peer is
+> [`../2_dbt_bigquery_trino_spark/`](../2_dbt_bigquery_trino_spark/) (BigQuery + Trino,
+> dbt v1). Both build the same models from the same source; the comparison between them
+> is in [`../README.md`](../README.md) and [`../docs/comparison.md`](../docs/comparison.md).
+> Run every command below from this folder.
 
 A dbt v2 experiment that asks a practical architecture question:
 
 **Can one dbt project serve both BigQuery and DuckDB without forking the model tree?**
 
-Short answer: **yes, structurally**. The same 29 models build on both engines from one source file per model. The main gap is not SQL syntax; it is **numeric semantics**, especially how money is typed and rounded.
+Short answer: **yes, structurally**. The same 29 models (30 since `mart_polyglot_types`) build on both engines from one source file per model. The main gap is not SQL syntax; it is **numeric semantics**, especially how money is typed and rounded.
 
 ## Executive summary
 
@@ -216,7 +222,7 @@ If you are a senior architect deciding whether this pattern is worth using:
 | `scripts/bq_preflight.py` | Read-only check that the BigQuery target can be built (dataset, job creation, dataset read); names the permission to grant when it cannot. `--create` creates the missing target dataset; run by `make bq` |
 | `scripts/ci_compile_both.sh` | Compiles both targets and runs the guardrail; behind `make ci-compile`, the one check CI runs |
 | `scripts/bq_partition_measure.py` | Partitioning harness: one leg's table metadata, uncached full and filtered scans and partitions, or the before/after report; behind `make partition-measure` |
-| `.github/workflows/ci.yml` | CI: runs `make ci-compile` on every push to `main` and every pull request; the gate `ci-compile` holds no credential, `ci-compile-bigquery` runs only with the `BQ_SA_KEY` secret ([`docs/ci.md`](docs/ci.md)) |
+| `../.github/workflows/1_dbt_bigquery_duckdb.yml` | CI: runs `make ci-compile` on every push to `main` and every pull request; the gate `ci-compile` holds no credential, `ci-compile-bigquery` runs only with the `BQ_SA_KEY` secret ([`docs/ci.md`](docs/ci.md)) |
 | `analyses/transport_a/` | Direct-read transport evidence (committed README plus generated results) |
 | `analyses/transport_b/` | File-based transport evidence (committed README plus generated results) |
 | [`analyses/value_parity/`](analyses/value_parity/) | Committed parity overview; generated results and row-level follow-up artifacts sit beside it |
@@ -259,7 +265,7 @@ make move-to-duckdb  # generate a DuckDB-only version of the project
 
 ## CI
 
-On every push to `main` and every pull request, GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) compiles the project and runs the portability guardrail, in two jobs that both call `make ci-compile`, and builds and tests the DuckDB leg end to end in a third job that calls `make pre-pr` (details and the decision tables: [`docs/ci.md`](docs/ci.md)):
+On every push to `main` and every pull request, GitHub Actions ([`../.github/workflows/1_dbt_bigquery_duckdb.yml`](../.github/workflows/1_dbt_bigquery_duckdb.yml)) compiles the project and runs the portability guardrail, in two jobs that both call `make ci-compile`, and builds and tests the DuckDB leg end to end in a third job that calls `make pre-pr` (details and the decision tables: [`docs/ci.md`](docs/ci.md)):
 
 - **`ci-compile`** is the gate. It deliberately holds no BigQuery credential, so its colour never depends on a secret: it compiles DuckDB and runs the guardrail, and it is green when those pass. The BigQuery leg is `n/a` there by construction; when the secret is absent the job says so out loud, with a `::warning` annotation and a job-summary line ("NOT ESTABLISHED ... this run says nothing about that target").
 - **`ci-compile-bigquery`** is the BigQuery leg: the same command with the `BQ_SA_KEY` secret as a key file. Without the secret it is **skipped**, which means nothing in that run speaks to the BigQuery target.

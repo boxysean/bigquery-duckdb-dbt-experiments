@@ -15,7 +15,11 @@ repo is built on. This card builds that procedure and measures it. The short ans
 **in this project the procedure is one command.** Every dialect difference already
 sits in `macros/polyglot/`, so moving to DuckDB only means inlining each macro's DuckDB
 branch (175 call sites, no model edited by hand), rewriting 3 non-model files, and
-building. The moved project builds green with the same 196 nodes, and its compiled SQL
+building. (Counts in this document are as measured with the original 29 models. On
+2026-10-07, with `mart_polyglot_types` added and the struct/JSON seam calls it uses,
+`move_to_duckdb.py --out` reports 186 call sites inlined; no `--verify` build was run
+then, because the DuckDB driver could not be downloaded in that environment.) The moved
+project builds green with the same 196 nodes, and its compiled SQL
 is byte-identical to the source project's DuckDB compile. A fallback that cheap does
 not need a second repository kept alive in advance, so the verdict (section 8) is to
 **keep one project** and use this procedure when a trigger fires.

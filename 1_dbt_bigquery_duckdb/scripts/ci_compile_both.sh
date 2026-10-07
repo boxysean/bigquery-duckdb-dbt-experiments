@@ -10,7 +10,7 @@
 #
 # Why: this is the one definition of "compile both targets". CI runs it through
 # `make ci-compile` on every push to main and every pull request
-# (.github/workflows/ci.yml), and a person runs the identical command before opening
+# (../.github/workflows/1_dbt_bigquery_duckdb.yml), and a person runs the identical command before opening
 # a PR, so CI is a gate and not a surprise.
 #
 # Step 5 is not decoration. A raw `try_cast(...)` in a model, or a

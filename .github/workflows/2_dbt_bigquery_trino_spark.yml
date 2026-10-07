@@ -1,0 +1,92 @@
+# Project 2 (2_dbt_bigquery_trino_spark/): the whole pre-PR routine, end to end, on every
+# push to main and every pull request. The check itself is `make pre-pr`
+# (scripts/pre_pr.sh), the same command a person runs locally, so this workflow
+# re-implements none of it:
+#
+#   prerequisites -> same models as project 1 -> portability (Trino AND BigQuery compile,
+#   no dialect leak) -> the lakehouse up in Docker (S3, Iceberg REST, Trino) -> Spark
+#   lands the sources -> dbt build --target trino (models + tests) -> every macro
+#   executed on Trino -> Spark reads every table dbt built, profiles compared.
+#
+# No credential and no secret: the Trino leg is fully local (Docker), and the BigQuery
+# leg is a compile with a throwaway key (scripts/check_portability.py). The BigQuery
+# BUILD stays out of CI, as in project 1.
+name: 2_dbt_bigquery_trino_spark
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: 2_dbt_bigquery_trino_spark
+
+jobs:
+  pre-pr:
+    runs-on: ubuntu-latest
+    # Measured locally from an empty stack: ~5 minutes, most of it image pulls and JVM starts.
+    timeout-minutes: 30
+    steps:
+      # Same pinned tags as project 1's workflow (see the comment there).
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+
+      # The committed uv.lock: dbt-core 1.11.11, dbt-trino 1.10.2, dbt-bigquery 1.11.0.
+      - name: uv sync --frozen
+        run: uv sync --frozen
+
+      # The Spark Iceberg jars, sha256-verified (Maven Central, then Google's mirror).
+      - name: bash scripts/fetch_spark_jars.sh
+        run: bash scripts/fetch_spark_jars.sh
+
+      - name: make pre-pr
+        id: check
+        run: |
+          set +e
+          make pre-pr 2>&1 | tee "$RUNNER_TEMP/pre-pr.log"
+          make_rc=${PIPESTATUS[0]}
+          set -e
+          rc=$make_rc
+          if [ "$make_rc" -ne 0 ]; then
+            rc=$(grep -oE 'pre-pr\] Error [0-9]+$' "$RUNNER_TEMP/pre-pr.log" | grep -oE '[0-9]+$' || echo 1)
+          fi
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          if [ "$rc" -eq 0 ]; then
+            echo "::notice title=2_dbt_bigquery_trino_spark::every step ok: portable on both targets, built and tested on Trino, every table read identically by Spark"
+            exit 0
+          fi
+          echo "::error title=2_dbt_bigquery_trino_spark failed::make pre-pr exited $rc; see the FAIL / n/a line(s) in the log"
+          exit 1
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## 2_dbt_bigquery_trino_spark: make pre-pr"
+            echo
+            if [ -f "$RUNNER_TEMP/pre-pr.log" ]; then
+              echo '```'
+              grep -E '^  (ok|n/a|FAIL)  |^pre-pr:' "$RUNNER_TEMP/pre-pr.log" || true
+              echo '```'
+            fi
+            if [ -f target/interop/report.md ]; then
+              echo
+              sed 's/^# /### /' target/interop/report.md
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Lakehouse logs (on failure)
+        if: failure()
+        run: docker compose -f stack/compose.yml logs --tail 200
+
+      - name: Stop the lakehouse
+        if: always()
+        run: docker compose -f stack/compose.yml down -v

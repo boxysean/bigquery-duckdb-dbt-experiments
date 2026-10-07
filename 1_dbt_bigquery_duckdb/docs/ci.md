@@ -1,6 +1,6 @@
 # CI: which job gates, and what each colour means
 
-The workflow is [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). It runs on every
+The workflow is [`.github/workflows/1_dbt_bigquery_duckdb.yml`](../../.github/workflows/1_dbt_bigquery_duckdb.yml). It runs on every
 push to `main`, every pull request, and on demand (`workflow_dispatch`). Two of its jobs
 compile: they run the same command, `make ci-compile`
 ([`scripts/ci_compile_both.sh`](../scripts/ci_compile_both.sh)). The third, `ci-duckdb-run`,
