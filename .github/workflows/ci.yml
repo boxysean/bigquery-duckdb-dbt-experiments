@@ -22,6 +22,22 @@
 # required check that is red for a missing secret can never go green for anyone who
 # cannot create that secret. A skipped job cannot annotate anything, so the loud part
 # of the absence (the ::warning and the summary line) is emitted by the gate.
+#
+# A third job runs the DuckDB leg end to end:
+#
+#   ci-duckdb-run        runs `make pre-pr` (scripts/pre_pr.sh), the same routine a
+#                        person runs before a PR, so the DuckDB leg is BUILT AND TESTED
+#                        on every push and PR, not merely compiled. Compiling is not
+#                        running: `dbt compile` renders without validating, so a model
+#                        can compile clean and return the wrong rows. It holds no
+#                        credential by construction (both credential variables are
+#                        blanked), so its colour cannot depend on a secret; its exit 2
+#                        (the BigQuery value parity leg is n/a) is mapped to GREEN plus a
+#                        ::warning, exactly as the gate does. Exit 1 is RED.
+#
+# The BigQuery *build* stays out of CI, deliberately: there is no credential in this
+# public repository's CI, the BigQuery leg is reported unavailable rather than faked,
+# and that behaviour is correct and must not change.
 name: ci
 
 on:
@@ -240,6 +256,100 @@ jobs:
               echo
               echo '```'
               grep -E '^  (ok|n/a|FAIL)  |^ci-compile:|^    (Processed|Summary):|^    (compiled files checked:|PORTABLE$|NOT PORTABLE:)' "$RUNNER_TEMP/ci-compile.log" || true
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  ci-duckdb-run:
+    runs-on: ubuntu-latest
+    # Measured locally: the whole routine is ~30-51 s; the runner is slower.
+    timeout-minutes: 15
+    steps:
+      # Same pinned tags as the gate; read the comment there before changing either.
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+
+      - name: uv sync --frozen
+        run: uv sync --frozen
+
+      # The repository's own installer, as in the gate: the DuckDB CLI and dbc must be on
+      # PATH for the fixture and the build.
+      - name: bash scripts/install_prereqs.sh
+        env:
+          PREFIX: ${{ github.workspace }}/.local/bin
+        run: |
+          bash scripts/install_prereqs.sh
+          echo "$PREFIX" >> "$GITHUB_PATH"
+
+      # The whole pre-PR routine: check-env, the fixture, the portability guardrail, then
+      # scripts/parity.py, which runs `make duck` (dbt build --target duckdb: the models
+      # AND the data tests) and a DuckDB baseline rebuild that must reproduce. As in the
+      # gate, the script's own status is read back from make's "Error N" line, and both
+      # credential variables are blanked so the BigQuery leg is n/a by construction.
+      - name: make pre-pr
+        id: check
+        env:
+          BQ_KEYFILE: ""
+          GOOGLE_APPLICATION_CREDENTIALS: ""
+        run: |
+          set +e
+          make pre-pr 2>&1 | tee "$RUNNER_TEMP/pre-pr.log"
+          make_rc=${PIPESTATUS[0]}
+          set -e
+          rc=$make_rc
+          if [ "$make_rc" -ne 0 ]; then
+            rc=$(grep -oE 'pre-pr\] Error [0-9]+$' "$RUNNER_TEMP/pre-pr.log" | grep -oE '[0-9]+$' || echo 1)
+          fi
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          case "$rc" in
+            0)
+              echo "::notice title=ci-duckdb-run::every step ok and parity established on both targets"
+              exit 0 ;;
+            2)
+              # Green, never silent: the DuckDB leg ran end to end, but the run must say
+              # out loud that it did not measure BigQuery.
+              echo "::warning title=ci-duckdb-run: BigQuery value parity NOT ESTABLISHED::the DuckDB leg ran end to end (dbt build --target duckdb with its tests, plus the portability guardrail) and passed. The BigQuery leg is n/a: no BQ_SA_KEY/BQ_KEYFILE credential exists in this job, so the BigQuery value comparison was not measured, never faked. The BigQuery compile is covered by the ci-compile-bigquery job."
+              exit 0 ;;
+            *)
+              echo "::error title=ci-duckdb-run failed::a step FAILED (script exit $rc); see the FAIL line(s) in the log above"
+              exit 1 ;;
+          esac
+
+      - name: Job summary
+        if: always()
+        env:
+          RC: ${{ steps.check.outputs.rc }}
+        run: |
+          {
+            echo "## ci-duckdb-run (the DuckDB leg, end to end)"
+            echo
+            echo "Ran \`make pre-pr\`: the prerequisites, the fixture, the portability guardrail, and \`scripts/parity.py\` (which runs \`dbt build --target duckdb\`, models and tests, and then a DuckDB baseline rebuild that must reproduce)."
+            echo
+            case "$RC" in
+              0) echo "**Every step ok** and parity is established on both targets." ;;
+              2) echo "**The DuckDB build, its tests and the portability guardrail ran and passed.** **BigQuery: \`n/a\`, NOT ESTABLISHED.** This job holds no credential by construction, so the BigQuery value comparison was not measured and nothing in this run speaks to that target. Green here means \"the DuckDB leg was built and tested\", not \"both targets were verified\"." ;;
+              "") echo "**make pre-pr did not run** (an earlier step failed)." ;;
+              *) echo "**A step FAILED** (script exit $RC); see the step lines below and the job log. A red run is a real finding." ;;
+            esac
+            # The runner's own dbt numbers, from the last build's run_results.json. Never
+            # fails the step: an absent or unreadable file prints nothing.
+            if [ -f target/run_results.json ]; then
+              python3 -c "
+          import collections, json
+          r = json.load(open('target/run_results.json'))
+          c = collections.Counter((x['unique_id'].split('.')[0], x['status']) for x in r['results'])
+          parts = ', '.join('%d %ss %s' % (n, k, s) for (k, s), n in sorted(c.items()))
+          print()
+          print('dbt %s --target duckdb (the last build in this run, its own target/run_results.json): %s' % (r['args'].get('which', 'build'), parts))
+          " 2>/dev/null || true
+            fi
+            if [ -f "$RUNNER_TEMP/pre-pr.log" ]; then
+              echo
+              echo '```'
+              grep -E '^  (ok|n/a|FAIL)  |^pre-pr:' "$RUNNER_TEMP/pre-pr.log" || true
               echo '```'
             fi
           } >> "$GITHUB_STEP_SUMMARY"

@@ -1,17 +1,21 @@
 # CI: which job gates, and what each colour means
 
 The workflow is [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). It runs on every
-push to `main`, every pull request, and on demand (`workflow_dispatch`). Both of its jobs run
-the same command, `make ci-compile` ([`scripts/ci_compile_both.sh`](../scripts/ci_compile_both.sh)),
-which is also the command to run locally before a PR. The workflow re-implements none of it:
-not the compile, not the credential gate, not the guardrail.
+push to `main`, every pull request, and on demand (`workflow_dispatch`). Two of its jobs
+compile: they run the same command, `make ci-compile`
+([`scripts/ci_compile_both.sh`](../scripts/ci_compile_both.sh)). The third, `ci-duckdb-run`,
+builds and tests the DuckDB leg end to end by running `make pre-pr`
+([`scripts/pre_pr.sh`](../scripts/pre_pr.sh)). Both are the commands to run locally before a
+PR. The workflow re-implements none of them: not the compile, not the build, not the
+credential gate, not the guardrail.
 
-## The two jobs
+## The three jobs
 
 | job | holds a credential? | runs when | what it proves |
 |---|---|---|---|
 | **`ci-compile`** (the gate) | **No, deliberately.** `BQ_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` are blanked on its `make ci-compile` step. | always | the prerequisites install, the DuckDB fixture loads, the project compiles for DuckDB, and the portability guardrail is clean |
 | **`ci-compile-bigquery`** (the BigQuery leg) | Yes: the `BQ_SA_KEY` repository secret, written to `$RUNNER_TEMP` with `umask 077` and handed over as `BQ_KEYFILE` + `BQ_AUTH_METHOD=service-account`. | only when the `BQ_SA_KEY` secret exists (`needs: ci-compile`) | all of the above, plus that the project compiles for BigQuery with a service-account-shaped key |
+| **`ci-duckdb-run`** (the DuckDB leg, end to end) | **No, deliberately.** `BQ_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` are blanked on its `make pre-pr` step. | always | the prerequisites install, the fixture loads, the project builds **and its tests pass** on DuckDB (`dbt build --target duckdb`, then a DuckDB baseline rebuild that must reproduce), the portability guardrail is clean, and (when a credential is supplied) parity is established |
 
 `ci-compile` is the check that gates. It holds no credential so that its colour can never
 depend on a secret existing: the token used to build this repository cannot create repository
@@ -44,6 +48,15 @@ with it:
 GNU make exits 2 for any failed recipe, so both jobs recover the script's own status from
 make's `ci-compile] Error N` line.
 
+`ci-duckdb-run` applies the same mapping to `scripts/pre_pr.sh`'s exit (`0` / `1` / `2`, see
+its header), recovered from make's `pre-pr] Error N` line:
+
+| script exit | meaning | `ci-duckdb-run` (no credential) |
+|---|---|---|
+| `0` | every step ok, parity established on both targets | green, `::notice` (does not occur here: the credential is blanked) |
+| `1` | a real finding: a prerequisite, the fixture, the DuckDB build or a test, the guardrail, or a baseline that did not reproduce | **red**, `::error` |
+| `2` | every other step ok (the DuckDB build, its tests and the guardrail), BigQuery value parity `n/a`: not established | **green**, `::warning` titled `BigQuery value parity NOT ESTABLISHED` + a job-summary line (always, since the credential is blanked by construction) |
+
 ## Loud, not silent
 
 A missing credential is not a finding, so it must not be a red X. It must not be a quiet green
@@ -67,3 +80,12 @@ still reported `258 total | 258 success` and was written to `target/compiled/` v
 with the key, the BigQuery compile issues no query and does not authenticate, so it is not a
 live connection or a build either; that is `make bq` / `make value-parity`, which cost money
 and do not run in CI. See [`README.md`](../README.md#ci) and [`gaps.md`](gaps.md) §10.
+
+## What a green `ci-duckdb-run` does mean
+
+A green `ci-duckdb-run` **does** mean the models were built and the data tests ran and passed
+on DuckDB, so invalid SQL or a failing test on that target turns it red. Its job summary
+quotes the runner's own model and test counts from `target/run_results.json` and the routine's
+`ok` / `n/a` / `FAIL` lines. It says nothing about the BigQuery target: no credential exists in
+this repository's CI, so the BigQuery value comparison is reported `n/a` rather than faked, and
+on BigQuery CI remains compile-only (`ci-compile-bigquery`, when the secret exists).
