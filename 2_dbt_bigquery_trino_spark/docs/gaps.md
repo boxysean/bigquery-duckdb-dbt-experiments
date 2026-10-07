@@ -15,7 +15,6 @@ Two words are used deliberately, as in project 1:
 | **Real data on the Trino leg** | The Trino leg reads project 1's 41,610-row fixture, landed by Spark, not the 3.3M-row public dataset | Add Trino's BigQuery connector as a catalog and land the real tables ([`architecture.md`](architecture.md) §4) |
 | **Performance and cost at scale** | One machine, small data, single-node Trino, `local[2]` Spark. The ~65 s Trino build says nothing about a cluster | A sized environment and the real data |
 | **The cost of disabling Spark's vectorized reader** | The fix in [`challenges.md`](challenges.md) 4.1 makes Spark use its row-based Parquet reader on dbt's tables; the slowdown was not measured | A Spark read benchmark with and without the property, on real data |
-| **CI on GitHub** | The workflow `.github/workflows/2_dbt_bigquery_trino_spark.yml` runs exactly `make pre-pr`, which passed locally from an empty stack in 287 s. It has not yet run on a GitHub runner (it triggers on pull requests and pushes to `main`) | Open a PR |
 
 ## 2. Blind spots (green checks that would not notice)
 

@@ -58,7 +58,7 @@ unless marked otherwise.
 | Must decide whether Spark reads it, and if so make it a table | No | **Yes** (interop gate) |
 | A model-level `properties` must repeat the Spark-readability property | No | **Yes** (interop gate catches a miss) |
 | Physical layout must be designed per engine | BigQuery only | BigQuery **and** Iceberg |
-| CI time per PR | ~1 min | ~5 min |
+| CI time per PR (measured on GitHub, PR #33) | ~40 s (slowest job) | ~3.5 min |
 | Infrastructure to keep current | DuckDB version, ADBC driver | Trino, Spark, Iceberg (jars must match the Spark version), REST catalog, object store, Docker images |
 | dbt version upgrades | One (v2) | One (v1), independent of option 1's; the shared tree must keep working on both |
 

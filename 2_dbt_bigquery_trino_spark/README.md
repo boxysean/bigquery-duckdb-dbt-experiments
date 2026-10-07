@@ -26,7 +26,7 @@ adapter.
 | Macros executed on Trino | **59 / 59** self-check cases ok (`make selfcheck`) |
 | Spark reads what dbt built | **12 / 12 tables read by Spark with identical per-column profiles**; 0 / 18 views readable (by design, see below) |
 | `bigquery` target | **Compiles** (no credential needed). **Not built in this session**: no BigQuery credential was available here. See [`docs/gaps.md`](docs/gaps.md) |
-| CI | `.github/workflows/2_dbt_bigquery_trino_spark.yml` runs `make pre-pr` end to end on every PR, about 5 minutes from an empty stack |
+| CI | `.github/workflows/2_dbt_bigquery_trino_spark.yml` runs `make pre-pr` end to end on every PR: green on GitHub's runner in 3m30s (first run, PR #33) |
 
 ## The architecture, and why it looks like this
 
