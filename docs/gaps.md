@@ -5,8 +5,9 @@ input rows, row counts are equal on all 29 models, but values are equal on 8 of 
 of the 11 marts. Joined row by row (2026-09-28), no row holds genuinely different money:
 every cent that differs is BigQuery's nine-decimal `numeric` propagated, reproduced exactly
 by a DuckDB build with the same declared scale. The next largest is the BigQuery
-write path beyond a plain build: it now materialises all 29 models, but the cost ceiling
-has never been hit, and no partitioning or clustering is used. Most of the other gaps are
+write path beyond a plain build: it now materialises all 29 models and is priced, the cost
+ceiling has refused a query only at a deliberately tiny setting, and no partitioning or
+clustering is used. Most of the other gaps are
 documented limits that were never reached, not failures.
 
 Two words are used deliberately below:
@@ -60,9 +61,10 @@ differences, so their checksum, null count and distinct count agree on both legs
 
 | gap | why | size |
 |---|---|---|
-| **`maximum_bytes_billed` enforcement** | The v2 adapter accepts the setting, and `dbt debug` echoes `1000000000`. No query came near 1 GB, so the ceiling has never refused anything. | One named, unverified control. The full build has not been priced against it either. |
+| **`maximum_bytes_billed` enforcement** | Measured (2026-10-06, card t_fc6d405f): with a 1000-byte ceiling the ceiling **has** refused a query, `HTTP 400 ... {"reason": "bytesBilledLimitExceeded", "message": "Query exceeded limit for bytes billed: 1000. 141557760 or higher required."}`; a job refused this way bills nothing. The build is now priced: 1,323,806,504 bytes processed, 4,653,580,288 billed (the 10 MB per-query minimum dominates 167 tiny test jobs); the largest single job processed 150,593,696 bytes. | Closed as a control. The ceiling is per job (1,000,000,000 bytes), and **0** of the build's jobs come near it, so at the configured 1 GB it has still never refused a build job. |
 | **Partitioning and clustering** | The warehouse uses neither, so nothing has exercised them. | Unverified. In the one-project design they are on the "cannot move" list (`docs/move_to_duckdb.md` §5). |
-| **DDL beyond a plain build** | The 29 models were materialised once, with 195 of 196 tests passing and 1 intended warning (orchestrator's `make bq`, 2026-09-27). Nothing about table options, incremental models or concurrency was tested. | The leg is materialised. Everything beyond a plain view/table build is unverified. |
+| **DDL beyond a plain build** | The 29 models were materialised, with 195 of 196 tests passing and 1 intended warning (orchestrator's `make bq`, 2026-09-27; again 2026-10-06, `196 total \| 195 success \| 1 warn`). Nothing about table options, incremental models or concurrency was tested. | The leg is materialised. Everything beyond a plain view/table build is unverified. |
+| **The preflight's refusal path** | `scripts/bq_preflight.py` (run by `make bq`) names the missing permission and prints the two `gcloud` grants. Its 403 branches (`datasets.insert`, `jobs.query`, `tables.list`) have not been exercised on a machine that genuinely lacks the permission: this account holds every one. Only the missing-dataset path ran (`--dataset experiments_does_not_exist`, exit 2, `--create` not passed). The historical 403 for `bigquery.datasets.create` predates the script. | Unverified, not broken: 3 refusal branches never ran; `--create` creating a dataset never ran either (the target already exists). |
 
 ## 3. The macro layer
 
@@ -126,8 +128,8 @@ differences, so their checksum, null count and distinct count agree on both legs
 
 | gap | why | size |
 |---|---|---|
-| **CI's BigQuery leg** | CI (`make ci-compile`) compiles both targets, but the BigQuery leg is `n/a` until the `BQ_SA_KEY` repository secret exists. The token that built the workflow could not create repository secrets. The job exits 2 on that path, so **the workflow's jobs are red on `main` until the secret is added**. | Unverified in CI, not broken: the DuckDB compile and the guardrail run and pass. With the secret, the leg proves the project renders for BigQuery with a service-account-shaped key: not a live connection, not a build. `dbt compile` bills nothing on DuckDB, and on BigQuery it issued no query in the measured no-credential case (it exited 0 with no credentials at all). CI builds and queries neither target. |
-| **CI does not validate SQL** | Measured on 2026-09-29 with a deliberately broken model. The bad `ref('no_such_model')` was caught by the compile (`DependencyNotFound (dbt1048)`). The raw syntax error `select (( from ...` was not: it compiled (`258 total \| 258 success`) and was written to `target/compiled/` verbatim. A `try_cast` plus a `target.type` branch compiled on both engines, and the guardrail caught it (`NOT PORTABLE: 2 finding(s)`). The DuckDB leg does fail end to end: `FAIL ... (exit 1)`, script exit 1. | By design, not fixed: `dbt compile` renders, it does not parse the SQL. Only running the models (`make duck`, `make bq`) would catch a syntax error, and CI runs neither. |
+| **CI's BigQuery leg** | CI runs `make ci-compile` in two jobs ([`ci.md`](ci.md)). The gate, `ci-compile`, deliberately holds no credential: it compiles DuckDB and runs the guardrail, and maps the script's exit 2 (BigQuery `n/a`) to green with a `::warning` and a job-summary line. The BigQuery leg, `ci-compile-bigquery`, runs only when the `BQ_SA_KEY` repository secret exists, and the token that built the workflow could not create repository secrets, so **until the secret is added that job is skipped and no run speaks to the BigQuery target**. Under the earlier one-job workflow the same absence made the job red (runs 36598771536, 36599048212, 36599339715, the last on `main`); a red job now means a real finding. | Unverified in CI, not broken: the DuckDB compile and the guardrail run and pass. With the secret, the leg proves the project renders for BigQuery with a service-account-shaped key: not a live connection, not a build. `dbt compile` bills nothing on DuckDB, and on BigQuery it issued no query in the measured no-credential case (it exited 0 with no credentials at all). CI builds and queries neither target. |
+| **CI does not validate SQL** | Measured on 2026-09-29 with a deliberately broken model. The bad `ref('no_such_model')` was caught by the compile (`DependencyNotFound (dbt1048)`). The raw syntax error `select (( from ...` was not: it compiled (`258 total \| 258 success`) and was written to `target/compiled/` verbatim. A `try_cast` plus a `target.type` branch compiled on both engines, and the guardrail caught it (`NOT PORTABLE: 2 finding(s)`). The DuckDB leg does fail end to end: `FAIL ... (exit 1)`, script exit 1. | By design, not fixed: a green `dbt compile` means "renders for both engines, no dialect leaked", not "the SQL is valid"; `dbt compile` renders, it does not parse the SQL. Only running the models (`make duck`, `make bq`) would catch a syntax error, and CI runs neither. |
 
 ## Where each claim comes from
 
@@ -153,7 +155,8 @@ differences, so their checksum, null count and distinct count agree on both legs
 | fixture path still 28/29 differ, 1/29 match | `README.md:761-770`; `NOTES.md:1197-1203,1236-1238` |
 | real distributions, `products.cost` 27%, cost equality | `README.md:709-726`; `NOTES.md:904-906,925-935` |
 | real load has no coherence checks | `scripts/load_duckdb_real_sources.sh:26-28` (what it checks); `scripts/load_duckdb_sources.sh:48-139` (the fixture's checks); `README.md:727-734` (the facts measured on BigQuery) |
-| `maximum_bytes_billed` | `README.md:399-405,679-688,825-827`; `NOTES.md:1229-1231` |
+| `maximum_bytes_billed` | `README.md:399-405,679-688,825-827`; `NOTES.md:1229-1231`; refused query, build price and largest job: `NOTES.md`, section "Card t_fc6d405f" (measured 2026-10-06 by the orchestrator, not in a log file) |
+| preflight, its exit codes and its unexercised refusal branches | `scripts/bq_preflight.py` (header); `scripts/run_bq.sh` (header); `NOTES.md`, section "Card t_fc6d405f" (the commands run and their output) |
 | partitioning/clustering, DDL | `NOTES.md:1229-1231`; `docs/move_to_duckdb.md:209-222`; orchestrator's `make bq` (2026-09-27) |
 | 10 macros not called by a model | `docs/move_to_duckdb.md:98-116`; the counting script in [`challenges.md`](challenges.md) "The verdict" |
 | render-only BigQuery half | `README.md:689-708`; `NOTES.md:1067-1083` |
@@ -172,5 +175,5 @@ differences, so their checksum, null count and distinct count agree on both legs
 | 168 vs 167 tests | `README.md:13,136,511-512,526-527`; orchestrator's `make duck` (`Processed: 29 models \| 167 tests`) |
 | b07c/b07d status | `analyses/transport_b/README.md:60`; `analyses/transport_b/logs/b07c.log:16`, `b07d.log:19` |
 | card-thread facts | t_2e263433 card thread (board, not in the repo); `analyses/transport_b/README.md:295-297` |
-| CI's BigQuery leg `n/a`, compile needs no credential | `scripts/ci_compile_both.sh` (header and the credential gate); `.github/workflows/ci.yml`; `.venv/bin/dbt compile --target bigquery` exiting 0 with no credential (2026-09-29, `Summary: 257 total \| 257 success`) |
+| CI's BigQuery leg `n/a` in the gate, skipped without the secret; compile needs no credential | `scripts/ci_compile_both.sh` (header and the credential gate); `.github/workflows/ci.yml` (jobs `ci-compile` and `ci-compile-bigquery`); [`ci.md`](ci.md); the red one-job runs 36598771536, 36599048212, 36599339715 (GitHub Actions run ids); `.venv/bin/dbt compile --target bigquery` exiting 0 with no credential (2026-09-29, `Summary: 257 total \| 257 success`) |
 | CI does not validate SQL; guardrail and bad `ref()` caught | orchestrator's `make ci-compile` runs with a temporary `models/intermediate/_ci_break.sql`, removed again (2026-09-29, not in a file) |

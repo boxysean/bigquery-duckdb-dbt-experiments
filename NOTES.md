@@ -1581,3 +1581,145 @@ through a portable function today — so this stays a named divergence rather th
 One consequence worth carrying forward: a `--same-data` run (`make value-parity`) over a model with
 a JSON column will report that column as differing for this reason alone. `mart_polyglot_types` is
 the only such model today, and its one row is constant, so the report can be read with that in mind.
+
+# Card t_fc6d405f — the materialised BigQuery build, and what to grant when it cannot run
+
+**The card's premise no longer reproduces.** It assumed `make bq` still fails for a missing
+permission. That *was* true before the service account's grants landed; the error then was
+
+    403 Access Denied: Project coreychimpbot: User does not have bigquery.datasets.create permission in project coreychimpbot
+
+It is not true today. Nothing below invents a failure: every "missing permission" the new code can
+print is either BigQuery's own 403 message quoted at run time, or (for a dataset that does not
+exist and `--create` was not passed) labelled `untested`.
+
+## Measured 2026-10-06 (by the orchestrator; read-only where it matters)
+
+* `coreychimpbot.experiments_dev` exists (created 2026-09-27 09:23:52Z, location `US`), and the
+  service account `coreychimpbot@coreychimpbot.iam.gserviceaccount.com` is a dataset `OWNER`.
+* `bigquery.datasets.create` is held: a throwaway `datasets.insert` returned HTTP 200 and the
+  dataset was deleted again.
+* `BQ_KEYFILE=/home/hermes/.config/gcp/coreychimpbot-sa.json bash scripts/run_bq.sh` exits 0:
+  `Processed: 29 models | 167 tests` / `Summary: 196 total | 195 success | 1 warn`.
+* `maximum_bytes_billed` enforcement, reproduced for the first time with a 1000-byte ceiling:
+
+      HTTP 400 ... {"reason": "bytesBilledLimitExceeded", "message": "Query exceeded limit for bytes billed: 1000. 141557760 or higher required."}
+
+  A job refused this way bills nothing.
+
+The price of one `make bq`:
+
+| measure | bytes | GB |
+|---|---:|---:|
+| processed, whole build | 1,323,806,504 | 1.3238 |
+| billed, whole build (the 10 MB per-query minimum dominates 167 tiny test jobs) | 4,653,580,288 | 4.6536 |
+| largest single job, processed | 150,593,696 | 0.1506 |
+| ceiling, per job (`maximum_bytes_billed`) | 1,000,000,000 | 1.0000 |
+| jobs of the build that come near the ceiling | **0** | |
+
+## What was built
+
+* **`scripts/bq_preflight.py`** (new; stdlib plus the `openssl` CLI, token from
+  `scripts/parity.py`'s `access_token()` loaded with `importlib`, as `bq_table_meta.py` does).
+  Target from the profile's convention: `BQ_PROJECT` (default `coreychimpbot`),
+  `experiments_<DBT_ENV>` (default `dev`), overridable with `--project` / `--dataset`. Key from
+  `BQ_KEYFILE`, else `GOOGLE_APPLICATION_CREDENTIALS` when that is a service-account JSON. Only
+  `client_email` is printed. Checks, in order: token; `datasets.get` (location, creation time,
+  OWNER); `jobs.query` `SELECT 1` (proves `bigquery.jobs.create`, 0 bytes, billed 0); `tables.list`
+  when the dataset exists. `--create` attempts `datasets.insert` (location `US`) once, only when
+  the dataset is missing. On any blocker it prints a "what to grant" block: two
+  `gcloud projects add-iam-policy-binding` commands (`roles/bigquery.jobUser`,
+  `roles/bigquery.dataEditor`) built from the key's `client_email`, and the console route
+  (`gcloud` is not installed on this box).
+* **`scripts/run_bq.sh`**: before `exec`ing dbt, with a key file in play (not gcloud ADC), runs
+  `python3 scripts/bq_preflight.py --create`, its output passing straight through. Exit 2 from the
+  preflight ends the wrapper with exit 2 and no build; exit 1 (preflight unavailable) falls
+  through to dbt as before, as the preflight's contract asks; exit 0 builds. ADC: one line saying
+  the preflight was skipped. `BQ_NO_PREFLIGHT=1` skips it.
+* `Makefile` (one `help` line), `README.md` (repository map, the `make bq` bullet),
+  `docs/gaps.md` section 2.
+
+The preflight's exit-code contract (neither 1 nor 2 is a build failure; no build was started):
+
+| exit | meaning |
+|---|---|
+| 0 | ready: the dataset exists, a job can be created, the dataset is readable |
+| 1 | **preflight unavailable**: no service-account key, no `openssl`, bad credentials, network, an unexpected HTTP status. Nothing is known about the target; the caller falls through to dbt |
+| 2 | **named blocker**: the dataset is missing and was not (or could not be) created, a job cannot be created, or the dataset cannot be read. The diagnosis, BigQuery's message and the "what to grant" block are printed |
+
+## Commands run (this worktree, 2026-10-06) and their output
+
+    $ python3 scripts/bq_preflight.py                                        # exit 0
+    bigquery preflight: target coreychimpbot.experiments_dev (location US)
+      ok    access token obtained for coreychimpbot@coreychimpbot.iam.gserviceaccount.com
+      ok    dataset coreychimpbot.experiments_dev exists: location US, created 2026-09-27 09:23:52Z, OWNER projectOwners, coreychimpbot@coreychimpbot.iam.gserviceaccount.com
+      ok    jobs.query SELECT 1 ran (bigquery.jobs.create held; processed 0 bytes, billed 0)
+      ok    tables.list on coreychimpbot.experiments_dev: 29 relation(s), the dataset is readable
+    ready: coreychimpbot.experiments_dev exists, a job can be created and the dataset is readable
+
+    $ python3 scripts/bq_preflight.py --create                               # exit 0, identical
+                                                                             # output: nothing to create
+
+    $ python3 scripts/bq_preflight.py --dataset experiments_does_not_exist   # exit 2
+    bigquery preflight: target coreychimpbot.experiments_does_not_exist (location US)
+      ok    access token obtained for coreychimpbot@coreychimpbot.iam.gserviceaccount.com
+      FAIL  dataset coreychimpbot.experiments_does_not_exist not found (HTTP 404 reason=notFound: "Not found: Dataset coreychimpbot:experiments_does_not_exist")
+      FAIL  creating it needs bigquery.datasets.create; not attempted. Re-run with --create, or create it in the console (id experiments_does_not_exist, location US)
+      ok    jobs.query SELECT 1 ran (bigquery.jobs.create held; processed 0 bytes, billed 0)
+
+    NAMED BLOCKER: coreychimpbot.experiments_does_not_exist cannot be built by coreychimpbot@coreychimpbot.iam.gserviceaccount.com; needed: bigquery.datasets.create (untested: --create was not passed). No build was started.
+
+    what to grant (to coreychimpbot@coreychimpbot.iam.gserviceaccount.com):
+      # roles/bigquery.jobUser supplies bigquery.jobs.create
+      gcloud projects add-iam-policy-binding coreychimpbot --member=serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com --role=roles/bigquery.jobUser
+      # roles/bigquery.dataEditor supplies bigquery.datasets.create, and inside the dataset
+      # bigquery.tables.create / .updateData / .get and bigquery.datasets.get / .update
+      gcloud projects add-iam-policy-binding coreychimpbot --member=serviceAccount:coreychimpbot@coreychimpbot.iam.gserviceaccount.com --role=roles/bigquery.dataEditor
+    gcloud is not installed on this box; the console route is BigQuery -> Create dataset
+    (id experiments_does_not_exist, location US), plus IAM -> grant the two roles above to coreychimpbot@coreychimpbot.iam.gserviceaccount.com.
+
+    # run as a python3 subprocess with BQ_KEYFILE=/nonexistent in its environment
+    $ BQ_KEYFILE=/nonexistent python3 scripts/bq_preflight.py                # exit 1
+    bigquery preflight: target coreychimpbot.experiments_dev (location US)
+      FAIL  no service-account key: set BQ_KEYFILE (or GOOGLE_APPLICATION_CREDENTIALS to a service-account JSON). Preflight unavailable.
+
+The wrapper's branches were exercised on a scratch copy of `scripts/run_bq.sh` under `target/`,
+with a stub `dbt` and a stub preflight that exits 0, 1 or 2 (no BigQuery call; scratch removed):
+
+    preflight 0 -> STUB dbt build --target bigquery --select x; wrapper exit 0
+    preflight 1 -> [bq] preflight unavailable (exit 1); building anyway, ...; STUB dbt ...; exit 0
+    preflight 2 -> [bq] preflight named a blocker (exit 2): no build was started.; wrapper exit 2
+    BQ_NO_PREFLIGHT=1 -> [bq] BQ_NO_PREFLIGHT=1: skipping scripts/bq_preflight.py; STUB dbt ...; exit 0
+
+`bash scripts/run_bq.sh` / `make bq` itself was **not** run by this card (it starts a billable
+build); the orchestrator runs it.
+
+The pre-PR gate, which never reaches the preflight or the wrapper:
+
+    $ BQ_KEYFILE=/home/hermes/.config/gcp/coreychimpbot-sa.json bash scripts/pre_pr.sh   # exit 0
+      ok    bash scripts/check_env.sh
+      ok    bash scripts/load_duckdb_sources.sh
+      ok    python3 scripts/check_portability.py    (30 files, 0/15, 0/13, 0 findings, PORTABLE)
+      ok    python3 scripts/parity.py               (baseline: MATCH; schema parity holds on all 29 models)
+    pre-pr: all steps ok
+    pre-pr: 210.1s
+
+## What this does not establish
+
+* **The 403 branches have never run.** This account holds every permission the preflight checks,
+  so the `datasets.insert`, `jobs.query`, `tables.list` and `datasets.get` refusal paths, and the
+  "missing permission is ..." lines they print, are unexercised. Only the missing-dataset path
+  (404, `--create` not passed) ran.
+* **`--create` has never created a dataset.** The target exists, and a run that would create
+  `experiments_does_not_exist` was not allowed. The insert body is the documented minimum
+  (`datasetReference`, `location`); the orchestrator's throwaway insert of 2026-10-06 was a
+  separate call, not this code.
+* **The two roles are from BigQuery's documented role contents**, not a measurement of a fresh
+  principal granted exactly those two and nothing else. The account today holds more (it is a
+  dataset OWNER, and project owners are listed too).
+* **gcloud ADC is not covered**: the preflight checks service-account keys only.
+* **The price is one build on one day.** Billed bytes depend on the number of jobs (10 MB
+  minimum each) far more than on data size; a larger source would change processed bytes, and the
+  ceiling is per job, not per build.
+* `maximum_bytes_billed` refusing at 1000 bytes shows the setting is enforced by BigQuery; it was
+  not shown refusing at the configured 1 GB, because no job of the build comes near it.
