@@ -1173,8 +1173,14 @@ before any model is measured, and refuses to measure anything if they disagree. 
 | NULLS ordering / row order | nothing depends on row order: every metric is an aggregate, the one sort is inside an array's own values, identical on both engines |
 | NULLs | SUM skips NULLs, so every column also carries an explicit null count and a distinct count |
 
-No model in the tree currently has an array, struct or JSON column, so those branches of the
-renderer are implemented but unexercised here.
+When card 4 ran, no model had an array, struct or JSON column, so those branches of the
+renderer were implemented but unexercised. **Since card t_68bfec9c** the rendering is exercised:
+`mart_polyglot_types` has one column of each kind (`int_array`, `date_array`, `pair_struct`,
+`pair_json`), built on both targets from the macro layer, and its renderings are asserted by the
+self-check (`polyglot_selfcheck`, DuckDB values and types) and by the guardrail
+(`check_portability.py`'s type-coverage check, both renders). Still not proven: cross-engine
+**value** parity of those columns, which needs the same input rows and the credentialed BigQuery
+leg (see the card t_68bfec9c section at the end of this file).
 
 ## What the run found
 
@@ -1231,8 +1237,11 @@ renderer are implemented but unexercised here.
    `maximum_bytes_billed` enforcement (no query came close to the 1 GB ceiling), or anything about
    the dataset's real existence. `make bq` remains broken on this machine for a permission reason
    outside the project.
-2. **The array/struct/JSON rendering is unexercised** — no model has such a column. Its correctness
-   rests on the self-check, which does not cover them.
+2. **The array/struct/JSON rendering was unexercised** when card 4 ran — no model had such a
+   column. *Updated by card t_68bfec9c:* `mart_polyglot_types` now renders all three on both
+   targets, the self-check asserts the DuckDB values and types, and the guardrail asserts each
+   construct is present in each render. What is still not proven is cross-engine **value** parity
+   of those columns: that needs the same input rows and the credentialed BigQuery leg.
 3. **Cross-engine *value* parity is still not established**, and cannot be until both legs read one
    dataset — that is cards 5/6. What is established is schema parity (with one named exception) and
    the machinery, verified end to end, that will measure value parity the day the data is shared.
@@ -1317,6 +1326,261 @@ is the read-only BigQuery leg.
 
 `shellcheck` is not installed on this machine, so `scripts/pre_pr.sh` was not shellchecked; nothing
 was installed to do it.
+
+# Card t_68bfec9c — exercise the array, struct and JSON rendering on both targets
+
+## What it is
+
+Card 4 left a whole class of SQL claimed but never shown on a real column: no model had an array,
+struct or JSON column, so `parity.py`'s array/struct/JSON branches of `Engine.canon`, and the
+macros behind them, ran only inside the self-check (and JSON not even there). This card closes the
+*rendering* half of that gap. It is a coverage card, not a feature: no macro was added or changed.
+
+* **`models/marts/mart_polyglot_types.sql`** — one constant row, five columns, built only from
+  existing macros (SPEC 7.2) plus `to_json(...)`. Documented in `_marts__models.yml` (`not_null`
+  on `id` only). The values are constants, not business data. The tree is now 30 models.
+* **`polyglot_selfcheck`** — three new cases: the `generate_date_series` value, the `to_json` of a
+  `struct_literal` as VARCHAR, and its `typeof`. 44 → 47 cases.
+* **`check_portability.py`** — a *positive* check (`scan_type_coverage`, `TYPE_SHOWCASE_MODEL`,
+  `TYPE_COVERAGE`). The token lists only prove the other dialect is *absent*; a macro that silently
+  dropped its construct would still have passed. Now each render of `mart_polyglot_types` must
+  contain every required substring (comments stripped first, so the model's header comment that
+  mentions `to_json(...)` cannot satisfy it). A missing file or substring is a finding in the same
+  `findings` list, so it prints `NOT PORTABLE` and exits 1. One new summary line:
+  `type coverage (mart_polyglot_types): ...`.
+
+| target | required substrings |
+|---|---|
+| duckdb | `generate_series(`, `date[]`, `'id':`, `'channel':`, `to_json(` |
+| bigquery | `generate_array(`, `generate_date_array(`, `struct(`, `to_json(` |
+
+## Decision: `to_json(...)` is not a macro
+
+Same precedent as `unnest(...)` (`macros/polyglot/arrays.sql`): the function name is the same on
+both engines and it returns the JSON type on both, so a wrapper would only hide plain SQL. What
+*does* differ — the struct literal inside it — already goes through `struct_literal()`.
+
+## The renderings, per column (from the compiled trees in `target/portability/<target>/`)
+
+| column | DuckDB render | BigQuery render |
+|---|---|---|
+| `id` | `cast(1 as bigint)` | `cast(1 as int64)` |
+| `int_array` | `generate_series(1, 3)` | `generate_array(1, 3)` |
+| `date_array` | `cast(generate_series(date '2024-03-01', date '2024-03-03', interval 1 day) as date[])` | `generate_date_array(date '2024-03-01', date '2024-03-03', interval 1 day)` |
+| `pair_struct` | `{'id': 1, 'channel': 'web'}` | `struct(1 as id, 'web' as channel)` |
+| `pair_json` | `to_json({'id': 1, 'channel': 'web'})` | `to_json(struct(1 as id, 'web' as channel))` |
+
+The materialised DuckDB row (`select *, typeof(...) from main.mart_polyglot_types` on `dev.duckdb`
+after `make duck`):
+
+| column | value | DuckDB type |
+|---|---|---|
+| `id` | `1` | `BIGINT` |
+| `int_array` | `[1, 2, 3]` | `BIGINT[]` |
+| `date_array` | `[2024-03-01, 2024-03-02, 2024-03-03]` | `DATE[]` |
+| `pair_struct` | `{'id': 1, 'channel': web}` | `STRUCT(id INTEGER, channel VARCHAR)` |
+| `pair_json` | `{"id":1,"channel":"web"}` | `JSON` |
+
+No rendering had to be left divergent: every column renders on both targets from the same model
+text, with no target branch.
+
+## Commands run (real output, this machine, 2026-10-06)
+
+    $ make duck
+    Finished 'build' with 1 warning for target 'duckdb' [6.1s]
+    Processed: 30 models | 168 tests
+    Summary: 198 total | 198 success
+
+    $ make polyglot
+    ... (dbt.log) selfcheck ok  generate_date_series value
+    ... (dbt.log) selfcheck ok  to_json(struct_literal) value
+    ... (dbt.log) selfcheck ok  to_json(struct_literal) typeof
+    ... (dbt.log) selfcheck: all 47 cases ok on duckdb
+      ok    .venv/bin/dbt run-operation polyglot_selfcheck --target duckdb
+      ok    .venv/bin/dbt run-operation polyglot_render --target duckdb        (31 render lines)
+      ok    .venv/bin/dbt run-operation polyglot_render --target bigquery      (31 render lines)
+      ok    ... --args {include_bignumeric: true} --target duckdb (failed as expected with the decimal-ceiling message)
+      ok    python3 scripts/check_portability.py
+      ok    python3 scripts/check_portability.py --demo
+    polyglot check: all steps ok
+
+    $ make portability
+    compiled files checked: 31 (models: 30, analyses: 1)
+    BigQuery-only tokens in the DuckDB render: 0/15
+    DuckDB-only tokens in the BigQuery render: 0/13
+    target-branch findings: 0
+    type coverage (mart_polyglot_types): array/struct/json present in both renders
+    PORTABLE
+
+    $ python3 scripts/check_portability.py --demo
+    demo: wrote models/intermediate/_portability_demo.sql (raw regexp_contains + a target.type branch)
+    type coverage (mart_polyglot_types): array/struct/json present in the duckdb render
+    NOT PORTABLE: 2 finding(s)
+    demo: guardrail failed as designed (1 dialect finding(s), 1 target-branch finding(s) in _portability_demo.sql)
+    demo: removed models/intermediate/_portability_demo.sql
+    type coverage (mart_polyglot_types): array/struct/json present in both renders
+    PORTABLE
+    demo: the guardrail failed as designed, then passed again
+
+    # probe, reverted: pair_json replaced by `cast(null as {{ string_type() }}) as pair_json`
+    $ python3 scripts/check_portability.py                                      # exit 1
+    target/portability/duckdb/compiled/bq_duckdb_experiments/models/marts/mart_polyglot_types.sql: required 'to_json(' missing - the duckdb render of mart_polyglot_types dropped an array/struct/json construct
+    target/portability/bigquery/compiled/bq_duckdb_experiments/models/marts/mart_polyglot_types.sql: required 'to_json(' missing - the bigquery render of mart_polyglot_types dropped an array/struct/json construct
+    type coverage (mart_polyglot_types): 2 finding(s)
+    NOT PORTABLE: 2 finding(s)
+
+The `1 warning` in every dbt run is the existing `MacroSyntaxInvalid (dbt1502)` on
+`analyses/value_parity/rows.md:79:6`, a committed file this card did not touch.
+
+## What is NOT verified for card t_68bfec9c
+
+Status after the orchestrator re-ran the gate with a BigQuery credential on 2026-10-07 (evidence in
+the section at the end of this file). Items 1, 2 and 4 were open when this list was first written;
+they are settled as noted below. Items 3 and 5 stand.
+
+1. ~~**The BigQuery render is compiled, never executed.**~~ **Settled.** `make bq` built all 30
+   models on BigQuery (198 tests, 197 success, 1 intended warn); `mart_polyglot_types`
+   materialised there with a `JSON` column and passed its `not_null` test, and `parity.py` then
+   measured the model by running its compiled SQL read-only on BigQuery. `generate_array`,
+   `generate_date_array`, `struct(...)` and `to_json(...)` really ran on the engine.
+2. ~~**Cross-engine value parity of these columns is not established.**~~ **Partly settled, and what
+   is left is a named divergence.** The canonical schema of all five columns agrees across the
+   engines, and four of the five column checksums agree exactly; the fifth, `pair_json`, differs
+   because the two engines serialise a JSON value with different key order. Exact digests are in
+   the section at the end. A `--same-data` run would therefore flag this one column, for that
+   reason alone — semantically the two JSON values are the same.
+3. **Struct field types differ by width, and the canonical comparison absorbs it.** DuckDB types
+   the literal `1` inside the struct as `INTEGER` (`STRUCT(id INTEGER, channel VARCHAR)`, measured
+   above); BigQuery's is `INT64` (`STRUCT<id INTEGER, channel STRING>`). Both canonicalise to
+   `struct<id:int64,channel:string>` in `parity.py` (`bq_kind`/`duck_kind`), which is why the schema
+   check holds on this model; nothing pins that mapping with a test, so a future type rename could
+   pass unnoticed.
+4. ~~**The JSON text on BigQuery is not measured.**~~ **Settled: it is measured, and it differs by
+   key order.** DuckDB `to_json({'id': 1, 'channel': 'web'})` renders `{"id":1,"channel":"web"}`;
+   BigQuery's `TO_JSON(struct(1 as id, 'web' as channel))` stores the same object, but reading it
+   back the way `parity.py`'s BigQuery JSON branch does — `TO_JSON_STRING(pair_json)` — re-serialises
+   it as `{"channel":"web","id":1}`. Key order is not part of JSON object equality, so this is a
+   comparison artefact rather than an engine disagreement about content; but the harness compares
+   canonicalised *text*, so it sees a difference. `CAST(pair_json AS STRING)` is not available on
+   BigQuery (`Invalid cast from JSON to STRING`), so there is no raw-text accessor to fall back on.
+5. `scripts/row_join.py` gates on `>= 29` / `< 29` relations; with 30 models that still holds, but
+   that script was not run here (it needs the pair build `make value-parity` writes). It shared the
+   stdout-parsing fragility described below and now uses the same helper as `parity.py`.
+
+## Verified end to end with the credentialed leg (orchestrator, 2026-10-07)
+
+Everything above this section was written from the DuckDB leg alone: `BQ_KEYFILE` was unset, so the
+BigQuery side was compile-only. That is no longer the state. A service-account credential for the
+project `profiles.yml` names (`coreychimpbot`) was used to run the credentialed parts of the gate,
+which settles two of the open items above and turns a third into a named, reproducible divergence.
+
+### The BigQuery render executes
+
+    $ make bq                                      # 30 models, 168 tests
+    Finished 'build' with 2 warnings for target 'bigquery' [2m 29s]
+    Processed: 30 models | 168 tests
+    Summary: 198 total | 197 success | 1 warn
+
+The `warn` is `assert_order_item_created_at_is_plausible`, a `severity: warn` test that fires on the
+real dataset rather than on the fixture (`dbt test --select
+assert_order_item_created_at_is_plausible --target bigquery` -> `Warned test
+assert_order_item_created_at_is_plausible [1 of 1 in 2.87s]`). The other warning is the committed
+`analyses/value_parity/rows.md:79:6` syntax note that every run carries. `mart_polyglot_types`
+materialised on BigQuery and its `not_null_mart_polyglot_types_id` test passed there.
+
+### A real harness defect, found by the first array column in the tree
+
+`python3 scripts/parity.py` could not measure the new model at all:
+
+    $ make pre-pr                                  # BQ_KEYFILE set, before the fix
+    $ python3 scripts/parity.py
+    ...
+    pre-pr: 1 step(s) FAILED
+
+    File "scripts/parity.py", line 364, in sql
+        return json.loads(out.stdout)
+    json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+`DuckLeg.sql()` parsed the DuckDB CLI's stdout as JSON. `Engine.canon`'s array branch is the first
+measured query in the tree to use a DuckDB lambda (`list_transform(<col>, x -> CAST(x AS VARCHAR))`),
+and DuckDB 1.5.5 — the version this repo pins and `check_env.sh` enforces — prints a **deprecation
+WARNING to stdout, ANSI-coloured, before the JSON**:
+
+    "\x1b[90mWARNING:\n\x1b[00m\x1b[90mDeprecated lambda arrow (->) detected. ...\x1b[00m\n\n[{\"__rows\":1,...
+
+So no model without an array column could ever have hit it: 29 of the 30 measured fine, and the only
+one that did not is the one this card added. Fixed in `scripts/parity.py` with a `last_json()` helper
+(tries each `[` / `{` as a document start, returns the last document that parses, and falls back to
+`json.loads(text)` so a genuinely bad stdout still raises `JSONDecodeError` as before), and
+`scripts/row_join.py`'s `ddb()` — which had the same fragility and meets the same warning through
+`parity.metrics_sql` — now calls the same helper. The numbers the two legs produce are unchanged:
+`mart_polyglot_types` on DuckDB still measures `id__sum` 3301589560 and `pair_json__sum` 2782575947,
+the values read straight out of the raw CLI output before the change.
+
+### The gate, with the credentialed leg
+
+    $ make pre-pr                                  # BQ_KEYFILE set, after the fix
+    $ bash scripts/check_env.sh                ... ok
+    $ bash scripts/load_duckdb_sources.sh      ... ok
+    $ python3 scripts/check_portability.py
+        compiled files checked: 31 (models: 30, analyses: 1)
+        BigQuery-only tokens in the DuckDB render: 0/15
+        DuckDB-only tokens in the BigQuery render: 0/13
+        target-branch findings: 0
+        type coverage (mart_polyglot_types): array/struct/json present in both renders
+        PORTABLE
+                                               ... ok
+    $ python3 scripts/parity.py
+        [4/5] measuring every model on both legs
+        [5/5] DuckDB baseline: rebuild and prove the measurements reproduce
+              baseline: MATCH
+        parity: schema parity holds on all 30 models. Row counts and checksums differ on 29 of
+        them, as expected: the two legs read different source data (fixture vs the real dataset).
+        That is cards 5/6's job; run with --same-data once both legs read one dataset.
+                                               ... ok
+    pre-pr: all steps ok
+    pre-pr: 300.3s
+
+This is also the first run in which `parity.py`'s array, struct and JSON branches of `Engine.canon`
+have run against a real model column on a real engine, which is what the docstring at the top of
+that file describes. "Schema parity holds on all 30 models" includes `mart_polyglot_types`: the
+canonical kinds of its five columns are identical on both legs.
+
+### The one divergence, named: JSON key order
+
+`target/parity-duckdb-leg.json` and `target/parity-bigquery-leg.json` from that run, for
+`mart_polyglot_types` (the `__sum` is the first 8 hex digits of an md5 of the canonicalised text):
+
+| column | DuckDB canonical text | BigQuery canonical text | DuckDB `__sum` | BigQuery `__sum` |
+|---|---|---|---|---|
+| `id` | `1` | `1` | 3301589560 | 3301589560 |
+| `int_array` | `1\|2\|3` | `1\|2\|3` | 45166227 | 45166227 |
+| `date_array` | `2024-03-01\|2024-03-02\|2024-03-03` | same | 236720013 | 236720013 |
+| `pair_struct` | `1\|web` | `1\|web` | 4205254971 | 4205254971 |
+| `pair_json` | `{"id":1,"channel":"web"}` | `{"channel":"web","id":1}` | 2782575947 | 2377532824 |
+
+Measured directly, not inferred:
+
+    $ duckdb dev.duckdb -c "select cast(pair_json as varchar) from main.mart_polyglot_types"
+    {"id":1,"channel":"web"}                       # md5 a5dabd4b16ee0be82e20821ce173827f
+
+    # BigQuery, the materialised table make bq wrote
+    select to_json_string(pair_json)  from `coreychimpbot`.experiments_dev.mart_polyglot_types
+    {"channel":"web","id":1}                       # md5 8db6459844df8ecdda3e96d008395125
+    select to_json_string(pair_struct) from ...    {"id":1,"channel":"web"}     # field order kept
+
+So BigQuery's `TO_JSON(struct(...))` stores the object in field order (`id`, `channel`) exactly as
+the model text says; it is the **re-serialisation** of an already-`JSON`-typed value through
+`TO_JSON_STRING` — the canon `Engine.canon` uses for the `json` kind on BigQuery — that comes back
+keyed alphabetically. DuckDB's canon (`CAST(json AS VARCHAR)`) reproduces the stored text. Nothing
+about the content differs, and neither engine is wrong; the harness compares text, so it sees two
+values. Making the JSON branch engine-independent would need a canonical form both engines can
+produce (a key-sorted serialisation, or a structural comparison), which neither engine exposes
+through a portable function today — so this stays a named divergence rather than a fix.
+
+One consequence worth carrying forward: a `--same-data` run (`make value-parity`) over a model with
+a JSON column will report that column as differing for this reason alone. `mart_polyglot_types` is
+the only such model today, and its one row is constant, so the report can be read with that in mind.
 
 # Card t_fc6d405f — the materialised BigQuery build, and what to grant when it cannot run
 

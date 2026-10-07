@@ -74,7 +74,10 @@ The project uses a macro seam instead of a forked model tree. The seam handles t
 - type names and casts
 - safe division
 - date/time behavior
-- array/struct rendering
+- array/struct/JSON rendering (exercised on both targets by `mart_polyglot_types`, a constant
+  coverage model, and asserted by the self-check and the guardrail; measured on both engines too —
+  schema and four of its five column checksums agree, the JSON column's text differs by key order,
+  a named divergence in NOTES.md)
 - key generation
 
 That is the important architectural result: **the project divergence lives in the seam, not in the business models**.

@@ -576,3 +576,35 @@ models:
         description: >
           customers / the cohort's month-0 customers (float, 0..1). Month 0 is
           always 1.0, because a cohort is defined by its first-order month.
+
+  - name: mart_polyglot_types
+    description: >
+      The coverage model for the array/struct/JSON rendering (card t_68bfec9c).
+      Grain: exactly one constant row, keyed by id. Its values are constants, not
+      business data: every column is built from the macro layer (generate_series,
+      generate_date_series, struct_literal) or from to_json(), so the same model
+      text exercises the dialect-divergent array, struct and JSON renderings on
+      both targets.
+    columns:
+      - name: id
+        description: Constant 1 (int_type()); the row's identifier.
+        data_tests:
+          - not_null
+      - name: int_array
+        description: >
+          Integer array [1, 2, 3] from generate_series(1, 3): generate_series on
+          DuckDB, generate_array on BigQuery.
+      - name: date_array
+        description: >
+          Date array 2024-03-01..2024-03-03 from generate_date_series(): DATE[] on
+          DuckDB (generate_series cast to date[]), ARRAY<DATE> from
+          generate_date_array on BigQuery.
+      - name: pair_struct
+        description: >
+          Struct (id 1, channel 'web') from struct_literal(): a {'id': ..} literal
+          on DuckDB, struct(.. as id, ..) on BigQuery.
+      - name: pair_json
+        description: >
+          to_json() of the same struct as pair_struct; the JSON type on both
+          engines. to_json is not a macro: the name and semantics are the same on
+          both (the unnest precedent).

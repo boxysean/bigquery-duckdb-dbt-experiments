@@ -170,13 +170,8 @@ def ddb(db: Path, sql: str, bq: bool = False, readonly: bool = False):
     out = subprocess.run(cmd, input=pre + sql, capture_output=True, text=True, timeout=3600)
     if out.returncode != 0:
         raise RuntimeError(redact(out.stderr.strip() or out.stdout.strip()))
-    dec, text, pos, last = json.JSONDecoder(), out.stdout, 0, []
-    while True:
-        while pos < len(text) and text[pos].isspace():
-            pos += 1
-        if pos >= len(text):
-            return last
-        last, pos = dec.raw_decode(text, pos)
+    # parity.last_json skips the lambda deprecation WARNING DuckDB 1.5.5 prints to stdout.
+    return parity.last_json(out.stdout) if out.stdout.strip() else []
 
 
 def duck_metrics(db: Path, source: str, measured, readonly=False) -> dict:

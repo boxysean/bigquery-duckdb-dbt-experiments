@@ -348,6 +348,26 @@ def metrics_sql(engine: Engine, source: str, columns) -> str:
 
 
 # ------------------------------------------------------------------ DuckDB leg
+def last_json(text: str):
+    """The last JSON document in the DuckDB CLI's stdout, skipping any non-JSON noise.
+
+    Not a plain json.loads(stdout): DuckDB 1.5.5 prints the lambda deprecation WARNING
+    ("Deprecated lambda arrow (->) detected ...") to stdout, ANSI-coloured, before the
+    JSON -- that is what broke the first array column (list_transform in Engine.canon).
+    Try each '[' / '{' as a document start; the colour code shares the JSON's line."""
+    dec, pos, found, last = json.JSONDecoder(), 0, False, None
+    while True:
+        starts = [i for i in (text.find("[", pos), text.find("{", pos)) if i >= 0]
+        if not starts:
+            # Nothing parsed: let json.loads raise exactly as it always has.
+            return last if found else json.loads(text)
+        try:
+            last, pos = dec.raw_decode(text, min(starts))
+            found = True
+        except json.JSONDecodeError:
+            pos = min(starts) + 1
+
+
 class DuckLeg:
     name = "duckdb"
     engine = Engine("duckdb")
@@ -361,7 +381,7 @@ class DuckLeg:
         out = run([self.cli, "-json", "-init", "/dev/null", str(self.db), query])
         if out.returncode != 0:
             raise RuntimeError(out.stderr.strip() or out.stdout.strip())
-        return json.loads(out.stdout)
+        return last_json(out.stdout)
 
     def schema(self, model):
         rows = self.sql(
