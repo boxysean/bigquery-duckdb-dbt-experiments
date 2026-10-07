@@ -1,0 +1,55 @@
+# dbt v1 (dbt-core 1.11, config-version 2). dbt v2 (Fusion) has no Trino adapter, so
+# this peer of ../1_dbt_bigquery_duckdb (dbt v2) is dbt v1 by necessity.
+name: bq_trino_experiments
+version: "1.0.0"
+config-version: 2
+
+profile: bq_trino_experiments
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+analysis-paths: ["analyses"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# The SAME model tree as ../1_dbt_bigquery_duckdb, byte for byte for every .sql file
+# (enforced by ../scripts/check_model_trees.py). Anything dialect-specific belongs in
+# macros/polyglot, never in a model.
+#
+# Materialisations match project 1 on purpose, with one rule that is specific to the
+# lakehouse: a model that SPARK reads must be a TABLE. A Trino view is stored in the
+# Iceberg catalog as Trino SQL; Spark can read it only when that SQL also happens to
+# parse as Spark SQL, which a view using any Trino-only function does not (measured:
+# ROUTINE_NOT_FOUND). Staging and intermediate are views (Trino-internal); marts, the
+# layer Spark consumes, are tables. scripts/spark_interop.sh proves it on every run.
+models:
+  bq_trino_experiments:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table
+      # dbt-trino: CREATE OR REPLACE TABLE instead of build-then-rename. On Iceberg this
+      # keeps the table's identity and snapshot history, so a Spark reader that holds
+      # the table never sees it disappear between the drop and the rename.
+      +on_table_exists: replace
+      # Every table dbt writes carries read.parquet.vectorization.enabled=false, so ANY
+      # Spark can read it with no Spark-side setting. Measured without it: Spark fails on
+      # 5 of the 12 tables with "Cannot support vectorized reads for column [email] ...
+      # with encoding DELTA_LENGTH_BYTE_ARRAY" (Trino writes Parquet v2 encodings that
+      # Iceberg's vectorized Spark reader cannot decode; apache/iceberg#7162). The cost is
+      # Spark's slower row-based Parquet reader on these tables. The key must be
+      # allow-listed in the catalog (stack/trino/catalog/lake.properties). A model that
+      # sets its own `properties` (physical_layout()) must repeat it: dbt replaces the
+      # whole dict. On the bigquery target `properties` is unknown, hence one
+      # CustomKeyInConfigDeprecation warning there.
+      +properties:
+        extra_properties: "map(array['read.parquet.vectorization.enabled'], array['false'])"
+
+flags:
+  # Opt in to dbt-trino's future default; the local stack is plain HTTP anyway.
+  require_certificate_validation: true

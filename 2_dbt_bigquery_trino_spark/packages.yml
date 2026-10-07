@@ -1,0 +1,2 @@
+# Empty on purpose, as in project 1: every package must work on both targets.
+packages: []

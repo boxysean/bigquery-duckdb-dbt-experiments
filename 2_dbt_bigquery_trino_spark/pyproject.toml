@@ -1,0 +1,22 @@
+[project]
+name = "dbt-bigquery-trino-spark"
+version = "0.0.1"
+description = "One dbt v1 (dbt-core) project, two targets: BigQuery and Trino (Iceberg lakehouse shared with Spark)."
+requires-python = ">=3.11,<3.14"
+# Pinned on purpose, as in project 1: the engine/adapter versions are part of the
+# contract being compared. dbt v2 (Fusion) has no Trino adapter, so this project is
+# dbt v1 (dbt-core) by necessity.
+dependencies = [
+  "dbt-core==1.11.11",
+  "dbt-trino==1.10.2",
+  "dbt-bigquery==1.11.0",
+]
+
+# Repo tooling, not part of the dbt project.
+#   duckdb   renders project 1's fixture SQL (the shared source dataset) to Parquet
+#   trino    the Python client the parity / interop scripts use
+[dependency-groups]
+dev = [
+  "duckdb==1.5.5",
+  "trino==0.336.0",
+]
