@@ -1,0 +1,14 @@
+name: PR ping
+on:
+  pull_request:
+    types: [opened]
+permissions:
+  pull-requests: write
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh pr comment ${{ github.event.pull_request.number }} --body "PR opened"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
